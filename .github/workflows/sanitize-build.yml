@@ -48,19 +48,34 @@ jobs:
           g++ --version
           echo "GCC version verification completed"
 
-      - name: Install Coverage Tools
-        if: matrix.sanitizer == 'coverage'
+      - name: Install GCC 15 + lcov from Toolchain PPA (coverage only)
+        if: matrix.sanitizer == 'coverage' && matrix.gcc-version == 15
+        run: |
+          apt-get update
+          apt-get install -y software-properties-common
+          add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          apt-get update
+          apt-get install -y gcc-15 g++-15 lcov
+          gcov-15 --version
+          # Optional: make 15 the default toolchain in this job
+          update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 50 \
+            --slave /usr/bin/g++ g++ /usr/bin/g++-15 \
+            --slave /usr/bin/gcov gcov /usr/bin/gcov-15
+
+      - name: Install Coverage Tools (non-coverage or non-15 legs)
+        if: matrix.sanitizer == 'coverage' && matrix.gcc-version != 15
         run: |
           apt-get update
           apt-get install -y lcov
           lcov --version
+          # Expect gcov for that containerized GCC to exist
           gcov-${{ matrix.gcc-version }} --version
 
       - name: Configure CMake
         run: |
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
-            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_CXX_COMPILER=${{ (matrix.sanitizer == 'coverage' && matrix.gcc-version == 15) && 'g++-15' || 'g++' }} \
             -DHAKKA_JSON_BUILD_TESTS=ON \
             -DICU_VERSION=77.1 \
             ${{ matrix.sanitizer == 'address' && '-DHAKKA_JSON_ENABLE_SANITIZER_ADDRESS=ON' || '' }} \
@@ -76,22 +91,19 @@ jobs:
           cd build
           ctest --output-on-failure --parallel --timeout 300
         env:
-          # Sanitizer options
           ASAN_OPTIONS: detect_leaks=1:abort_on_error=1:check_initialization_order=1:strict_init_order=1
           UBSAN_OPTIONS: print_stacktrace=1:abort_on_error=1
           TSAN_OPTIONS: abort_on_error=1
 
-      - name: Collect Coverage Data
-        if: matrix.sanitizer == 'coverage'
+      - name: Collect Coverage Data (GCC 15)
+        if: matrix.sanitizer == 'coverage' && matrix.gcc-version == 15
         run: |
-          # Capture coverage info with branch coverage using matching gcov version
           lcov --directory build \
                --capture \
                --output-file coverage.info \
-               --gcov-tool gcov-${{ matrix.gcc-version }} \
+               --gcov-tool gcov-15 \
                --rc lcov_branch_coverage=1
 
-          # Filter out system headers, dependencies, and test files
           lcov --remove coverage.info \
                '/usr/*' \
                '*/build/_deps/*' \
@@ -100,9 +112,26 @@ jobs:
                --output-file coverage.info \
                --rc lcov_branch_coverage=1
 
-          # Display coverage summary for verification
-          lcov --list coverage.info \
+          lcov --list coverage.info --rc lcov_branch_coverage=1
+
+      - name: Collect Coverage Data (other GCC)
+        if: matrix.sanitizer == 'coverage' && matrix.gcc-version != 15
+        run: |
+          lcov --directory build \
+               --capture \
+               --output-file coverage.info \
+               --gcov-tool gcov-${{ matrix.gcc-version }} \
                --rc lcov_branch_coverage=1
+
+          lcov --remove coverage.info \
+               '/usr/*' \
+               '*/build/_deps/*' \
+               '*/build/icu-install/*' \
+               '*/tests/*' \
+               --output-file coverage.info \
+               --rc lcov_branch_coverage=1
+
+          lcov --list coverage.info --rc lcov_branch_coverage=1
 
       - name: Upload Coverage to Codecov
         if: matrix.sanitizer == 'coverage'
@@ -110,7 +139,7 @@ jobs:
         with:
           files: ./coverage.info
           flags: unittests
-          name: gcc-15-debug
+          name: gcc-${{ matrix.gcc-version }}-${{ matrix.build-type }}-coverage
           fail_ci_if_error: true
           verbose: true
 
