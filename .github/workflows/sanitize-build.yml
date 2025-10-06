@@ -24,15 +24,15 @@ jobs:
         build-type: [Debug, Release]
         sanitizer: ['', 'address', 'undefined', 'thread', 'coverage']
         exclude:
-          # Coverage only on GCC 15 Debug
+          # Coverage only on GCC 13 Debug
           - sanitizer: coverage
             gcc-version: 11
           - sanitizer: coverage
             gcc-version: 12
           - sanitizer: coverage
-            gcc-version: 13
-          - sanitizer: coverage
             gcc-version: 14
+          - sanitizer: coverage
+            gcc-version: 15
           - sanitizer: coverage
             gcc-version: 16
           - sanitizer: coverage
@@ -48,34 +48,19 @@ jobs:
           g++ --version
           echo "GCC version verification completed"
 
-      - name: Install GCC 15 + lcov from Toolchain PPA (coverage only)
-        if: matrix.sanitizer == 'coverage' && matrix.gcc-version == 15
-        run: |
-          apt-get update
-          apt-get install -y software-properties-common
-          add-apt-repository -y ppa:ubuntu-toolchain-r/test
-          apt-get update
-          apt-get install -y gcc-15 g++-15 lcov
-          gcov-15 --version
-          # Optional: make 15 the default toolchain in this job
-          update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 50 \
-            --slave /usr/bin/g++ g++ /usr/bin/g++-15 \
-            --slave /usr/bin/gcov gcov /usr/bin/gcov-15
-
-      - name: Install Coverage Tools (non-coverage or non-15 legs)
-        if: matrix.sanitizer == 'coverage' && matrix.gcc-version != 15
+      - name: Install Coverage Tools
+        if: matrix.sanitizer == 'coverage'
         run: |
           apt-get update
           apt-get install -y lcov
           lcov --version
-          # Expect gcov for that containerized GCC to exist
-          gcov-${{ matrix.gcc-version }} --version
+          gcov --version
 
       - name: Configure CMake
         run: |
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
-            -DCMAKE_CXX_COMPILER=${{ (matrix.sanitizer == 'coverage' && matrix.gcc-version == 15) && 'g++-15' || 'g++' }} \
+            -DCMAKE_CXX_COMPILER=g++ \
             -DHAKKA_JSON_BUILD_TESTS=ON \
             -DICU_VERSION=77.1 \
             ${{ matrix.sanitizer == 'address' && '-DHAKKA_JSON_ENABLE_SANITIZER_ADDRESS=ON' || '' }} \
@@ -95,32 +80,13 @@ jobs:
           UBSAN_OPTIONS: print_stacktrace=1:abort_on_error=1
           TSAN_OPTIONS: abort_on_error=1
 
-      - name: Collect Coverage Data (GCC 15)
-        if: matrix.sanitizer == 'coverage' && matrix.gcc-version == 15
+      - name: Collect Coverage Data
+        if: matrix.sanitizer == 'coverage'
         run: |
           lcov --directory build \
                --capture \
                --output-file coverage.info \
-               --gcov-tool gcov-15 \
-               --rc lcov_branch_coverage=1
-
-          lcov --remove coverage.info \
-               '/usr/*' \
-               '*/build/_deps/*' \
-               '*/build/icu-install/*' \
-               '*/tests/*' \
-               --output-file coverage.info \
-               --rc lcov_branch_coverage=1
-
-          lcov --list coverage.info --rc lcov_branch_coverage=1
-
-      - name: Collect Coverage Data (other GCC)
-        if: matrix.sanitizer == 'coverage' && matrix.gcc-version != 15
-        run: |
-          lcov --directory build \
-               --capture \
-               --output-file coverage.info \
-               --gcov-tool gcov-${{ matrix.gcc-version }} \
+               --gcov-tool gcov \
                --rc lcov_branch_coverage=1
 
           lcov --remove coverage.info \
