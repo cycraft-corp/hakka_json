@@ -32,11 +32,21 @@ constexpr size_t ITERATIONS = 10000000;  // 10M iterations for stable measuremen
 constexpr size_t WARMUP_ITERATIONS = 100000;  // Warmup to stabilize CPU
 
 // Helper to prevent compiler optimization
+#if defined(_MSC_VER)
+template<typename T>
+__declspec(noinline)
+void DoNotOptimize(const T& value) {
+    _ReadWriteBarrier();
+    const volatile void* p = &value;
+    (void)p;
+}
+#else
 template<typename T>
 __attribute__((noinline))
 void DoNotOptimize(const T& value) {
     asm volatile("" : : "r,m"(value) : "memory");
 }
+#endif
 
 // Timing helper
 class Timer {

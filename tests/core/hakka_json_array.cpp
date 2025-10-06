@@ -530,7 +530,7 @@ TEST(JsonArray, MultiplyArray)
     ASSERT_EQ(h2t_mut<JsonArrayCompact>(json_array)->length(), 3);
     for (size_t i = 0; i < h2t_mut<JsonArrayCompact>(json_array)->length(); ++i)
     {
-        auto element = h2t_mut<JsonArrayCompact>(json_array)->at(i);
+        auto element = h2t_mut<JsonArrayCompact>(json_array)->at(static_cast<uint32_t>(i));
         ASSERT_TRUE(element);
         ASSERT_EQ(element.value().get_type(), HakkaJsonType::HAKKA_JSON_INT);
         ASSERT_EQ(h2t<JsonIntCompact>(element.value())->get().value(), PrimitiveType(42));

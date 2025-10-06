@@ -431,7 +431,7 @@ TEST(JsonString, Iterator)
         std::string str;
         for (; iter != end; ++iter)
         {
-            str.push_back(*iter);
+            str.push_back(static_cast<char>(*iter));
         }
 
         ASSERT_EQ(str, "Hello, World!");
@@ -449,7 +449,7 @@ TEST(JsonString, Iterator)
         std::wstring str;
         for (; iter != end; ++iter)
         {
-            str.push_back(*iter);
+            str.push_back(static_cast<wchar_t>(*iter));
         }
 
         // TODO: Fix 👨‍👩‍👧‍👦 support if code point is >16 bits
@@ -486,7 +486,7 @@ TEST(JsonString, ChineseCharacters)
         std::wstring str;
         for (; iter != end; ++iter)
         {
-            str.push_back(*iter);
+            str.push_back(static_cast<wchar_t>(*iter));
         }
 
         ASSERT_EQ(str, L"何𢪻諺一票, 何𢪻諺一票");
