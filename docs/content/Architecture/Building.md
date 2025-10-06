@@ -35,7 +35,7 @@ Options:        shared=[True, False], fPIC=[True, False]
 **Dependency Graph**:
 ```
 hakka_json/1.0.0
-├── nlohmann_json/3.11.3 (PUBLIC, header-only)
+├── nlohmann_json/3.12.0 (PUBLIC, header-only)
 ├── tl-expected/1.1.0 (PUBLIC, header-only)
 └── ICU (PRIVATE, statically bundled)
     ├── libicudata.a  (32MB Unicode data)
@@ -302,12 +302,12 @@ $<$<CONFIG:Release>:NDEBUG>
 
 #### **Header-Only Dependencies** (INTERFACE targets)
 
-**nlohmann_json** (>=3.11.3):
+**nlohmann_json** (>=3.12.0):
 ```cmake
 TARGET TYPE:       INTERFACE (header-only)
 ACQUISITION:       find_package() -> FetchContent
 REPOSITORY:        https://github.com/nlohmann/json.git
-TAG:               v3.11.3
+TAG:               v3.12.0
 LINK SCOPE:        PUBLIC (exposed in hakka_json_core API)
 USAGE:             #include <nlohmann/json.hpp>
 ```
@@ -476,7 +476,7 @@ run_perf_stat (Linux only):
    v
    FetchContent_Declare(nlohmann_json
      GIT_REPOSITORY https://github.com/nlohmann/json.git
-     GIT_TAG v3.11.3
+     GIT_TAG v3.12.0
    )
    FetchContent_MakeAvailable(nlohmann_json)
 ```

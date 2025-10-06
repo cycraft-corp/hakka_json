@@ -4,13 +4,13 @@ option(HAKKA_JSON_USE_SYSTEM_DEPS "Try system packages first" ON)
 
 # nlohmann_json
 if(HAKKA_JSON_USE_SYSTEM_DEPS)
-    find_package(nlohmann_json 3.11 QUIET)
+    find_package(nlohmann_json 3.12 QUIET)
 endif()
 if(NOT nlohmann_json_FOUND)
     FetchContent_Declare(
         nlohmann_json
         GIT_REPOSITORY https://github.com/nlohmann/json.git
-        GIT_TAG v3.11.3
+        GIT_TAG v3.12.0
     )
     FetchContent_MakeAvailable(nlohmann_json)
 endif()

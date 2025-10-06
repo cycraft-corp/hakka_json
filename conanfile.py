@@ -72,7 +72,7 @@ class HakkaJsonConan(ConanFile):
             )
 
     def requirements(self):
-        self.requires("nlohmann_json/3.11.3", transitive_headers=True)
+        self.requires("nlohmann_json/3.12.0", transitive_headers=True)
         self.requires("tl-expected/1.1.0", transitive_headers=True)
 
     def source(self):
