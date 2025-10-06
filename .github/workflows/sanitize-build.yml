@@ -1,0 +1,323 @@
+name: sanitize-build
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  # =============================================================================
+  # Linux GCC Builds with Sanitizers (using cplusplus-ci Docker images)
+  # =============================================================================
+  linux-gcc:
+    name: Linux GCC ${{ matrix.gcc-version }} (${{ matrix.build-type }}${{ matrix.sanitizer && ', ' || '' }}${{ matrix.sanitizer }})
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.gcc-version == 16 }}
+    container:
+      image: ghcr.io/mattkretz/cplusplus-ci/gcc${{ matrix.gcc-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        gcc-version: [11, 12, 13, 14, 15, 16]
+        build-type: [Debug, Release]
+        sanitizer: ['', 'address', 'undefined', 'thread', 'coverage']
+        exclude:
+          # Coverage only on GCC 15 Debug
+          - sanitizer: coverage
+            gcc-version: 11
+          - sanitizer: coverage
+            gcc-version: 12
+          - sanitizer: coverage
+            gcc-version: 13
+          - sanitizer: coverage
+            gcc-version: 14
+          - sanitizer: coverage
+            gcc-version: 16
+          - sanitizer: coverage
+            build-type: Release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Verify GCC Installation
+        run: |
+          gcc --version
+          g++ --version
+          echo "GCC version verification completed"
+
+      - name: Install Coverage Tools
+        if: matrix.sanitizer == 'coverage'
+        run: |
+          apt-get update
+          apt-get install -y lcov
+          lcov --version
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DHAKKA_JSON_BUILD_TESTS=ON \
+            ${{ matrix.sanitizer == 'address' && '-DHAKKA_JSON_ENABLE_SANITIZER_ADDRESS=ON' || '' }} \
+            ${{ matrix.sanitizer == 'undefined' && '-DHAKKA_JSON_ENABLE_SANITIZER_UNDEFINED=ON' || '' }} \
+            ${{ matrix.sanitizer == 'thread' && '-DHAKKA_JSON_ENABLE_SANITIZER_THREAD=ON' || '' }} \
+            ${{ matrix.sanitizer == 'coverage' && '-DHAKKA_JSON_ENABLE_COVERAGE=ON' || '' }}
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: |
+          cd build
+          ctest --output-on-failure --parallel --timeout 300
+        env:
+          # Sanitizer options
+          ASAN_OPTIONS: detect_leaks=1:abort_on_error=1:check_initialization_order=1:strict_init_order=1
+          UBSAN_OPTIONS: print_stacktrace=1:abort_on_error=1
+          TSAN_OPTIONS: abort_on_error=1
+
+      - name: Collect Coverage Data
+        if: matrix.sanitizer == 'coverage'
+        run: |
+          # Capture coverage info with branch coverage
+          lcov --directory build \
+               --capture \
+               --output-file coverage.info \
+               --rc lcov_branch_coverage=1
+
+          # Filter out system headers, dependencies, and test files
+          lcov --remove coverage.info \
+               '/usr/*' \
+               '*/build/_deps/*' \
+               '*/build/icu-install/*' \
+               '*/tests/*' \
+               --output-file coverage.info \
+               --rc lcov_branch_coverage=1
+
+          # Display coverage summary for verification
+          lcov --list coverage.info \
+               --rc lcov_branch_coverage=1
+
+      - name: Upload Coverage to Codecov
+        if: matrix.sanitizer == 'coverage'
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage.info
+          flags: unittests
+          name: gcc-15-debug
+          fail_ci_if_error: true
+          verbose: true
+
+  # =============================================================================
+  # Linux LLVM Clang Builds with Sanitizers (using cplusplus-ci Docker images)
+  # =============================================================================
+  linux-clang:
+    name: Linux Clang ${{ matrix.clang-version }} (${{ matrix.build-type }}${{ matrix.sanitizer && ', ' || '' }}${{ matrix.sanitizer }})
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.clang-version >= 20 }}
+    container:
+      image: ghcr.io/mattkretz/cplusplus-ci/clang${{ matrix.clang-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        clang-version: [15, 16, 17, 18, 19, 20, 21, 22]
+        build-type: [Debug, Release]
+        sanitizer: ['', 'address', 'undefined', 'memory', 'thread']
+        exclude: []
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Verify Clang Installation
+        run: |
+          clang++ --version
+          echo "Clang version verification completed"
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DHAKKA_JSON_BUILD_TESTS=ON \
+            ${{ matrix.sanitizer == 'address' && '-DHAKKA_JSON_ENABLE_SANITIZER_ADDRESS=ON' || '' }} \
+            ${{ matrix.sanitizer == 'undefined' && '-DHAKKA_JSON_ENABLE_SANITIZER_UNDEFINED=ON' || '' }} \
+            ${{ matrix.sanitizer == 'memory' && '-DHAKKA_JSON_ENABLE_SANITIZER_MEMORY=ON' || '' }} \
+            ${{ matrix.sanitizer == 'thread' && '-DHAKKA_JSON_ENABLE_SANITIZER_THREAD=ON' || '' }}
+
+      - name: Build
+        run: cmake --build build --parallel
+        env:
+          # Sanitizer options during build (detect_leaks=0 for Clang to avoid false positives)
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1:check_initialization_order=1:strict_init_order=1
+          UBSAN_OPTIONS: print_stacktrace=1:abort_on_error=1
+          MSAN_OPTIONS: abort_on_error=1:print_stats=1
+          TSAN_OPTIONS: abort_on_error=1
+
+      - name: Test
+        run: |
+          cd build
+          ctest --output-on-failure --parallel --timeout 300
+        env:
+          # Sanitizer options (detect_leaks=0 for Clang to avoid false positives)
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1:check_initialization_order=1:strict_init_order=1
+          UBSAN_OPTIONS: print_stacktrace=1:abort_on_error=1
+          MSAN_OPTIONS: abort_on_error=1:print_stats=1
+          TSAN_OPTIONS: abort_on_error=1
+
+  # =============================================================================
+  # macOS Apple Clang Builds
+  # =============================================================================
+  macos-apple-clang:
+    name: macOS Apple Clang ${{ matrix.xcode-version }} (${{ matrix.build-type }}${{ matrix.sanitizer && ', ' || '' }}${{ matrix.sanitizer }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          
+          # macOS 13 (Ventura) with Xcode 15.2
+          - os: macos-13
+            xcode-version: "15.2"
+            build-type: Debug
+            sanitizer: ""
+          - os: macos-13
+            xcode-version: "15.2"
+            build-type: Release
+            sanitizer: ""
+          - os: macos-13
+            xcode-version: "15.2"
+            build-type: Debug
+            sanitizer: "address"
+          - os: macos-13
+            xcode-version: "15.2"
+            build-type: Debug
+            sanitizer: "undefined"
+          
+          # macOS 14 (Sonoma) with Xcode 15.4
+          - os: macos-14
+            xcode-version: "15.4"
+            build-type: Debug
+            sanitizer: ""
+          - os: macos-14
+            xcode-version: "15.4"
+            build-type: Release
+            sanitizer: ""
+          - os: macos-14
+            xcode-version: "15.4"
+            build-type: Debug
+            sanitizer: "address"
+          - os: macos-14
+            xcode-version: "15.4"
+            build-type: Debug
+            sanitizer: "undefined"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ matrix.xcode-version }}
+
+      - name: Install dependencies
+        run: |
+          # Install ninja and fmt via Homebrew (cmake is pre-installed on GitHub Actions macOS runners)
+          # Check and install only if not already present to reduce CI noise
+          if ! brew list ninja &>/dev/null; then
+            echo "Installing ninja..."
+            brew install ninja
+          else
+            echo "ninja is already installed: $(ninja --version)"
+          fi
+          
+          if ! brew list fmt &>/dev/null; then
+            echo "Installing fmt..."
+            brew install fmt
+          else
+            echo "fmt is already installed"
+          fi
+          
+          # Verify cmake and ninja are available
+          echo "cmake version: $(cmake --version)"
+          echo "ninja version: $(ninja --version)"
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DHAKKA_JSON_BUILD_TESTS=ON \
+            ${{ matrix.sanitizer == 'address' && '-DHAKKA_JSON_ENABLE_SANITIZER_ADDRESS=ON' || '' }} \
+            ${{ matrix.sanitizer == 'undefined' && '-DHAKKA_JSON_ENABLE_SANITIZER_UNDEFINED=ON' || '' }}
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: |
+          cd build
+          ctest --output-on-failure --parallel --timeout 300
+        env:
+          # Sanitizer options for Apple Clang (leak detection disabled on macOS)
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1:check_initialization_order=1:strict_init_order=1
+          UBSAN_OPTIONS: print_stacktrace=1:abort_on_error=1
+
+  # =============================================================================
+  # Windows MSVC Builds
+  # =============================================================================
+  windows-msvc:
+    name: Windows MSVC ${{ matrix.vs-version }} (${{ matrix.build-type }}${{ matrix.sanitizer && ', ASAN' || '' }}${{ matrix.static_runtime && ', Static RT' || '' }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Visual Studio 2022
+          - os: windows-2022
+            vs-version: 2022
+            build-type: Debug
+            sanitizer: false
+          - os: windows-2022
+            vs-version: 2022
+            build-type: Release
+            sanitizer: false
+          - os: windows-2022
+            vs-version: 2022
+            build-type: Debug
+            sanitizer: true
+          # Test with static runtime library
+          - os: windows-2022
+            vs-version: 2022
+            build-type: Debug
+            sanitizer: false
+            static_runtime: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -G "Visual Studio ${{ matrix.vs-version == '2022' && '17 2022' }}" -A x64 `
+            -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} `
+            -DHAKKA_JSON_BUILD_TESTS=ON `
+            ${{ matrix.sanitizer && '-DHAKKA_JSON_ENABLE_SANITIZER_ADDRESS=ON' || '' }} `
+            ${{ matrix.static_runtime && '-DHAKKA_JSON_MSVC_STATIC_RUNTIME=ON' || '' }}
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build-type }} --parallel
+
+      - name: Test
+        run: |
+          cd build
+          ctest -C ${{ matrix.build-type }} --output-on-failure --parallel --timeout 300

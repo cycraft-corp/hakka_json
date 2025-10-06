@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "docs"
+version = "0.1.0"
+description = ""
+authors = ["scc <oscar.yang@cycraft.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+mkdocs = "^1.6.1"
+mkdocs-material = "^9.5.49"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

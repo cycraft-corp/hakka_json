@@ -1,0 +1,17 @@
+Hakka JSON
+Copyright (c) 2025, scc@cycraft
+
+This software is dual-licensed under the Boost Software License 1.0 and the BSD 3-Clause License.
+
+You may choose to use this software under either license.
+
+The full text of each license can be found in:
+- LICENSE-BOOST: Boost Software License 1.0
+- LICENSE-BSD: BSD 3-Clause License
+
+When using or redistributing this software, you must include the chosen license
+and comply with its terms and conditions.
+
+================================================================================
+SPDX-License-Identifier: BSL-1.0 OR BSD-3-Clause
+================================================================================

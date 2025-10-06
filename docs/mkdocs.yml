@@ -1,0 +1,74 @@
+site_name: Hakka JSON
+docs_dir: content
+
+theme:
+  name: material
+  logo: Home/images/hakka.png        # path is relative to docs_dir
+  features:
+    - navigation.path
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.indexes
+    - content.code.copy
+    - content.tabs.link
+    - content.tooltips
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.tabbed:
+      alternate_style: true   # optional: Material’s nicer tab look
+
+
+extra_javascript:
+  # Mermaid (for ```mermaid fences)
+  - https://unpkg.com/mermaid@10/dist/mermaid.min.js
+  - js/init-mermaid.js
+
+  # MathJax (for $$...$$ and \( ... \))
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+  - Home:
+      - Home/index.md
+      - Build: Home/build.md
+  - API:
+      - C++:
+          - Data Types Overview: API/C++/DataTypesOverview.md
+          - Primitive: API/C++/Primitive.md
+          - Structured: API/C++/Structured.md
+          - Int: API/C++/Int.md
+          - Float: API/C++/Float.md
+          - String: API/C++/String.md
+          - Bool: API/C++/Bool.md
+          - Null: API/C++/Null.md
+          - Array: API/C++/Array.md
+          - Object: API/C++/Object.md
+          - Invalid: API/C++/Invalid.md
+          - Handle: API/C++/Handle.md
+      - C API:
+          - Common: API/CAPI/common.md
+          - Primitive: API/CAPI/primitive.md
+          - Array: API/CAPI/array.md
+          - Object: API/CAPI/object.md
+      - WASM: API/WASM/index.md
+  - Architecture:
+      - Building: Architecture/Building.md
+      - Handle: Architecture/Handle.md
+      - Types: Architecture/Types.md
+      - Tests: Architecture/Tests.md

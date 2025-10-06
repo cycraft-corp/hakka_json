@@ -1,0 +1,302 @@
+name: release-build
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  validate-version:
+    name: Validate Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.cmake_version.outputs.version }}
+      tag: ${{ github.ref_name }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Extract Version from CMakeLists.txt
+        id: cmake_version
+        run: |
+          VERSION=$(grep -oP 'VERSION\s+\K\d+\.\d+\.\d+' CMakeLists.txt)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "CMakeLists.txt version: $VERSION"
+
+      - name: Extract Version from Tag
+        id: tag_version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$TAG_VERSION" >> $GITHUB_OUTPUT
+          echo "Git tag version: $TAG_VERSION"
+
+      - name: Validate Version Match
+        run: |
+          if [ "${{ steps.cmake_version.outputs.version }}" != "${{ steps.tag_version.outputs.version }}" ]; then
+            echo "Version mismatch detected!"
+            echo "  CMakeLists.txt: ${{ steps.cmake_version.outputs.version }}"
+            echo "  Git tag: v${{ steps.tag_version.outputs.version }}"
+            echo ""
+            echo "Please update CMakeLists.txt VERSION before tagging."
+            exit 1
+          fi
+          echo "Version validated: ${{ steps.cmake_version.outputs.version }}"
+
+      - name: Verify Conan Integration
+        run: |
+          python3 -c "
+          import re
+          with open('CMakeLists.txt') as f:
+              cmake_file = f.read()
+          version = re.search(r'VERSION\s+(\d+\.\d+\.\d+)', cmake_file).group(1)
+          print(f'Conan will use version: {version}')
+          "
+
+  build-and-test:
+    name: Build ${{ matrix.name }}
+    needs: validate-version
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux GCC 15
+            os: ubuntu-latest
+            compiler: gcc
+            version: 15
+            use-container: true
+
+          - name: macOS Apple Clang 15.4
+            os: macos-14
+            compiler: apple-clang
+            xcode: "15.4"
+            use-container: false
+
+          - name: Windows MSVC 2022
+            os: windows-2022
+            compiler: msvc
+            version: 2022
+            use-container: false
+
+    container: ${{ matrix.use-container && 'ghcr.io/mattkretz/cplusplus-ci/gcc15' || null }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Xcode (macOS only)
+        if: matrix.os == 'macos-14'
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ matrix.xcode }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Conan
+        run: pip install conan
+
+      - name: Conan Profile Detect
+        run: conan profile detect --force
+
+      - name: Create Conan Package
+        run: conan create . --build=missing -s compiler.cppstd=23
+
+      - name: Upload Package Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: conan-package-${{ matrix.os }}-${{ matrix.compiler }}
+          path: |
+            ~/.conan2/p/hakka*/*/p/
+          if-no-files-found: warn
+
+  create-github-release:
+    name: Create GitHub Release
+    needs: [validate-version, build-and-test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Generate Changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v4
+        with:
+          configuration: |
+            {
+              "categories": [
+                {"title": "Features", "labels": ["feature"]},
+                {"title": "Fixes", "labels": ["fix", "bug"]},
+                {"title": "Documentation", "labels": ["docs"]},
+                {"title": "Maintenance", "labels": ["chore"]}
+              ]
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          name: Release ${{ needs.validate-version.outputs.version }}
+          body: |
+            ## What's Changed
+            ${{ steps.changelog.outputs.changelog }}
+
+            ## Installation
+            ```bash
+            # Via Conan (after Conan Center approval)
+            conan install hakka_json/${{ needs.validate-version.outputs.version }}
+            ```
+
+            ## Artifacts
+            - Multi-platform Conan packages (Linux, macOS, Windows)
+            - [Coverage Report](https://codecov.io/gh/${{ github.repository }})
+
+            ## Conan Center
+            - Pull Request: (will be added after creation)
+          artifacts: "artifacts/**/*"
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-to-conan-center:
+    name: Publish to Conan Center
+    needs: [validate-version, build-and-test]
+    runs-on: ubuntu-latest
+    environment: release
+
+    steps:
+      - name: Checkout Source Repository
+        uses: actions/checkout@v5
+        with:
+          path: source
+
+      - name: Checkout Conan Center Index
+        uses: actions/checkout@v5
+        with:
+          repository: conan-io/conan-center-index
+          path: cci
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Recipe Directory
+        run: |
+          mkdir -p cci/recipes/hakka_json/all
+          cp source/conanfile.py cci/recipes/hakka_json/all/
+          cp -r source/test_package cci/recipes/hakka_json/all/
+
+      - name: Generate conandata.yml
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          TARBALL_URL="https://github.com/${{ github.repository }}/archive/v${VERSION}.tar.gz"
+
+          curl -L "$TARBALL_URL" -o source.tar.gz
+          SHA256=$(sha256sum source.tar.gz 2>/dev/null || shasum -a 256 source.tar.gz | awk '{print $1}')
+
+          cat > cci/recipes/hakka_json/all/conandata.yml <<EOF
+          sources:
+            "${VERSION}":
+              url: "${TARBALL_URL}"
+              sha256: "${SHA256}"
+          EOF
+
+          echo "Generated conandata.yml with SHA256: ${SHA256}"
+
+      - name: Update config.yml
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+
+          cat > cci/recipes/hakka_json/config.yml <<EOF
+          versions:
+            "${VERSION}":
+              folder: all
+          EOF
+
+          echo "Updated config.yml for version ${VERSION}"
+
+      - name: Install CCI Validation Hooks
+        run: |
+          cd cci
+          pip install -r .c3i/requirements.txt
+
+      - name: Run Recipe Validation
+        run: |
+          cd cci
+          python3 .c3i/run_validation.py recipes/hakka_json
+
+      # NOTE: The following step requires manual setup:
+      # 1. Fork conan-io/conan-center-index to your GitHub account
+      # 2. Update line 190 to checkout YOUR fork instead
+      # 3. Set up GitHub CLI (gh) authentication or use a PAT with push permissions
+      # 4. For first-time submission, this entire job should be done manually
+      #
+      # This automated approach only works for subsequent version updates
+      # after the initial recipe is approved in Conan Center Index.
+
+      - name: Create Pull Request to Conan Center
+        if: false  # Disabled - requires fork setup and manual configuration
+        uses: peter-evans/create-pull-request@v6
+        with:
+          path: cci
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: hakka_json/v${{ needs.validate-version.outputs.version }}
+          title: "(hakka_json) add version ${{ needs.validate-version.outputs.version }}"
+          body: |
+            ## Description
+            Add hakka_json version ${{ needs.validate-version.outputs.version }}
+
+            ## Checklist
+            - [x] Tarball URL and SHA256 verified
+            - [x] Recipe validation hooks passed
+            - [x] test_package builds successfully
+            - [x] Multi-platform builds tested (Linux, macOS, Windows)
+
+            ## Related
+            - Release: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.validate-version.outputs.version }}
+            - Package builds: See CI artifacts in release workflow
+
+            ---
+            This PR was automatically generated by the release workflow.
+          commit-message: "hakka_json: add version ${{ needs.validate-version.outputs.version }}"
+          delete-branch: true
+
+      - name: Manual Instructions
+        run: |
+          echo "=========================================="
+          echo "Conan Center Index Submission"
+          echo "=========================================="
+          echo ""
+          echo "The recipe has been validated and is ready for submission."
+          echo ""
+          echo "To submit to Conan Center Index:"
+          echo "1. Fork https://github.com/conan-io/conan-center-index"
+          echo "2. Clone your fork locally"
+          echo "3. Copy the generated files:"
+          echo "   - cci/recipes/hakka_json/all/conandata.yml"
+          echo "   - cci/recipes/hakka_json/all/conanfile.py"
+          echo "   - cci/recipes/hakka_json/all/test_package/"
+          echo "   - cci/recipes/hakka_json/config.yml"
+          echo "4. Commit and push to your fork"
+          echo "5. Create PR to conan-io/conan-center-index"
+          echo ""
+          echo "Recipe location in this workflow:"
+          echo "  cci/recipes/hakka_json/"
+          echo ""
+          echo "=========================================="
