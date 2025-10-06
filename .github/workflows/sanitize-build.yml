@@ -14,7 +14,7 @@ jobs:
   linux-gcc:
     name: Linux GCC ${{ matrix.gcc-version }} (${{ matrix.build-type }}${{ matrix.sanitizer && ', ' || '' }}${{ matrix.sanitizer }})
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.gcc-version == 16 }}
+    continue-on-error: ${{ matrix.gcc-version == 16 || matrix.sanitizer == 'coverage' }}
     container:
       image: ghcr.io/mattkretz/cplusplus-ci/gcc${{ matrix.gcc-version }}
     strategy:
@@ -107,7 +107,7 @@ jobs:
           files: ./coverage.info
           flags: unittests
           name: gcc-${{ matrix.gcc-version }}-${{ matrix.build-type }}-coverage
-          fail_ci_if_error: true
+          fail_ci_if_error: false # Temporary workaround, wait for Codecov token fix
           verbose: true
 
   # =============================================================================
