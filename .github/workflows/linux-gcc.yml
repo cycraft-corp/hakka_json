@@ -109,7 +109,8 @@ jobs:
                --capture \
                --output-file coverage.info \
                --gcov-tool gcov \
-               --rc lcov_branch_coverage=1
+               --rc branch_coverage=1 \
+               --ignore-errors mismatch,inconsistent
 
           lcov --remove coverage.info \
                '/usr/*' \
@@ -117,9 +118,10 @@ jobs:
                '*/build/icu-install/*' \
                '*/tests/*' \
                --output-file coverage.info \
-               --rc lcov_branch_coverage=1
+               --rc branch_coverage=1 \
+               --ignore-errors mismatch,inconsistent
 
-          lcov --list coverage.info --rc lcov_branch_coverage=1
+          lcov --list coverage.info --rc branch_coverage=1
 
       - name: Upload Coverage to Codecov
         if: matrix.sanitizer == 'coverage'
