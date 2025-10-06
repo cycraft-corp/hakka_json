@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 #include "hakka_json_primitive.h"
+#include "../test_helpers.hpp"
 #include <cstring>
 
 // Helper function to create a string handle
@@ -646,7 +647,7 @@ TEST_F(HakkaJsonPrimitiveTest, StringIterator)
         do
         {
             ASSERT_EQ(GetHakkaStringDeref(iter, &utf32), HAKKA_JSON_SUCCESS);
-            result.push_back(static_cast<wchar_t>(utf32));
+            hakka_test::append_utf32_to_wstring(result, utf32);
         } while (MoveHakkaStringNext(iter) == HAKKA_JSON_SUCCESS);
         HakkaStringIterRelease(&iter);
 
@@ -673,7 +674,7 @@ TEST_F(HakkaJsonPrimitiveTest, StringIterator)
         do
         {
             ASSERT_EQ(GetHakkaStringDeref(iter, &utf32), HAKKA_JSON_SUCCESS);
-            result.push_back(static_cast<wchar_t>(utf32));
+            hakka_test::append_utf32_to_wstring(result, utf32);
         } while (MoveHakkaStringNext(iter) == HAKKA_JSON_SUCCESS);
         HakkaStringIterRelease(&iter);
 
