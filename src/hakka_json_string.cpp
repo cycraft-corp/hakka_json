@@ -261,7 +261,7 @@ namespace
             {
                 auto find_next = [separator](std::string_view source, std::size_t pos) -> FindNextResult
                 {
-                    if (Direction == SplitOrient::LEFT)
+                    if constexpr (Direction == SplitOrient::LEFT)
                     {
                         std::size_t next = source.find(separator, pos);
                         if (next != std::string_view::npos)
