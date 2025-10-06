@@ -17,7 +17,12 @@ target_compile_options(hakka_json_compiler_options INTERFACE
 
 # MSVC specific defines
 target_compile_definitions(hakka_json_compiler_options INTERFACE
-    $<$<CXX_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS _CTYPE_DISABLE_MACROS>
+    $<$<CXX_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS _CTYPE_DISABLE_MACROS NOMINMAX UNICODE _UNICODE>
+)
+
+# MSVC source file encoding
+target_compile_options(hakka_json_compiler_options INTERFACE
+    $<$<CXX_COMPILER_ID:MSVC>:/utf-8>
 )
 
 # Debug: sanitizers (GNU/Clang only, exclude AppleClang)

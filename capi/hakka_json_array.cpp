@@ -22,11 +22,14 @@ static const JsonArrayCompact *to_json_array_compact(HakkaHandle *handle)
     JsonHandleCompact *json_handle = to_json_handle_compact(handle);
     if (json_handle->get_type() != HakkaJsonType::HAKKA_JSON_ARRAY)
         return nullptr;
-    
-    try {
+
+    try
+    {
         auto view = json_handle->get_view();
-        return std::get<const JsonArrayCompact*>(view);
-    } catch (...) {
+        return std::get<const JsonArrayCompact *>(view);
+    }
+    catch (...)
+    {
         return nullptr;
     }
 }
@@ -36,11 +39,14 @@ static JsonArrayCompact *to_json_array_compact_mut(HakkaHandle *handle)
     JsonHandleCompact *json_handle = to_json_handle_compact(handle);
     if (json_handle->get_type() != HakkaJsonType::HAKKA_JSON_ARRAY)
         return nullptr;
-    
-    try {
+
+    try
+    {
         auto mut_ptr = json_handle->get_mut_ptr();
-        return std::get<JsonArrayCompact*>(mut_ptr);
-    } catch (...) {
+        return std::get<JsonArrayCompact *>(mut_ptr);
+    }
+    catch (...)
+    {
         return nullptr;
     }
 }
@@ -48,7 +54,8 @@ static JsonArrayCompact *to_json_array_compact_mut(HakkaHandle *handle)
 static HakkaHandle move_to_hakka_handle(JsonHandleCompact &&handle)
 {
     static_assert(sizeof(JsonHandleCompact) <= sizeof(HakkaHandle));
-    auto inc_ref = [](const auto *elem) { return elem->inc_ref_impl(); };
+    auto inc_ref = [](const auto *elem)
+    { return elem->inc_ref_impl(); };
     dispatch<decltype(inc_ref), uint64_t>(handle.get_view(), std::forward<decltype(inc_ref)>(inc_ref));
     return static_cast<HakkaHandle>(handle);
 }
@@ -57,10 +64,13 @@ static HakkaHandle move_to_hakka_handle(JsonHandleCompact &&handle)
 template <typename T>
 static const T *get_compact_ptr(const JsonHandleCompact &handle)
 {
-    try {
+    try
+    {
         auto view = handle.get_view();
-        return std::get<const T*>(view);
-    } catch (...) {
+        return std::get<const T *>(view);
+    }
+    catch (...)
+    {
         return nullptr;
     }
 }
@@ -161,7 +171,7 @@ extern_c HakkaJsonResultEnum GetHakkaArraySlice(HakkaHandle array, int64_t start
     if (json_array == nullptr)
         return HAKKA_JSON_TYPE_ERROR;
 
-    auto slice_result = json_array->get_slice(start, end, step);
+    auto slice_result = json_array->get_slice(static_cast<uint32_t>(start), static_cast<uint32_t>(end), static_cast<uint32_t>(step));
     if (!slice_result)
         return slice_result.error();
 
@@ -179,7 +189,7 @@ extern_c HakkaJsonResultEnum SetHakkaArraySlice(HakkaHandle dst, int64_t start, 
     if (json_array_dst == nullptr)
         return HAKKA_JSON_TYPE_ERROR;
 
-    return json_array_dst->set_slice(start, end, step, *to_json_handle_compact(&src));
+    return json_array_dst->set_slice(static_cast<uint32_t>(start), static_cast<uint32_t>(end), static_cast<uint32_t>(step), *to_json_handle_compact(&src));
 }
 
 extern_c HakkaJsonResultEnum RemoveHakkaArrayIndex(HakkaHandle array, uint32_t index)
@@ -224,7 +234,7 @@ extern_c HakkaJsonResultEnum MultiplyHakkaArray(HakkaHandle array, int64_t times
     if (json_array == nullptr)
         return HAKKA_JSON_TYPE_ERROR;
 
-    return json_array->multiply(times);
+    return json_array->multiply(static_cast<uint32_t>(times));
 }
 
 extern_c HakkaJsonResultEnum GetHakkaArraySize(HakkaHandle array, uint32_t *size)
@@ -488,8 +498,9 @@ extern_c HakkaJsonResultEnum MoveHakkaArrayIterPrev(HakkaArrayIter iter)
 extern_c HakkaJsonResultEnum GetHakkaArrayIterDeref(HakkaArrayIter iter, HakkaHandle *value)
 {
     CHECK_INVALID_ARGUMENT(iter == 0 || value == nullptr);
-    auto inc_ref = [](const auto *elem) { return elem->inc_ref_impl(); };
-    
+    auto inc_ref = [](const auto *elem)
+    { return elem->inc_ref_impl(); };
+
     HakkaArrayMoveIterCompact *move_iter = reinterpret_cast<HakkaArrayMoveIterCompact *>(iter);
     if (move_iter->is_end())
         return HAKKA_JSON_ITERATOR_END;

@@ -483,7 +483,7 @@ extern_c HakkaJsonResultEnum CreateHakkaObjectFromKeys(HakkaHandle string_array_
     std::vector<KeyType> keys;
     for (size_t i = 0; i < string_array->length(); ++i)
     {
-        auto key_handle = string_array->at(i);
+        auto key_handle = string_array->at(static_cast<uint32_t>(i));
         if (!key_handle || key_handle.value().get_type() != HakkaJsonType::HAKKA_JSON_STRING)
             return HAKKA_JSON_TYPE_ERROR;
 
