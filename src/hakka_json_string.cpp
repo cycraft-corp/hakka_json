@@ -1,4 +1,11 @@
+#ifndef _WIN32
+// Workaround that the not found the U_DISABLE_RENAMING macro in icu headers on Windows
+// we know the ICU library is NOT recommended to DISABLE_RENAMING, except for static linking
+// But, we want to produce both static and dynamic linking version of this Hakka Json library
+// So, we just disable the renaming by default except for Windows.
 #define U_DISABLE_RENAMING 1
+#endif
+
 #include <hakka_json_string.hpp>
 #include <hakka_json_array.hpp>
 #include <handles/string_manager.hpp>
@@ -110,7 +117,7 @@ namespace
 
         using TransformFunc = std::function<HakkaJsonResultEnum(const std::string &, std::string &)>;
         tl::expected<JsonHandleCompact, HakkaJsonResultEnum> transform_string_compact(const std::string &from,
-                                                                                       TransformFunc &&func)
+                                                                                      TransformFunc &&func)
         {
             std::string result;
             auto res = func(from, result);
@@ -501,7 +508,8 @@ JsonStringCompact::JsonStringCompact(const ValueType &value) : JsonPrimitiveComp
 }
 
 // string_view version of constructor
-JsonStringCompact::JsonStringCompact(std::string_view value) : JsonPrimitiveCompact([](std::string_view value) -> ValueType {
+JsonStringCompact::JsonStringCompact(std::string_view value) : JsonPrimitiveCompact([](std::string_view value) -> ValueType
+                                                                                    {
     if (value.size() == 0)
         return scc::PicoString1(""); // special case for empty string
 
@@ -523,8 +531,7 @@ JsonStringCompact::JsonStringCompact(std::string_view value) : JsonPrimitiveComp
         return scc::PicoString32(temp_str.c_str());
     else if (value.size() <= 64)
         return scc::PicoString64(temp_str.c_str());
-    return scc::PicoStringUnlimited(value);
-}(value))
+    return scc::PicoStringUnlimited(value); }(value))
 {
 }
 
@@ -561,20 +568,25 @@ uint64_t JsonStringCompact::dec_ref_impl() const
 
 tl::expected<std::string, HakkaJsonResultEnum> JsonStringCompact::dump_impl([[maybe_unused]] uint32_t /*max_depth*/) const
 {
-    try {
+    try
+    {
         return detail::escape_json_string(value_.to_string_view());
-    } catch (...) {
+    }
+    catch (...)
+    {
         return tl::make_unexpected(HAKKA_JSON_INTERNAL_ERROR);
     }
 }
 
 HakkaJsonResultEnum JsonStringCompact::to_bytes_impl(char *buffer, uint32_t *buffer_size) const
 {
-    try {
+    try
+    {
         std::string serialized = dump(1).value();
         uint32_t required_size = static_cast<uint32_t>(serialized.size()) + 1; // +1 for null terminator
 
-        if (*buffer_size < required_size) {
+        if (*buffer_size < required_size)
+        {
             *buffer_size = required_size;
             return HAKKA_JSON_NOT_ENOUGH_MEMORY;
         }
@@ -583,7 +595,9 @@ HakkaJsonResultEnum JsonStringCompact::to_bytes_impl(char *buffer, uint32_t *buf
         buffer[serialized.size()] = '\0';
         *buffer_size = static_cast<uint32_t>(serialized.size());
         return HAKKA_JSON_SUCCESS;
-    } catch (...) {
+    }
+    catch (...)
+    {
         return HAKKA_JSON_INTERNAL_ERROR;
     }
 }
@@ -595,26 +609,33 @@ HakkaJsonType JsonStringCompact::type_impl() const
 
 tl::expected<int, HakkaJsonResultEnum> JsonStringCompact::compare_impl(const JsonHandleCompact &other) const
 {
-    if (other.get_type() != HakkaJsonType::HAKKA_JSON_STRING) {
+    if (other.get_type() != HakkaJsonType::HAKKA_JSON_STRING)
+    {
         return tl::make_unexpected(HAKKA_JSON_TYPE_ERROR);
     }
 
-    try {
+    try
+    {
         // Get the other string's view through UniformCompactPointerView
         auto other_view = other.get_view();
         // Extract JsonStringCompact* from the variant
-        const auto *other_str = std::get<const JsonStringCompact*>(other_view);
-        if (!other_str) {
+        const auto *other_str = std::get<const JsonStringCompact *>(other_view);
+        if (!other_str)
+        {
             return tl::make_unexpected(HAKKA_JSON_INTERNAL_ERROR);
         }
 
         const auto &my_value = value_.to_string_view();
         const auto &other_value = other_str->value_.to_string_view();
 
-        if (my_value < other_value) return -1;
-        if (my_value > other_value) return 1;
+        if (my_value < other_value)
+            return -1;
+        if (my_value > other_value)
+            return 1;
         return 0;
-    } catch (...) {
+    }
+    catch (...)
+    {
         return tl::make_unexpected(HAKKA_JSON_INTERNAL_ERROR);
     }
 }
@@ -886,7 +907,7 @@ tl::expected<JsonHandleCompact, HakkaJsonResultEnum> JsonStringCompact::rsplit(s
 {
     // TODO: implement the JsonArrayCompact
     auto arr_handle = JsonArrayCompact::create();
-    auto arr_ptr = std::get<JsonArrayCompact*>(arr_handle.get_mut_ptr());
+    auto arr_ptr = std::get<JsonArrayCompact *>(arr_handle.get_mut_ptr());
     if (!arr_ptr)
         return tl::make_unexpected(HAKKA_JSON_INTERNAL_ERROR);
 
@@ -911,7 +932,7 @@ tl::expected<JsonHandleCompact, HakkaJsonResultEnum> JsonStringCompact::split(st
 {
     // TODO: implement the JsonArrayCompact
     auto arr_handle = JsonArrayCompact::create();
-    auto arr_ptr = std::get<JsonArrayCompact*>(arr_handle.get_mut_ptr());
+    auto arr_ptr = std::get<JsonArrayCompact *>(arr_handle.get_mut_ptr());
     if (!arr_ptr)
         return tl::make_unexpected(HAKKA_JSON_INTERNAL_ERROR);
 
@@ -931,7 +952,7 @@ tl::expected<JsonHandleCompact, HakkaJsonResultEnum> JsonStringCompact::splitlin
 {
     // TODO: implement the JsonArrayCompact
     auto arr_handle = JsonArrayCompact::create();
-    auto arr_ptr = std::get<JsonArrayCompact*>(arr_handle.get_mut_ptr());
+    auto arr_ptr = std::get<JsonArrayCompact *>(arr_handle.get_mut_ptr());
     if (!arr_ptr)
         return tl::make_unexpected(HAKKA_JSON_INTERNAL_ERROR);
 
@@ -1362,5 +1383,3 @@ JsonStringCompactIter JsonStringCompact::end() const
 {
     return JsonStringCompactIter(value_.to_string_view(), true);
 }
-
-

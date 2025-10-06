@@ -76,6 +76,13 @@ function(build_icu_windows)
         set(ICU_MSBUILD_PATH "MSBuild.exe")
     endif()
 
+    # Determine build configuration
+    if(CMAKE_BUILD_TYPE MATCHES "Debug")
+        set(ICU_CONFIG "Debug")
+    else()
+        set(ICU_CONFIG "Release")
+    endif()
+
     # Map ICU_ARCH to MSBuild platform
     if(ICU_ARCH STREQUAL "x86")
         set(MSBUILD_PLATFORM "Win32")
@@ -97,16 +104,17 @@ function(build_icu_windows)
         BINARY_DIR ${ICU_BUILD_DIR}
         INSTALL_DIR ${ICU_INSTALL_DIR}
         CONFIGURE_COMMAND ""
-        BUILD_COMMAND 
-            ${ICU_MSBUILD_PATH} ${ICU_SRC_DIR}/source/allinone/allinone.sln 
-            /p:Configuration=Release /p:Platform=${MSBUILD_PLATFORM} /p:SkipUWP=true
-        INSTALL_COMMAND 
-            ${CMAKE_COMMAND} -E copy_directory 
-            ${WINDOWS_SRC_BIN_DIR} ${ICU_INSTALL_DIR}/bin
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${WINDOWS_SRC_LIB_DIR} ${ICU_INSTALL_DIR}/lib
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${ICU_SRC_DIR}/include ${ICU_INSTALL_DIR}/include
+        BUILD_COMMAND
+            ${ICU_MSBUILD_PATH} ${ICU_SRC_DIR}/source/allinone/allinone.sln
+            /p:Configuration=${ICU_CONFIG} /p:Platform=${MSBUILD_PLATFORM} /p:SkipUWP=true
+            /p:RuntimeLibrary=MultiThreaded$<$<CONFIG:Debug>:Debug>
+        INSTALL_COMMAND
+            ${CMAKE_COMMAND} -E copy_directory ${WINDOWS_SRC_BIN_DIR} ${ICU_INSTALL_DIR}/bin
+            COMMAND ${CMAKE_COMMAND} -E copy_directory ${WINDOWS_SRC_LIB_DIR} ${ICU_INSTALL_DIR}/lib
+            COMMAND ${CMAKE_COMMAND} -E copy_directory ${ICU_SRC_DIR}/include ${ICU_INSTALL_DIR}/include
+            COMMAND ${CMAKE_COMMAND} -E echo "Renaming ICU DLLs to remove version suffix..."
+            COMMAND cmd /c "for %f in (\"${ICU_INSTALL_DIR}/bin/icu*[0-9].dll\") do @copy /y \"%f\" \"%~dpnf.dll\" >nul 2>&1 || echo Skipped %~nxf"
+            COMMAND cmd /c "for %f in (\"${ICU_INSTALL_DIR}/bin/icu*[0-9]d.dll\") do @set \"name=%~nf\" && set \"name=!name:~0,-1!\" && copy /y \"%f\" \"%~dpf!name!d.dll\" >nul 2>&1 || echo Skipped %~nxf"
         LOG_DOWNLOAD ON
         LOG_BUILD ON
         LOG_INSTALL ON
@@ -146,6 +154,7 @@ endif()
 # Export variables for dependent projects
 set(ICU_INCLUDE_DIR ${ICU_INCLUDE_DIR} PARENT_SCOPE)
 set(ICU_LIB_DIR ${ICU_LIB_DIR} PARENT_SCOPE)
+set(ICU_INSTALL_DIR ${ICU_INSTALL_DIR} PARENT_SCOPE)
 set(ICU_WINDOWS_LIBRARY_NAMES
     icutu
     icuin
@@ -168,14 +177,15 @@ endif()
 
 add_custom_target(icu_project_libs)
 if (WIN32)
-    # On Windows, libraries have .lib extension
+    # On Windows, libraries have .lib extension (import libraries for DLLs)
     foreach(lib ${ICU_WINDOWS_LIBRARY_NAMES})
-        set(LIB_STATIC_PATH "${ICU_LIB_DIR}/${lib}.lib")
-        list(APPEND ICU_LIBRARIES "${LIB_STATIC_PATH}")
+        set(LIB_IMPORT_PATH "${ICU_LIB_DIR}/${lib}.lib")
+        list(APPEND ICU_LIBRARIES "${LIB_IMPORT_PATH}")
         list(APPEND ICU_SHARED_LIBRARIES "${ICU_LIB_DIR}/${lib}.dll")
-        add_library(${lib} STATIC IMPORTED GLOBAL)
-        set_target_properties(${lib} PROPERTIES 
-            IMPORTED_LOCATION "${LIB_STATIC_PATH}"
+        add_library(${lib} SHARED IMPORTED GLOBAL)
+        set_target_properties(${lib} PROPERTIES
+            IMPORTED_LOCATION "${ICU_INSTALL_DIR}/bin/${lib}.dll"
+            IMPORTED_IMPLIB "${LIB_IMPORT_PATH}"
         )
         add_dependencies(${lib} icu_project)
         add_dependencies(icu_project_libs ${lib})

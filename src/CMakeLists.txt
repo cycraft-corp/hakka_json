@@ -45,7 +45,11 @@ target_include_directories(hakka_json_core PRIVATE ${ICU_INCLUDE_DIR})
 
 if(WIN32)
     target_link_libraries(hakka_json_core PRIVATE
-        icutu icuin icuio icuuc icudt
+        "${ICU_LIB_DIR}/icuin$<$<CONFIG:Debug>:d>.lib"
+        "${ICU_LIB_DIR}/icuuc$<$<CONFIG:Debug>:d>.lib"
+        "${ICU_LIB_DIR}/icudt.lib"
+        "${ICU_LIB_DIR}/icuio$<$<CONFIG:Debug>:d>.lib"
+        "${ICU_LIB_DIR}/icutu$<$<CONFIG:Debug>:d>.lib"
     )
 else()
     target_link_libraries(hakka_json_core PRIVATE
