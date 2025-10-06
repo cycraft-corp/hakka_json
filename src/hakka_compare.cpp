@@ -12,7 +12,7 @@ namespace version_2 {
     {
         auto a_int = std::get<const JsonIntCompact*>(a);
         auto b_int = std::get<const JsonIntCompact*>(b);
-        return std::get<JsonIntCompact::ValueType>(a_int->get().value()) - std::get<JsonIntCompact::ValueType>(b_int->get().value());
+        return static_cast<int>(std::get<JsonIntCompact::ValueType>(a_int->get().value()) - std::get<JsonIntCompact::ValueType>(b_int->get().value()));
     }
 
     static int ib(const UniformCompactPointerView &a, const UniformCompactPointerView &b, uint32_t)
@@ -105,7 +105,7 @@ namespace version_2 {
     static int nd(const UniformCompactPointerView &, const UniformCompactPointerView &b, uint32_t)
     {
         auto b_float = std::get<const JsonFloatCompact*>(b);
-        return std::get<JsonFloatCompact::ValueType>(b_float->get().value()) * -1;
+        return static_cast<int>(std::get<JsonFloatCompact::ValueType>(b_float->get().value()) * -1);
     }
 
     static int nn(const UniformCompactPointerView &, const UniformCompactPointerView &, uint32_t)

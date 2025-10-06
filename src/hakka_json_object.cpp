@@ -49,12 +49,12 @@ JsonObjectIterCompact JsonObjectIterCompact::operator--(int)
 
 JsonObjectIterCompact::pointer JsonObjectIterCompact::operator->() const
 {
-    auto key_string_handle = obj_->keys().at(pos_).value(); // it is string handle
+    auto key_string_handle = obj_->keys().at(static_cast<uint32_t>(pos_)).value(); // it is string handle
     auto key_string = std::get<const JsonStringCompact*>(key_string_handle.get_view())->get();
     if (!key_string)
         return nullptr;
 
-    auto value_handle = obj_->values().at(pos_).value(); // it is value handle
+    auto value_handle = obj_->values().at(static_cast<uint32_t>(pos_)).value(); // it is value handle
     if (!value_handle)
         return nullptr;
 
@@ -827,8 +827,8 @@ HakkaJsonResultEnum JsonObjectCompact::update(const JsonObjectCompact &other)
 
         for (size_t i = 0; i < num_keys; ++i)
         {
-            auto key_handle = other_keys_array->at_impl(i);
-            auto value_handle = other_values_array->at_impl(i);
+            auto key_handle = other_keys_array->at_impl(static_cast<uint32_t>(i));
+            auto value_handle = other_values_array->at_impl(static_cast<uint32_t>(i));
 
             if (!key_handle || !value_handle)
                 continue;
@@ -868,7 +868,7 @@ int64_t JsonObjectCompact::find(const std::string &key) const
 
         for (size_t i = 0; i < num_keys; ++i)
         {
-            auto key_handle = keys_array->at_impl(i);
+            auto key_handle = keys_array->at_impl(static_cast<uint32_t>(i));
             if (!key_handle || key_handle.value().get_type() != HakkaJsonType::HAKKA_JSON_STRING)
                 continue;
 

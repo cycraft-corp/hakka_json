@@ -46,7 +46,7 @@ namespace
             static constexpr auto int_mask = 0x20000000;
             uint32_t get_index(HandleManagerToken token) const
             {
-                return token & ~ScalarManagerCompact::scalar_mask;
+                return static_cast<uint32_t>(token & ~ScalarManagerCompact::scalar_mask);
             }
         };
 
@@ -69,7 +69,7 @@ namespace
             static constexpr auto float_mask = 0x00000000;
             uint32_t get_index(HandleManagerToken token) const
             {
-                return token & ~ScalarManagerCompact::scalar_mask;
+                return static_cast<uint32_t>(token & ~ScalarManagerCompact::scalar_mask);
             }
         };
     }

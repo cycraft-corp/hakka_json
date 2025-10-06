@@ -13,7 +13,7 @@ namespace {
 
 uint32_t ObjectManagerCompact::get_index(HandleManagerToken token) const
 {
-    return token & ~JsonHandleManagerCompact::type_mask;
+    return static_cast<uint32_t>(token & ~JsonHandleManagerCompact::type_mask);
 }
 
 ObjectManagerCompact &ObjectManagerCompact::get_instance()
@@ -104,7 +104,7 @@ HandleManagerToken ObjectManagerCompact::create()
         freelist_.pop_back();
         handles_[index].emplace(JsonObjectCompact::create_unique());
     }
-    return index | object_mask;
+    return static_cast<HandleManagerToken>(index) | object_mask;
 }
 
 const static auto init_registry_compact = []() -> bool

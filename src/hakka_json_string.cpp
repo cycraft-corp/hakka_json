@@ -476,13 +476,13 @@ JsonStringCompactIter::reference JsonStringCompactIter::operator*() const
 
 JsonStringCompactIter &JsonStringCompactIter::operator++()
 {
-    pImpl->pos = pImpl->unicode_str.moveIndex32(pImpl->pos, 1);
+    pImpl->pos = static_cast<difference_type>(pImpl->unicode_str.moveIndex32(static_cast<int32_t>(pImpl->pos), 1));
     return *this;
 }
 
 JsonStringCompactIter &JsonStringCompactIter::operator--()
 {
-    pImpl->pos = pImpl->unicode_str.moveIndex32(pImpl->pos, -1);
+    pImpl->pos = static_cast<difference_type>(pImpl->unicode_str.moveIndex32(static_cast<int32_t>(pImpl->pos), -1));
     return *this;
 }
 

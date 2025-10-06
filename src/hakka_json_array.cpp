@@ -519,9 +519,9 @@ tl::expected<JsonHandleCompact, HakkaJsonResultEnum> JsonArrayCompact::get_slice
         return tl::make_unexpected(HAKKA_JSON_INVALID_ARGUMENT);
 
     if (start < 0)
-        start += elements_.size();
+        start += static_cast<int>(elements_.size());
     if (end < 0)
-        end += elements_.size();
+        end += static_cast<int>(elements_.size());
 
     auto slice_array_handle = JsonArrayCompact::create();
     if (!slice_array_handle.is_valid())

@@ -82,21 +82,21 @@ uint32_t JsonHandleCompact::retain() const {
     if (std::holds_alternative<std::monostate>(compacted_pointer))
         return 0;
     else if (std::holds_alternative<const JsonIntCompact*>(compacted_pointer))
-        return std::get<const JsonIntCompact*>(compacted_pointer)->inc_ref();
+        return static_cast<uint32_t>(std::get<const JsonIntCompact*>(compacted_pointer)->inc_ref());
     else if (std::holds_alternative<const JsonFloatCompact*>(compacted_pointer))
-        return std::get<const JsonFloatCompact*>(compacted_pointer)->inc_ref();
+        return static_cast<uint32_t>(std::get<const JsonFloatCompact*>(compacted_pointer)->inc_ref());
     else if (std::holds_alternative<const JsonBoolCompact*>(compacted_pointer))
-        return reinterpret_cast<const JsonFloatCompact*>(std::get<const JsonBoolCompact*>(compacted_pointer))->inc_ref(); // YES, it is nan boxing
+        return static_cast<uint32_t>(reinterpret_cast<const JsonFloatCompact*>(std::get<const JsonBoolCompact*>(compacted_pointer))->inc_ref()); // YES, it is nan boxing
     else if (std::holds_alternative<const JsonStringCompact*>(compacted_pointer))
-        return std::get<const JsonStringCompact*>(compacted_pointer)->inc_ref();
+        return static_cast<uint32_t>(std::get<const JsonStringCompact*>(compacted_pointer)->inc_ref());
     else if (std::holds_alternative<const JsonArrayCompact*>(compacted_pointer))
-        return std::get<const JsonArrayCompact*>(compacted_pointer)->inc_ref();
+        return static_cast<uint32_t>(std::get<const JsonArrayCompact*>(compacted_pointer)->inc_ref());
     else if (std::holds_alternative<const JsonObjectCompact*>(compacted_pointer))
-        return std::get<const JsonObjectCompact*>(compacted_pointer)->inc_ref();
+        return static_cast<uint32_t>(std::get<const JsonObjectCompact*>(compacted_pointer)->inc_ref());
     else if (std::holds_alternative<const JsonNullCompact*>(compacted_pointer))
-        return reinterpret_cast<const JsonFloatCompact*>(std::get<const JsonNullCompact*>(compacted_pointer))->inc_ref(); // YES, it is nan boxing
+        return static_cast<uint32_t>(reinterpret_cast<const JsonFloatCompact*>(std::get<const JsonNullCompact*>(compacted_pointer))->inc_ref()); // YES, it is nan boxing
     else if (std::holds_alternative<const JsonInvalidCompact*>(compacted_pointer))
-        return reinterpret_cast<const JsonFloatCompact*>(std::get<const JsonInvalidCompact*>(compacted_pointer))->inc_ref(); // YES, it is nan boxing
+        return static_cast<uint32_t>(reinterpret_cast<const JsonFloatCompact*>(std::get<const JsonInvalidCompact*>(compacted_pointer))->inc_ref()); // YES, it is nan boxing
     else
         return 0;
 }

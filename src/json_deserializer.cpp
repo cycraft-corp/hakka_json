@@ -127,5 +127,4 @@ HakkaJsonType JsonDeserializerCompact::type() const {
     default:
         return HAKKA_JSON_INVALID;
     }
-    return HAKKA_JSON_INVALID;
 }

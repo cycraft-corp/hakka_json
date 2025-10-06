@@ -8,7 +8,7 @@ using namespace hakka;
 
 uint32_t StringManagerCompact::get_index(HandleManagerToken token) const
 {
-    return token & ~JsonHandleManagerCompact::type_mask;
+    return static_cast<uint32_t>(token & ~JsonHandleManagerCompact::type_mask);
 }
 
 StringManagerCompact &StringManagerCompact::get_instance()
@@ -100,7 +100,7 @@ HandleManagerToken StringManagerCompact::create(std::string_view value)
     }
 
     hash_to_index_map_[hash_value] = index;
-    return index | string_mask;
+    return static_cast<HandleManagerToken>(index) | string_mask;
 }
 
 static const auto init_registry_compact = []()
