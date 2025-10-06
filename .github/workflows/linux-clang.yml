@@ -1,0 +1,65 @@
+name: Linux Clang
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  linux-clang:
+    name: Linux Clang ${{ matrix.clang-version }} (${{ matrix.build-type }}${{ matrix.sanitizer && ', ' || '' }}${{ matrix.sanitizer }})
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.clang-version >= 20 }}
+    container:
+      image: ghcr.io/mattkretz/cplusplus-ci/clang${{ matrix.clang-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        clang-version: [17, 18, 19, 20, 21, 22]
+        build-type: [Debug, Release]
+        sanitizer: ['', 'address', 'undefined', 'memory', 'thread']
+        exclude: []
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Verify Clang Installation
+        run: |
+          clang++ --version
+          echo "Clang version verification completed"
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DHAKKA_JSON_BUILD_TESTS=ON \
+            -DICU_VERSION=77.1 \
+            ${{ matrix.sanitizer == 'address' && '-DHAKKA_JSON_ENABLE_SANITIZER_ADDRESS=ON' || '' }} \
+            ${{ matrix.sanitizer == 'undefined' && '-DHAKKA_JSON_ENABLE_SANITIZER_UNDEFINED=ON' || '' }} \
+            ${{ matrix.sanitizer == 'memory' && '-DHAKKA_JSON_ENABLE_SANITIZER_MEMORY=ON' || '' }} \
+            ${{ matrix.sanitizer == 'thread' && '-DHAKKA_JSON_ENABLE_SANITIZER_THREAD=ON' || '' }}
+
+      - name: Build
+        run: cmake --build build --parallel
+        env:
+          # Sanitizer options during build (detect_leaks=0 for Clang to avoid false positives)
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1:check_initialization_order=1:strict_init_order=1
+          UBSAN_OPTIONS: print_stacktrace=1:abort_on_error=1
+          MSAN_OPTIONS: abort_on_error=1:print_stats=1
+          TSAN_OPTIONS: abort_on_error=1
+
+      - name: Test
+        run: |
+          cd build
+          ctest --output-on-failure --parallel --timeout 300
+        env:
+          # Sanitizer options (detect_leaks=0 for Clang to avoid false positives)
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1:check_initialization_order=1:strict_init_order=1
+          UBSAN_OPTIONS: print_stacktrace=1:abort_on_error=1
+          MSAN_OPTIONS: abort_on_error=1:print_stats=1
+          TSAN_OPTIONS: abort_on_error=1
+

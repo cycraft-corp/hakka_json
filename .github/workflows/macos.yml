@@ -1,0 +1,107 @@
+name: macOS
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  macos-apple-clang:
+    name: macOS Apple Clang ${{ matrix.xcode-version }} (${{ matrix.build-type }}${{ matrix.sanitizer && ', ' || '' }}${{ matrix.sanitizer }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          
+          # macOS 13 (Ventura) with Xcode 15.2
+          - os: macos-13
+            xcode-version: "15.2"
+            build-type: Debug
+            sanitizer: ""
+          - os: macos-13
+            xcode-version: "15.2"
+            build-type: Release
+            sanitizer: ""
+          - os: macos-13
+            xcode-version: "15.2"
+            build-type: Debug
+            sanitizer: "address"
+          - os: macos-13
+            xcode-version: "15.2"
+            build-type: Debug
+            sanitizer: "undefined"
+          
+          # macOS 14 (Sonoma) with Xcode 15.4
+          - os: macos-14
+            xcode-version: "15.4"
+            build-type: Debug
+            sanitizer: ""
+          - os: macos-14
+            xcode-version: "15.4"
+            build-type: Release
+            sanitizer: ""
+          - os: macos-14
+            xcode-version: "15.4"
+            build-type: Debug
+            sanitizer: "address"
+          - os: macos-14
+            xcode-version: "15.4"
+            build-type: Debug
+            sanitizer: "undefined"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ matrix.xcode-version }}
+
+      - name: Install dependencies
+        run: |
+          # Install ninja and fmt via Homebrew (cmake is pre-installed on GitHub Actions macOS runners)
+          # Check and install only if not already present to reduce CI noise
+          if ! brew list ninja &>/dev/null; then
+            echo "Installing ninja..."
+            brew install ninja
+          else
+            echo "ninja is already installed: $(ninja --version)"
+          fi
+          
+          if ! brew list fmt &>/dev/null; then
+            echo "Installing fmt..."
+            brew install fmt
+          else
+            echo "fmt is already installed"
+          fi
+          
+          # Verify cmake and ninja are available
+          echo "cmake version: $(cmake --version)"
+          echo "ninja version: $(ninja --version)"
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DHAKKA_JSON_BUILD_TESTS=ON \
+            -DICU_VERSION=77.1 \
+            ${{ matrix.sanitizer == 'address' && '-DHAKKA_JSON_ENABLE_SANITIZER_ADDRESS=ON' || '' }} \
+            ${{ matrix.sanitizer == 'undefined' && '-DHAKKA_JSON_ENABLE_SANITIZER_UNDEFINED=ON' || '' }}
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: |
+          cd build
+          ctest --output-on-failure --parallel --timeout 300
+        env:
+          # Sanitizer options for Apple Clang (leak detection disabled on macOS)
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1:check_initialization_order=1:strict_init_order=1
+          UBSAN_OPTIONS: print_stacktrace=1:abort_on_error=1
+

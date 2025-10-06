@@ -1,0 +1,108 @@
+name: Linux GCC
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  linux-gcc:
+    name: Linux GCC ${{ matrix.gcc-version }} (${{ matrix.build-type }}${{ matrix.sanitizer && ', ' || '' }}${{ matrix.sanitizer }})
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.gcc-version == 16 }}
+    container:
+      image: ghcr.io/mattkretz/cplusplus-ci/gcc${{ matrix.gcc-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        gcc-version: [11, 12, 13, 14, 15, 16]
+        build-type: [Debug, Release]
+        sanitizer: ['', 'address', 'undefined', 'thread', 'coverage']
+        exclude:
+          # Coverage only on GCC 13 Debug
+          - sanitizer: coverage
+            gcc-version: 11
+          - sanitizer: coverage
+            gcc-version: 12
+          - sanitizer: coverage
+            gcc-version: 14
+          - sanitizer: coverage
+            gcc-version: 15
+          - sanitizer: coverage
+            gcc-version: 16
+          - sanitizer: coverage
+            build-type: Release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Verify GCC Installation
+        run: |
+          gcc --version
+          g++ --version
+          echo "GCC version verification completed"
+
+      - name: Install Coverage Tools
+        if: matrix.sanitizer == 'coverage'
+        run: |
+          apt-get update
+          apt-get install -y lcov
+          lcov --version
+          gcov --version
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DHAKKA_JSON_BUILD_TESTS=ON \
+            -DICU_VERSION=77.1 \
+            ${{ matrix.sanitizer == 'address' && '-DHAKKA_JSON_ENABLE_SANITIZER_ADDRESS=ON' || '' }} \
+            ${{ matrix.sanitizer == 'undefined' && '-DHAKKA_JSON_ENABLE_SANITIZER_UNDEFINED=ON' || '' }} \
+            ${{ matrix.sanitizer == 'thread' && '-DHAKKA_JSON_ENABLE_SANITIZER_THREAD=ON' || '' }} \
+            ${{ matrix.sanitizer == 'coverage' && '-DHAKKA_JSON_ENABLE_COVERAGE=ON' || '' }}
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: |
+          cd build
+          ctest --output-on-failure --parallel --timeout 300
+        env:
+          ASAN_OPTIONS: detect_leaks=1:abort_on_error=1:check_initialization_order=1:strict_init_order=1
+          UBSAN_OPTIONS: print_stacktrace=1:abort_on_error=1
+          TSAN_OPTIONS: abort_on_error=1
+
+      - name: Collect Coverage Data
+        if: matrix.sanitizer == 'coverage'
+        run: |
+          lcov --directory build \
+               --capture \
+               --output-file coverage.info \
+               --gcov-tool gcov \
+               --rc lcov_branch_coverage=1
+
+          lcov --remove coverage.info \
+               '/usr/*' \
+               '*/build/_deps/*' \
+               '*/build/icu-install/*' \
+               '*/tests/*' \
+               --output-file coverage.info \
+               --rc lcov_branch_coverage=1
+
+          lcov --list coverage.info --rc lcov_branch_coverage=1
+
+      - name: Upload Coverage to Codecov
+        if: matrix.sanitizer == 'coverage'
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage.info
+          flags: unittests
+          name: gcc-${{ matrix.gcc-version }}-${{ matrix.build-type }}-coverage
+          fail_ci_if_error: true
+          verbose: true
+

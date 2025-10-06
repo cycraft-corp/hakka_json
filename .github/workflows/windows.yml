@@ -1,0 +1,62 @@
+name: Windows
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  windows-msvc:
+    name: Windows MSVC ${{ matrix.vs-version }} (${{ matrix.build-type }}${{ matrix.sanitizer && ', ASAN' || '' }}${{ matrix.static_runtime && ', Static RT' || '' }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Visual Studio 2022
+          - os: windows-2022
+            vs-version: 2022
+            build-type: Debug
+            sanitizer: false
+          - os: windows-2022
+            vs-version: 2022
+            build-type: Release
+            sanitizer: false
+          - os: windows-2022
+            vs-version: 2022
+            build-type: Debug
+            sanitizer: true
+          # Test with static runtime library
+          - os: windows-2022
+            vs-version: 2022
+            build-type: Debug
+            sanitizer: false
+            static_runtime: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -G "Visual Studio ${{ matrix.vs-version == '2022' && '17 2022' }}" -A x64 `
+            -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} `
+            -DHAKKA_JSON_BUILD_TESTS=ON `
+            ${{ matrix.sanitizer && '-DHAKKA_JSON_ENABLE_SANITIZER_ADDRESS=ON' || '' }} `
+            ${{ matrix.static_runtime && '-DHAKKA_JSON_MSVC_STATIC_RUNTIME=ON' || '' }}
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build-type }} --parallel
+
+      - name: Test
+        run: |
+          cd build
+          ctest -C ${{ matrix.build-type }} --output-on-failure --parallel --timeout 300
+
