@@ -52,7 +52,7 @@ jobs:
         if: matrix.sanitizer == 'coverage'
         run: |
           apt-get update
-          apt-get install -y lcov gcov-${{ matrix.gcc-version }}
+          apt-get install -y lcov
           lcov --version
           gcov-${{ matrix.gcc-version }} --version
 
