@@ -470,7 +470,7 @@ JsonStringCompactIter::reference JsonStringCompactIter::operator*() const
     auto pos = pImpl->pos;
 
     // copy the character at the current position
-    char32_t c = unicode_str.char32At(pos);
+    char32_t c = unicode_str.char32At(static_cast<int32_t>(pos));
     return c;
 }
 

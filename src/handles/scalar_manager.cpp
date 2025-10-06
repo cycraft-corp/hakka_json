@@ -94,7 +94,7 @@ HandleManagerToken ScalarManagerCompact::create(bool &&value)
     static const auto TRUE_COMPACT_TOKEN = detail::JsonHandleManagerFloatCompact::get_instance().create(double(TRUE_NAN));
     static const auto FALSE_COMPACT_TOKEN = detail::JsonHandleManagerFloatCompact::get_instance().create(double(FALSE_NAN));
 
-    static const std::array<HandleManagerToken, 2> TF_ARRAY = {FALSE_COMPACT_TOKEN, TRUE_COMPACT_TOKEN};
+    static const std::array<HandleManagerToken, 2> TF_ARRAY{{FALSE_COMPACT_TOKEN, TRUE_COMPACT_TOKEN}};
     return TF_ARRAY[static_cast<size_t>(value)];
 }
 
