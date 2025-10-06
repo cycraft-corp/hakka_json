@@ -14,6 +14,8 @@ jobs:
     continue-on-error: ${{ matrix.gcc-version == 16 }}
     container:
       image: ghcr.io/mattkretz/cplusplus-ci/gcc${{ matrix.gcc-version }}
+    env:
+      ICU_VERSION: "77.1"
     strategy:
       fail-fast: false
       matrix:
@@ -39,6 +41,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Cache ICU Build
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/icu-install
+            build/_deps/icu-src
+            build/_deps/icu-build
+          key: icu-${{ env.ICU_VERSION }}-gcc${{ matrix.gcc-version }}-${{ matrix.build-type }}-${{ hashFiles('cmake/icu.cmake') }}
+          restore-keys: |
+            icu-${{ env.ICU_VERSION }}-gcc${{ matrix.gcc-version }}-${{ matrix.build-type }}-
+            icu-${{ env.ICU_VERSION }}-gcc${{ matrix.gcc-version }}-
+
+      - name: Cache CMake Build
+        uses: actions/cache@v4
+        with:
+          path: |
+            build
+            ~/.cache/ccache
+          key: cmake-gcc${{ matrix.gcc-version }}-${{ matrix.build-type }}-${{ matrix.sanitizer }}-${{ hashFiles('**/CMakeLists.txt', 'cmake/**') }}-${{ github.sha }}
+          restore-keys: |
+            cmake-gcc${{ matrix.gcc-version }}-${{ matrix.build-type }}-${{ matrix.sanitizer }}-${{ hashFiles('**/CMakeLists.txt', 'cmake/**') }}-
+            cmake-gcc${{ matrix.gcc-version }}-${{ matrix.build-type }}-${{ matrix.sanitizer }}-
+
       - name: Verify GCC Installation
         run: |
           gcc --version
@@ -59,7 +84,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
             -DCMAKE_CXX_COMPILER=g++ \
             -DHAKKA_JSON_BUILD_TESTS=ON \
-            -DICU_VERSION=77.1 \
+            -DICU_VERSION=${{ env.ICU_VERSION }} \
             ${{ matrix.sanitizer == 'address' && '-DHAKKA_JSON_ENABLE_SANITIZER_ADDRESS=ON' || '' }} \
             ${{ matrix.sanitizer == 'undefined' && '-DHAKKA_JSON_ENABLE_SANITIZER_UNDEFINED=ON' || '' }} \
             ${{ matrix.sanitizer == 'thread' && '-DHAKKA_JSON_ENABLE_SANITIZER_THREAD=ON' || '' }} \

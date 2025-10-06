@@ -11,6 +11,8 @@ jobs:
   windows-msvc:
     name: Windows MSVC ${{ matrix.vs-version }} (${{ matrix.build-type }}${{ matrix.sanitizer && ', ASAN' || '' }}${{ matrix.static_runtime && ', Static RT' || '' }})
     runs-on: ${{ matrix.os }}
+    env:
+      ICU_VERSION: "77.1"
     strategy:
       fail-fast: false
       matrix:
@@ -38,6 +40,29 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+      - name: Cache ICU Build
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/icu-install
+            build/_deps/icu-src
+            build/_deps/icu-build
+          key: icu-${{ env.ICU_VERSION }}-windows-${{ matrix.vs-version }}-${{ matrix.build-type }}-${{ hashFiles('cmake/icu.cmake') }}
+          restore-keys: |
+            icu-${{ env.ICU_VERSION }}-windows-${{ matrix.vs-version }}-${{ matrix.build-type }}-
+            icu-${{ env.ICU_VERSION }}-windows-${{ matrix.vs-version }}-
+
+      - name: Cache CMake Build
+        uses: actions/cache@v4
+        with:
+          path: |
+            build
+            ~\AppData\Local\ccache
+          key: cmake-windows-${{ matrix.vs-version }}-${{ matrix.build-type }}-${{ matrix.sanitizer }}-${{ matrix.static_runtime }}-${{ hashFiles('**/CMakeLists.txt', 'cmake/**') }}-${{ github.sha }}
+          restore-keys: |
+            cmake-windows-${{ matrix.vs-version }}-${{ matrix.build-type }}-${{ matrix.sanitizer }}-${{ matrix.static_runtime }}-${{ hashFiles('**/CMakeLists.txt', 'cmake/**') }}-
+            cmake-windows-${{ matrix.vs-version }}-${{ matrix.build-type }}-${{ matrix.sanitizer }}-${{ matrix.static_runtime }}-
 
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1

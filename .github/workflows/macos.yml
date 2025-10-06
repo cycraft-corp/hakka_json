@@ -11,6 +11,8 @@ jobs:
   macos-apple-clang:
     name: macOS Apple Clang ${{ matrix.xcode-version }} (${{ matrix.build-type }}${{ matrix.sanitizer && ', ' || '' }}${{ matrix.sanitizer }})
     runs-on: ${{ matrix.os }}
+    env:
+      ICU_VERSION: "77.1"
     strategy:
       fail-fast: false
       matrix:
@@ -56,6 +58,43 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Cache Homebrew
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/Homebrew
+            /usr/local/Cellar/ninja
+            /usr/local/Cellar/fmt
+            /opt/homebrew/Cellar/ninja
+            /opt/homebrew/Cellar/fmt
+          key: homebrew-${{ runner.os }}-${{ matrix.xcode-version }}-v1
+          restore-keys: |
+            homebrew-${{ runner.os }}-${{ matrix.xcode-version }}-
+            homebrew-${{ runner.os }}-
+
+      - name: Cache ICU Build
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/icu-install
+            build/_deps/icu-src
+            build/_deps/icu-build
+          key: icu-${{ env.ICU_VERSION }}-macos-${{ matrix.xcode-version }}-${{ matrix.build-type }}-${{ hashFiles('cmake/icu.cmake') }}
+          restore-keys: |
+            icu-${{ env.ICU_VERSION }}-macos-${{ matrix.xcode-version }}-${{ matrix.build-type }}-
+            icu-${{ env.ICU_VERSION }}-macos-${{ matrix.xcode-version }}-
+
+      - name: Cache CMake Build
+        uses: actions/cache@v4
+        with:
+          path: |
+            build
+            ~/Library/Caches/ccache
+          key: cmake-macos-${{ matrix.xcode-version }}-${{ matrix.build-type }}-${{ matrix.sanitizer }}-${{ hashFiles('**/CMakeLists.txt', 'cmake/**') }}-${{ github.sha }}
+          restore-keys: |
+            cmake-macos-${{ matrix.xcode-version }}-${{ matrix.build-type }}-${{ matrix.sanitizer }}-${{ hashFiles('**/CMakeLists.txt', 'cmake/**') }}-
+            cmake-macos-${{ matrix.xcode-version }}-${{ matrix.build-type }}-${{ matrix.sanitizer }}-
+
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
@@ -89,7 +128,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
             -DCMAKE_CXX_COMPILER=clang++ \
             -DHAKKA_JSON_BUILD_TESTS=ON \
-            -DICU_VERSION=77.1 \
+            -DICU_VERSION=${{ env.ICU_VERSION }} \
             ${{ matrix.sanitizer == 'address' && '-DHAKKA_JSON_ENABLE_SANITIZER_ADDRESS=ON' || '' }} \
             ${{ matrix.sanitizer == 'undefined' && '-DHAKKA_JSON_ENABLE_SANITIZER_UNDEFINED=ON' || '' }}
 
