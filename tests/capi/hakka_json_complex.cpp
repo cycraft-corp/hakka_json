@@ -176,10 +176,10 @@ TEST(HakkaJsonTypesTest, CreateAndGetFloat)
     HakkaHandleWrapper float_handle = create_float(3.14159);
     ASSERT_NE(float_handle.get(), 0);
 
-    double retrieved_value = 0.0f;
+    double retrieved_value = 0.0;
     HakkaJsonResultEnum result = GetHakkaFloat(float_handle.get(), &retrieved_value);
     ASSERT_EQ(result, HAKKA_JSON_SUCCESS);
-    EXPECT_FLOAT_EQ(retrieved_value, 3.14159f);
+    EXPECT_FLOAT_EQ(static_cast<float>(retrieved_value), 3.14159f);
 }
 
 // Test string creation and retrieval
@@ -234,14 +234,14 @@ TEST(HakkaJsonNestedTest, CreateAndRetrieveNestedStructures)
     ASSERT_NE(outer_object.get(), 0);
 
     // Retrieve and verify outer_key1
-    double retrieved_float = 0.0f;
+    double retrieved_float = 0.0;
     HakkaJsonResultEnum result = GetHakkaObjectFloat(
         outer_object.get(),
         reinterpret_cast<const uint8_t *>("outer_key1"),
         10,
         &retrieved_float);
     ASSERT_EQ(result, HAKKA_JSON_SUCCESS);
-    EXPECT_FLOAT_EQ(retrieved_float, 9.81f);
+    EXPECT_FLOAT_EQ(static_cast<float>(retrieved_float), 9.81f);
 
     // Retrieve and verify outer_key2 (array)
     HakkaHandle retrieved_array = 0;
@@ -726,10 +726,10 @@ TEST(HakkaJsonModificationTest, AddNewKey)
               HAKKA_JSON_SUCCESS);
 
     // Verify the addition
-    double pi_val = 0.0f;
+    double pi_val = 0.0;
     HakkaJsonResultEnum result = GetHakkaObjectFloat(object.get(), reinterpret_cast<const uint8_t *>("pi"), 2, &pi_val);
     ASSERT_EQ(result, HAKKA_JSON_SUCCESS);
-    EXPECT_FLOAT_EQ(pi_val, 2.718f);
+    EXPECT_FLOAT_EQ(static_cast<float>(pi_val), 2.718f);
 }
 
 // Test removing a key from the object

@@ -151,7 +151,7 @@ TEST(HakkaJsonArrayTest, SetSlice)
     ASSERT_EQ(SetHakkaArraySlice(array, 0, 5, 1, new_array), HAKKA_JSON_SUCCESS);
 
     // check the size of the array
-    uint32_t size = -1;
+    uint32_t size = UINT32_MAX;
     ASSERT_EQ(GetHakkaArraySize(array, &size), HAKKA_JSON_SUCCESS);
     EXPECT_EQ(size, 0);
 
@@ -171,7 +171,7 @@ TEST(HakkaJsonArrayTest, RemoveIndex)
     ASSERT_EQ(RemoveHakkaArrayIndex(array, 0), HAKKA_JSON_SUCCESS);
 
     // check the size of the array
-    uint32_t size = -1;
+    uint32_t size = UINT32_MAX;
     ASSERT_EQ(GetHakkaArraySize(array, &size), HAKKA_JSON_SUCCESS);
     EXPECT_EQ(size, 4);
 
@@ -190,7 +190,7 @@ TEST(HakkaJsonArrayTest, ClearArray)
     ASSERT_EQ(ClearHakkaArray(array), HAKKA_JSON_SUCCESS);
 
     // check the size of the array
-    uint32_t size = -1;
+    uint32_t size = UINT32_MAX;
     ASSERT_EQ(GetHakkaArraySize(array, &size), HAKKA_JSON_SUCCESS);
     EXPECT_EQ(size, 0);
 
@@ -209,7 +209,7 @@ TEST(HakkaJsonArrayTest, MultiplyArray)
     ASSERT_EQ(MultiplyHakkaArray(array, 3), HAKKA_JSON_SUCCESS);
 
     // check the size of the array
-    uint32_t size = -1;
+    uint32_t size = UINT32_MAX;
     ASSERT_EQ(GetHakkaArraySize(array, &size), HAKKA_JSON_SUCCESS);
     EXPECT_EQ(size, 15);
 
@@ -228,7 +228,7 @@ TEST(HakkaJsonArrayTest, CountArray)
     HakkaHandle value;
     ASSERT_EQ(CreateHakkaString(&value, reinterpret_cast<const uint8_t *>("value2"), 6), HAKKA_JSON_SUCCESS);
 
-    uint32_t count = -1;
+    uint32_t count = UINT32_MAX;
     ASSERT_EQ(CountHakkaArray(array, value, &count), HAKKA_JSON_SUCCESS);
     EXPECT_EQ(count, 1);
 
@@ -252,7 +252,7 @@ TEST(HakkaJsonArrayTest, ExtendArray)
     ASSERT_EQ(ExtendHakkaArrayArray(array, array_extend), HAKKA_JSON_SUCCESS);
 
     // check the size of the array
-    uint32_t size = -1;
+    uint32_t size = UINT32_MAX;
     ASSERT_EQ(GetHakkaArraySize(array, &size), HAKKA_JSON_SUCCESS);
     EXPECT_EQ(size, 10);
 
@@ -272,7 +272,7 @@ TEST(HakkaJsonArrayTest, FindFirstArray)
     HakkaHandle value;
     ASSERT_EQ(CreateHakkaString(&value, reinterpret_cast<const uint8_t *>("value3"), 6), HAKKA_JSON_SUCCESS);
 
-    uint32_t index = -1;
+    uint32_t index = UINT32_MAX;
     ASSERT_EQ(FindFirstHakkaArray(array, value, 0, 5, &index), HAKKA_JSON_SUCCESS);
     EXPECT_EQ(index, 2);
 
@@ -293,7 +293,7 @@ TEST(HakkaJsonArrayTest, PushBackArray)
     ASSERT_EQ(PushBackHakkaArray(array, int_value), HAKKA_JSON_SUCCESS);
 
     // check the size of the array
-    uint32_t size = -1;
+    uint32_t size = UINT32_MAX;
     ASSERT_EQ(GetHakkaArraySize(array, &size), HAKKA_JSON_SUCCESS);
     EXPECT_EQ(size, 1);
 
@@ -315,7 +315,7 @@ TEST(HakkaJsonArrayTest, PopArray)
     ASSERT_NE(value, 0);
 
     // check the size of the array
-    uint32_t size = -1;
+    uint32_t size = UINT32_MAX;
     ASSERT_EQ(GetHakkaArraySize(array, &size), HAKKA_JSON_SUCCESS);
     EXPECT_EQ(size, 4);
 
@@ -344,7 +344,7 @@ TEST(HakkaJsonArrayTest, RemoveValueArray)
     ASSERT_EQ(RemoveValueHakkaArray(array, value), HAKKA_JSON_SUCCESS);
 
     // check the size of the array
-    uint32_t size = -1;
+    uint32_t size = UINT32_MAX;
     ASSERT_EQ(GetHakkaArraySize(array, &size), HAKKA_JSON_SUCCESS);
     EXPECT_EQ(size, 4);
 
@@ -364,7 +364,7 @@ TEST(HakkaJsonArrayTest, ReverseArray)
     ASSERT_EQ(ReverseHakkaArray(array), HAKKA_JSON_SUCCESS);
 
     // check the size of the array
-    uint32_t size = -1;
+    uint32_t size = UINT32_MAX;
     ASSERT_EQ(GetHakkaArraySize(array, &size), HAKKA_JSON_SUCCESS);
     EXPECT_EQ(size, 5);
 

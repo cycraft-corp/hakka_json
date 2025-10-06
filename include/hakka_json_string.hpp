@@ -2,6 +2,11 @@
 #define __HAKKA_JSON_STRING_HPP__
 #pragma once
 
+#ifdef _MSC_VER
+#undef isascii
+#undef __isascii
+#endif
+
 #include <hakka_json_primitive.hpp>
 #include <hakka_iter_base.hpp>
 #include <pico_string.hpp>

@@ -6,6 +6,12 @@
 #define U_DISABLE_RENAMING 1
 #endif
 
+// Undefine MSVC ctype macros that conflict with method names
+#ifdef _MSC_VER
+#undef __isascii
+#undef isascii
+#endif
+
 #include <hakka_json_string.hpp>
 #include <hakka_json_array.hpp>
 #include <handles/string_manager.hpp>

@@ -49,9 +49,9 @@ TEST_F(HakkaJsonPrimitiveTest, CreateAndGetFloat)
     ASSERT_EQ(CreateHakkaFloat(&handle, 3.14f), HAKKA_JSON_SUCCESS);
     ASSERT_NE(handle, 0);
 
-    double value = 0.0f;
+    double value = 0.0;
     ASSERT_EQ(GetHakkaFloat(handle, &value), HAKKA_JSON_SUCCESS);
-    EXPECT_FLOAT_EQ(value, 3.14f);
+    EXPECT_FLOAT_EQ(static_cast<float>(value), 3.14f);
 
     // Test type
     HakkaJsonType type;
@@ -543,7 +543,7 @@ TEST_F(HakkaJsonPrimitiveTest, GetWrongType)
     ASSERT_EQ(CreateStringHandle(&string_handle, "Test"), HAKKA_JSON_SUCCESS);
 
     int64_t int_value = 0;
-    double float_value = 0.0f;
+    double float_value = 0.0;
 
     // Attempt to get float from int handle
     ASSERT_EQ(GetHakkaFloat(int_handle, &float_value), HAKKA_JSON_TYPE_ERROR);

@@ -5,6 +5,13 @@ add_library(hakka_json SHARED
     hakka_json_primitive.cpp
 )
 
+# Windows: Export all symbols to generate import library
+if(WIN32)
+    set_target_properties(hakka_json PROPERTIES
+        WINDOWS_EXPORT_ALL_SYMBOLS ON
+    )
+endif()
+
 # Include directories
 target_include_directories(hakka_json
     PRIVATE

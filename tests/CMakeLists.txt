@@ -2,12 +2,12 @@ add_subdirectory(core)
 add_subdirectory(capi)
 add_subdirectory(perf)
 
-add_executable(draft test_mem_draft.cpp)
-target_link_libraries(draft PRIVATE hakka_json_core)
-target_include_directories(draft PRIVATE
-    ${CMAKE_SOURCE_DIR}/include/
-    ${CMAKE_BINARY_DIR}/_deps/expected-src/include/
-)
+# add_executable(draft test_mem_draft.cpp)
+# target_link_libraries(draft PRIVATE hakka_json_core)
+# target_include_directories(draft PRIVATE
+#     ${CMAKE_SOURCE_DIR}/include/
+#     ${CMAKE_BINARY_DIR}/_deps/expected-src/include/
+# )
 
 # Coverage report generation (gcov + lcov)
 if(HAKKA_JSON_ENABLE_COVERAGE)

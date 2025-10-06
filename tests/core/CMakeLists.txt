@@ -27,5 +27,20 @@ foreach(source ${TEST_SOURCES})
         target_link_libraries(t_${name} PRIVATE hakka_json::coverage_options)
     endif()
 
-    gtest_discover_tests(t_${name})
+    # Windows: Copy ICU DLLs to test executable directory
+    if(WIN32)
+        add_custom_command(TARGET t_${name} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${ICU_INSTALL_DIR}/bin"
+                $<TARGET_FILE_DIR:t_${name}>
+            COMMAND ${CMAKE_COMMAND} -E echo "Copied all ICU DLLs to test directory"
+        )
+        # Delay test discovery until runtime to ensure DLLs are available
+        gtest_discover_tests(t_${name}
+            DISCOVERY_MODE PRE_TEST
+            WORKING_DIRECTORY $<TARGET_FILE_DIR:t_${name}>
+        )
+    else()
+        gtest_discover_tests(t_${name})
+    endif()
 endforeach()

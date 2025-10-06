@@ -20,10 +20,6 @@ target_compile_definitions(hakka_json_compiler_options INTERFACE
     $<$<CXX_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS _CTYPE_DISABLE_MACROS NOMINMAX UNICODE _UNICODE _C_ALWAYS_NO_IS>
 )
 
-# MSVC: explicitly disable RTC1 for all builds to avoid conflicts with optimization
-target_compile_options(hakka_json_compiler_options INTERFACE
-    $<$<CXX_COMPILER_ID:MSVC>:/RTC1->
-)
 
 # MSVC source file encoding
 target_compile_options(hakka_json_compiler_options INTERFACE

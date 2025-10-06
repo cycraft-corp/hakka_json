@@ -1,3 +1,9 @@
+// Undefine MSVC ctype macros that conflict with method names
+#ifdef _MSC_VER
+#undef __isascii
+#undef isascii
+#endif
+
 #include <hakka_json_object.hpp>
 
 #include <iostream>

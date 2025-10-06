@@ -68,9 +68,9 @@ TEST(HakkaJsonObjectTest, SetAndGetFloat)
 
     ASSERT_EQ(SetHakkaObjectFloat(object, reinterpret_cast<const uint8_t *>(key_str), sizeof(key_str) - 1, value_set), HAKKA_JSON_SUCCESS);
 
-    double value_get = 0.0f;
+    double value_get = 0.0;
     ASSERT_EQ(GetHakkaObjectFloat(object, reinterpret_cast<const uint8_t *>(key_str), sizeof(key_str) - 1, &value_get), HAKKA_JSON_SUCCESS);
-    EXPECT_FLOAT_EQ(value_get, value_set);
+    EXPECT_FLOAT_EQ(static_cast<float>(value_get), static_cast<float>(value_set));
 
     // Clean up
     HakkaRelease(&object);
