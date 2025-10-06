@@ -81,11 +81,11 @@ HandleManagerToken StringManagerCompact::create(std::string_view value)
     {
         auto token = it->second;
         handles_[token].get<JsonStringCompact>()->inc_ref();
-        return token | string_mask;
+        return static_cast<HandleManagerToken>(token) | string_mask;
     }
 
     // try to get a free index
-    size_t index = -1;
+    size_t index = static_cast<size_t>(-1);
     if (!freelist_.empty())
     {
         std::pop_heap(freelist_.begin(), freelist_.end(), std::greater<size_t>());

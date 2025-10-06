@@ -558,9 +558,9 @@ HakkaJsonResultEnum JsonArrayCompact::set_slice(int start, int end, int step, Js
         return HAKKA_JSON_INVALID_ARGUMENT;
 
     if (start < 0)
-        start += elements_.size();
+        start += static_cast<int>(elements_.size());
     if (end < 0)
-        end += elements_.size();
+        end += static_cast<int>(elements_.size());
 
     // if start is still less than 0, it means the slice is invalid
     if (start < 0 || end < 0)

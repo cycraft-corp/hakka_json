@@ -650,13 +650,13 @@ tl::expected<JsonHandleCompact, HakkaJsonResultEnum> JsonStringCompact::capitali
         return JsonStringCompact::create("");
 
     char16_t first_char = unicode_str.charAt(0);
-    char16_t upper_first_char = u_toupper(first_char);
+    char16_t upper_first_char = static_cast<char16_t>(u_toupper(first_char));
     unicode_str.replace(0, U16_LENGTH(first_char), upper_first_char);
 
     for (int32_t i = U16_LENGTH(first_char); i < unicode_str.length();)
     {
         char16_t c = unicode_str.charAt(i);
-        char16_t lower_c = u_tolower(c);
+        char16_t lower_c = static_cast<char16_t>(u_tolower(c));
         unicode_str.replace(i, U16_LENGTH(c), lower_c);
         i += U16_LENGTH(c);
     }
@@ -762,29 +762,29 @@ tl::expected<JsonHandleCompact, HakkaJsonResultEnum> JsonStringCompact::slice(in
 
     if (step > 0) // loop forward
     {
-        int64_t start_index = unicode_str.moveIndex32(start, 0);
-        int64_t stop_index = unicode_str.moveIndex32(stop, 0);
+        int64_t start_index = unicode_str.moveIndex32(static_cast<int32_t>(start), 0);
+        int64_t stop_index = unicode_str.moveIndex32(static_cast<int32_t>(stop), 0);
         for (int64_t i = start_index; i < stop_index;)
         {
-            UChar32 c = unicode_str.char32At(i);
+            UChar32 c = unicode_str.char32At(static_cast<int32_t>(i));
             result.append(c);
-            i = unicode_str.moveIndex32(i, step);
+            i = unicode_str.moveIndex32(static_cast<int32_t>(i), static_cast<int32_t>(step));
         }
     }
     else // loop backward
     {
-        int64_t start_index = unicode_str.moveIndex32(start, 0);
-        int64_t stop_index = unicode_str.moveIndex32(stop, 0);
+        int64_t start_index = unicode_str.moveIndex32(static_cast<int32_t>(start), 0);
+        int64_t stop_index = unicode_str.moveIndex32(static_cast<int32_t>(stop), 0);
         for (int64_t i = start_index; i > stop_index;)
         {
-            UChar32 c = unicode_str.char32At(i);
+            UChar32 c = unicode_str.char32At(static_cast<int32_t>(i));
             result.append(c);
-            i = unicode_str.moveIndex32(i, step);
+            i = unicode_str.moveIndex32(static_cast<int32_t>(i), static_cast<int32_t>(step));
         }
 
         if (stop == -1)
         {
-            UChar32 c = unicode_str.char32At(stop_index);
+            UChar32 c = unicode_str.char32At(static_cast<int32_t>(stop_index));
             result.append(c);
         }
     }
@@ -995,9 +995,9 @@ tl::expected<JsonHandleCompact, HakkaJsonResultEnum> JsonStringCompact::swapcase
         for (int32_t i = 0; i < unicode_str.length();)
         {
             char16_t c = unicode_str.charAt(i);
-            char16_t swapped_c = u_toupper(c);
+            char16_t swapped_c = static_cast<char16_t>(u_toupper(c));
             if (swapped_c == c)
-                swapped_c = u_tolower(c);
+                swapped_c = static_cast<char16_t>(u_tolower(c));
             unicode_str.replace(i, U16_LENGTH(c), swapped_c);
             i += U16_LENGTH(c);
         }
@@ -1032,12 +1032,12 @@ tl::expected<JsonHandleCompact, HakkaJsonResultEnum> JsonStringCompact::title() 
             char16_t title_c = c;
             if (capitalize_next)
             {
-                title_c = u_toupper(c);
+                title_c = static_cast<char16_t>(u_toupper(c));
                 capitalize_next = false;
             }
             else
             {
-                title_c = u_tolower(c);
+                title_c = static_cast<char16_t>(u_tolower(c));
             }
 
             if (u_isspace(c))

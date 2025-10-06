@@ -162,8 +162,8 @@ tl::expected<std::string, HakkaJsonResultEnum> JsonObjectCompact::dump_impl(uint
             if (i > 0)
                 ss << ", ";
 
-            auto key_handle = keys_array->at_impl(i);
-            auto value_handle = values_array->at_impl(i);
+            auto key_handle = keys_array->at_impl(static_cast<uint32_t>(i));
+            auto value_handle = values_array->at_impl(static_cast<uint32_t>(i));
 
             if (!key_handle || !value_handle)
                 return tl::make_unexpected(HAKKA_JSON_INTERNAL_ERROR);
@@ -258,7 +258,7 @@ tl::expected<int, HakkaJsonResultEnum> JsonObjectCompact::compare_impl(const Jso
 
         for (size_t i = 0; i < min_keys; ++i)
         {
-            auto my_key = my_keys_array->at_impl(i);
+            auto my_key = my_keys_array->at_impl(static_cast<uint32_t>(i));
             if (!my_key || my_key.value().get_type() != HakkaJsonType::HAKKA_JSON_STRING)
                 return tl::make_unexpected(HAKKA_JSON_INTERNAL_ERROR);
 
@@ -283,7 +283,7 @@ tl::expected<int, HakkaJsonResultEnum> JsonObjectCompact::compare_impl(const Jso
             if (!my_values_array)
                 return tl::make_unexpected(HAKKA_JSON_INTERNAL_ERROR);
 
-            auto my_elem = my_values_array->at_impl(i);
+            auto my_elem = my_values_array->at_impl(static_cast<uint32_t>(i));
             if (!my_elem)
                 return tl::make_unexpected(HAKKA_JSON_INTERNAL_ERROR);
 
@@ -339,8 +339,8 @@ uint64_t JsonObjectCompact::dump_size_impl() const
 
         for (size_t i = 0; i < length(); ++i)
         {
-            auto key_handle = keys_array->at_impl(i);
-            auto value_handle = values_array->at_impl(i);
+            auto key_handle = keys_array->at_impl(static_cast<uint32_t>(i));
+            auto value_handle = values_array->at_impl(static_cast<uint32_t>(i));
 
             if (!key_handle || key_handle.value().get_type() != HakkaJsonType::HAKKA_JSON_STRING)
                 continue; // Skip invalid keys
@@ -366,7 +366,7 @@ uint64_t JsonObjectCompact::dump_size_impl() const
 tl::expected<JsonHandleCompact, HakkaJsonResultEnum> JsonObjectCompact::get_impl(KeyType key) const
 {
     if (std::holds_alternative<int64_t>(key))
-        return at_impl(std::get<int64_t>(key));
+        return at_impl(static_cast<uint32_t>(std::get<int64_t>(key)));
 
     if (!std::holds_alternative<std::string>(key))
         return tl::make_unexpected(HAKKA_JSON_TYPE_ERROR);
@@ -382,7 +382,7 @@ tl::expected<JsonHandleCompact, HakkaJsonResultEnum> JsonObjectCompact::get_impl
             if (!values_array)
                 return tl::make_unexpected(HAKKA_JSON_INTERNAL_ERROR);
 
-            return values_array->at_impl(find_index).value();
+            return values_array->at_impl(static_cast<uint32_t>(find_index)).value();
         } catch (...) {
             return tl::make_unexpected(HAKKA_JSON_INTERNAL_ERROR);
         }
@@ -702,7 +702,7 @@ tl::expected<JsonHandleCompact, HakkaJsonResultEnum> JsonObjectCompact::pop(cons
         if (!values_array)
             return tl::make_unexpected(HAKKA_JSON_INTERNAL_ERROR);
 
-        auto value_handle = values_array->at_impl(find_index);
+        auto value_handle = values_array->at_impl(static_cast<uint32_t>(find_index));
         if (!value_handle)
             return tl::make_unexpected(HAKKA_JSON_INTERNAL_ERROR);
 
@@ -747,14 +747,14 @@ tl::expected<std::pair<KeyType, JsonHandleCompact>, HakkaJsonResultEnum> JsonObj
 
         // Remove the last item
         size_t last_index = num_keys - 1;
-        auto key_handle = keys_array->at_impl(last_index);
+        auto key_handle = keys_array->at_impl(static_cast<uint32_t>(last_index));
 
         auto values_view = elements_.values.get_view();
         const auto *values_array = std::get<const JsonArrayCompact*>(values_view);
         if (!values_array)
             return tl::make_unexpected(HAKKA_JSON_INTERNAL_ERROR);
 
-        auto value_handle = values_array->at_impl(last_index);
+        auto value_handle = values_array->at_impl(static_cast<uint32_t>(last_index));
 
         if (!key_handle || !value_handle)
             return tl::make_unexpected(HAKKA_JSON_INTERNAL_ERROR);

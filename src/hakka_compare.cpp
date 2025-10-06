@@ -19,27 +19,27 @@ namespace version_2 {
     {
         auto a_int = std::get<const JsonIntCompact*>(a);
         auto b_bool = reinterpret_cast<const JsonFloatCompact*>(std::get<const JsonBoolCompact*>(b));
-        return std::get<JsonIntCompact::ValueType>(a_int->get().value()) - std::get<bool>(b_bool->get().value());
+        return static_cast<int>(std::get<JsonIntCompact::ValueType>(a_int->get().value()) - std::get<bool>(b_bool->get().value()));
     }
 
     static int id(const UniformCompactPointerView &a, const UniformCompactPointerView &b, uint32_t)
     {
         auto a_int = std::get<const JsonIntCompact*>(a);
         auto b_float = std::get<const JsonFloatCompact*>(b);
-        return std::get<JsonIntCompact::ValueType>(a_int->get().value()) - std::get<JsonFloatCompact::ValueType>(b_float->get().value());
+        return static_cast<int>(std::get<JsonIntCompact::ValueType>(a_int->get().value()) - std::get<JsonFloatCompact::ValueType>(b_float->get().value()));
     }
 
     static int in(const UniformCompactPointerView &a, const UniformCompactPointerView &, uint32_t)
     {
         auto a_int = std::get<const JsonIntCompact*>(a);
-        return std::get<JsonIntCompact::ValueType>(a_int->get().value());
+        return static_cast<int>(std::get<JsonIntCompact::ValueType>(a_int->get().value()));
     }
 
     static int bi(const UniformCompactPointerView &a, const UniformCompactPointerView &b, uint32_t)
     {
         auto a_bool = reinterpret_cast<const JsonFloatCompact*>(std::get<const JsonBoolCompact*>(a));
         auto b_int = std::get<const JsonIntCompact*>(b);
-        return std::get<bool>(a_bool->get().value()) - std::get<JsonIntCompact::ValueType>(b_int->get().value());
+        return static_cast<int>(std::get<bool>(a_bool->get().value()) - std::get<JsonIntCompact::ValueType>(b_int->get().value()));
     }
 
     static int bb(const UniformCompactPointerView &a, const UniformCompactPointerView &b, uint32_t)
@@ -53,7 +53,7 @@ namespace version_2 {
     {
         auto a_bool = reinterpret_cast<const JsonFloatCompact*>(std::get<const JsonBoolCompact*>(a));
         auto b_float = std::get<const JsonFloatCompact*>(b);
-        return std::get<bool>(a_bool->get().value()) - std::get<JsonFloatCompact::ValueType>(b_float->get().value());
+        return static_cast<int>(std::get<bool>(a_bool->get().value()) - std::get<JsonFloatCompact::ValueType>(b_float->get().value()));
     }
 
     static int bn(const UniformCompactPointerView &a, const UniformCompactPointerView &, uint32_t)
@@ -62,38 +62,38 @@ namespace version_2 {
         return std::get<bool>(a_bool->get().value());
     }
 
-    
+
     static int di(const UniformCompactPointerView &a, const UniformCompactPointerView &b, uint32_t)
     {
         auto a_float = std::get<const JsonFloatCompact*>(a);
         auto b_int = std::get<const JsonIntCompact*>(b);
-        return std::get<JsonFloatCompact::ValueType>(a_float->get().value()) - std::get<JsonIntCompact::ValueType>(b_int->get().value());
+        return static_cast<int>(std::get<JsonFloatCompact::ValueType>(a_float->get().value()) - std::get<JsonIntCompact::ValueType>(b_int->get().value()));
     }
 
     static int db(const UniformCompactPointerView &a, const UniformCompactPointerView &b, uint32_t)
     {
         auto a_float = std::get<const JsonFloatCompact*>(a);
         auto b_bool = reinterpret_cast<const JsonFloatCompact*>(std::get<const JsonBoolCompact*>(b));
-        return std::get<JsonFloatCompact::ValueType>(a_float->get().value()) - std::get<bool>(b_bool->get().value());
+        return static_cast<int>(std::get<JsonFloatCompact::ValueType>(a_float->get().value()) - std::get<bool>(b_bool->get().value()));
     }
 
     static int dd(const UniformCompactPointerView &a, const UniformCompactPointerView &b, uint32_t)
     {
         auto a_float = std::get<const JsonFloatCompact*>(a);
         auto b_float = std::get<const JsonFloatCompact*>(b);
-        return std::get<JsonFloatCompact::ValueType>(a_float->get().value()) - std::get<JsonFloatCompact::ValueType>(b_float->get().value());
+        return static_cast<int>(std::get<JsonFloatCompact::ValueType>(a_float->get().value()) - std::get<JsonFloatCompact::ValueType>(b_float->get().value()));
     }
 
     static int dn(const UniformCompactPointerView &a, const UniformCompactPointerView &, uint32_t)
     {
         auto a_float = std::get<const JsonFloatCompact*>(a);
-        return std::get<JsonFloatCompact::ValueType>(a_float->get().value());
+        return static_cast<int>(std::get<JsonFloatCompact::ValueType>(a_float->get().value()));
     }
 
     static int ni(const UniformCompactPointerView &, const UniformCompactPointerView &b, uint32_t)
     {
         auto b_int = std::get<const JsonIntCompact*>(b);
-        return std::get<JsonIntCompact::ValueType>(b_int->get().value()) * -1;
+        return static_cast<int>(std::get<JsonIntCompact::ValueType>(b_int->get().value()) * -1);
     }
 
     static int nb(const UniformCompactPointerView &, const UniformCompactPointerView &b, uint32_t)

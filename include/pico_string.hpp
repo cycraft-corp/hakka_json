@@ -19,7 +19,7 @@ namespace scc
         // Constructor to initialize from a C-string
         PicoString(const char *str)
         {
-            uint8_t len = std::strlen(str);
+            uint8_t len = static_cast<uint8_t>(std::strlen(str));
             if (len > N)
                 len = N;
             std::memcpy(this->data(), str, len);

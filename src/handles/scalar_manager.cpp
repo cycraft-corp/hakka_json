@@ -94,7 +94,7 @@ HandleManagerToken ScalarManagerCompact::create(bool &&value)
     static const auto TRUE_COMPACT_TOKEN = detail::JsonHandleManagerFloatCompact::get_instance().create(double(TRUE_NAN));
     static const auto FALSE_COMPACT_TOKEN = detail::JsonHandleManagerFloatCompact::get_instance().create(double(FALSE_NAN));
 
-    static const auto TF_ARRAY = std::array<HandleManagerToken, 2>{FALSE_COMPACT_TOKEN, TRUE_COMPACT_TOKEN};
+    static const std::array<HandleManagerToken, 2> TF_ARRAY = {FALSE_COMPACT_TOKEN, TRUE_COMPACT_TOKEN};
     return TF_ARRAY[static_cast<size_t>(value)];
 }
 
@@ -191,11 +191,11 @@ HandleManagerToken detail::JsonHandleManagerIntCompact::create(int64_t &&value)
     {
         const auto &index_of_active = it->second;
         handles_[index_of_active].get<JsonIntCompact>()->inc_ref();
-        return index_of_active | int_mask;
+        return static_cast<HandleManagerToken>(index_of_active) | int_mask;
     }
-    
+
     // try to get a free index
-    size_t index = -1;
+    size_t index = static_cast<size_t>(-1);
     if (!freelist_.empty())
     {
         std::pop_heap(freelist_.begin(), freelist_.end(), std::greater<size_t>());
@@ -208,9 +208,9 @@ HandleManagerToken detail::JsonHandleManagerIntCompact::create(int64_t &&value)
         index = handles_.size();
         handles_.emplace_back(JsonIntCompact::create_unique(std::move(value)));
     }
-    
+
     hash_to_index_map_[hash_value] = index;
-    return index | int_mask;
+    return static_cast<HandleManagerToken>(index) | int_mask;
 }
 
 HakkaJsonType detail::JsonHandleManagerIntCompact::type([[maybe_unused]] HandleManagerToken token) const
@@ -278,11 +278,11 @@ HandleManagerToken detail::JsonHandleManagerFloatCompact::create(double &&value)
     {
         const auto &index_of_active = it->second;
         handles_[index_of_active].get<JsonFloatCompact>()->inc_ref();
-        return index_of_active | float_mask;
+        return static_cast<HandleManagerToken>(index_of_active) | float_mask;
     }
-    
+
     // try to get a free index
-    size_t index = -1;
+    size_t index = static_cast<size_t>(-1);
     if (!freelist_.empty())
     {
         std::pop_heap(freelist_.begin(), freelist_.end(), std::greater<size_t>());
@@ -295,9 +295,9 @@ HandleManagerToken detail::JsonHandleManagerFloatCompact::create(double &&value)
         index = handles_.size();
         handles_.emplace_back(JsonFloatCompact::create_unique(std::move(value)));
     }
-    
+
     hash_to_index_map_[hash_value] = index;
-    return index | float_mask;
+    return static_cast<HandleManagerToken>(index) | float_mask;
 }
 
 HakkaJsonType detail::JsonHandleManagerFloatCompact::type([[maybe_unused]] HandleManagerToken token) const
