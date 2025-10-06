@@ -1,9 +1,9 @@
 [tool.poetry]
 name = "docs"
-version = "0.1.0"
+version = "1.0.0"
 description = ""
 authors = ["scc <oscar.yang@cycraft.com>"]
-readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.13"
