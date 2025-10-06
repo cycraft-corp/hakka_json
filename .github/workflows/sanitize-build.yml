@@ -126,7 +126,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        clang-version: [15, 16, 17, 18, 19, 20, 21, 22]
+        clang-version: [17, 18, 19, 20, 21, 22]
         build-type: [Debug, Release]
         sanitizer: ['', 'address', 'undefined', 'memory', 'thread']
         exclude: []

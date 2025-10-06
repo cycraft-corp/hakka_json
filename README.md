@@ -35,7 +35,7 @@ TBD
 | Platform | Compiler | Versions | Status |
 |----------|----------|----------|--------|
 | **Linux** | GCC | 11, 12, 13, 14, 15, 16 | ![GCC](https://img.shields.io/github/actions/workflow/status/cycraft-corp/hakka_json/sanitize-build.yml?branch=main&label=GCC) |
-| **Linux** | Clang/LLVM | 15, 16, 17, 18, 19, 20, 21, 22 | ![Clang](https://img.shields.io/github/actions/workflow/status/cycraft-corp/hakka_json/sanitize-build.yml?branch=main&label=Clang) |
+| **Linux** | Clang/LLVM | 17, 18, 19, 20, 21, 22 | ![Clang](https://img.shields.io/github/actions/workflow/status/cycraft-corp/hakka_json/sanitize-build.yml?branch=main&label=Clang) |
 | **macOS** | Apple Clang | Xcode 15.2, 15.4 | ![macOS](https://img.shields.io/github/actions/workflow/status/cycraft-corp/hakka_json/sanitize-build.yml?branch=main&label=macOS) |
 | **Windows** | MSVC | VS 2022 | ![Windows](https://img.shields.io/github/actions/workflow/status/cycraft-corp/hakka_json/sanitize-build.yml?branch=main&label=Windows) |
 
