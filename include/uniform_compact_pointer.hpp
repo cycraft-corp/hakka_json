@@ -8,6 +8,7 @@
 #include <functional>
 #include <tl/expected.hpp>
 #include <type_traits>
+#include <climits>
 
 #include <hakka_json_enum.h>
 
