@@ -112,30 +112,30 @@ class OwnedUniformCompactPointer {
 
 public:
     OwnedUniformCompactPointer() : data(nullptr) {}
-    explicit OwnedUniformCompactPointer(std::unique_ptr<JsonIntCompact> ptr) : data{
+    explicit OwnedUniformCompactPointer(std::unique_ptr<JsonIntCompact> ptr) : data(
         (PointerType)(((std::size_t)ptr.release()) | (INT_MASK))
-    } {}
-    explicit OwnedUniformCompactPointer(std::unique_ptr<JsonFloatCompact> ptr) : data{
+    ) {}
+    explicit OwnedUniformCompactPointer(std::unique_ptr<JsonFloatCompact> ptr) : data(
         (PointerType)(((std::size_t)ptr.release()) | (FLOAT_MASK))
-    } {}
-    explicit OwnedUniformCompactPointer(std::unique_ptr<JsonBoolCompact> ptr) : data{
+    ) {}
+    explicit OwnedUniformCompactPointer(std::unique_ptr<JsonBoolCompact> ptr) : data(
         (PointerType)(((std::size_t)ptr.release()) | (BOOL_MASK))
-    } {}
-    explicit OwnedUniformCompactPointer(std::unique_ptr<JsonNullCompact> ptr) : data{
+    ) {}
+    explicit OwnedUniformCompactPointer(std::unique_ptr<JsonNullCompact> ptr) : data(
         (PointerType)(((std::size_t)ptr.release()) | (NULL_MASK))
-    } {}
-    explicit OwnedUniformCompactPointer(std::unique_ptr<JsonInvalidCompact> ptr) : data{
+    ) {}
+    explicit OwnedUniformCompactPointer(std::unique_ptr<JsonInvalidCompact> ptr) : data(
         (PointerType)(((std::size_t)ptr.release()) | (INVALID_MASK))
-    } {}
-    explicit OwnedUniformCompactPointer(std::unique_ptr<JsonStringCompact> ptr) : data{
+    ) {}
+    explicit OwnedUniformCompactPointer(std::unique_ptr<JsonStringCompact> ptr) : data(
         (PointerType)(((std::size_t)ptr.release()) | (STRING_MASK))
-    } {}
-    explicit OwnedUniformCompactPointer(std::unique_ptr<JsonArrayCompact> ptr) : data{
+    ) {}
+    explicit OwnedUniformCompactPointer(std::unique_ptr<JsonArrayCompact> ptr) : data(
         (PointerType)(((std::size_t)ptr.release()) | (ARRAY_MASK))
-    } {}
-    explicit OwnedUniformCompactPointer(std::unique_ptr<JsonObjectCompact> ptr) : data{
+    ) {}
+    explicit OwnedUniformCompactPointer(std::unique_ptr<JsonObjectCompact> ptr) : data(
         (PointerType)(((std::size_t)ptr.release()) | (OBJECT_MASK))
-    } {}
+    ) {}
     explicit OwnedUniformCompactPointer(std::nullptr_t) : data(nullptr) {} // nullptr constructor for invalid state
 
     OwnedUniformCompactPointer(OwnedUniformCompactPointer &&other) noexcept : data(other.data) {
