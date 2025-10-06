@@ -33,7 +33,8 @@ foreach(source ${TEST_SOURCES})
             COMMAND ${CMAKE_COMMAND} -E copy_directory
                 "${ICU_INSTALL_DIR}/bin"
                 $<TARGET_FILE_DIR:t_${name}>
-            COMMAND ${CMAKE_COMMAND} -E echo "Copied all ICU DLLs to test directory"
+            COMMENT "Copied all ICU DLLs to test directory"
+            VERBATIM
         )
         # Delay test discovery until runtime to ensure DLLs are available
         gtest_discover_tests(t_${name}

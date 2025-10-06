@@ -38,7 +38,8 @@ foreach(source ${TEST_SOURCES})
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 $<TARGET_FILE:hakka_json>
                 $<TARGET_FILE_DIR:capi_${name}>
-            COMMAND ${CMAKE_COMMAND} -E echo "Copied all ICU DLLs and hakka_json.dll to test directory"
+            COMMENT "Copied all ICU DLLs and hakka_json.dll to test directory"
+            VERBATIM
         )
         # Delay test discovery until runtime to ensure DLLs are available
         gtest_discover_tests(capi_${name}

@@ -75,4 +75,6 @@ add_library(hakka_json::core ALIAS hakka_json_core)
 add_custom_command(TARGET hakka_json_core POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/target/release
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:hakka_json_core> ${CMAKE_SOURCE_DIR}/target/release/
+    COMMENT "Copying hakka_json_core library to target/release directory"
+    VERBATIM
 )

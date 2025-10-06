@@ -20,14 +20,11 @@ target_include_directories(handle_perf_benchmark
 # Windows: Copy ICU DLLs to benchmark executable directory
 if(WIN32)
     add_custom_command(TARGET handle_perf_benchmark POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${ICU_INSTALL_DIR}/bin/icudt.dll"
-            "${ICU_INSTALL_DIR}/bin/icuin$<$<CONFIG:Debug>:d>.dll"
-            "${ICU_INSTALL_DIR}/bin/icuuc$<$<CONFIG:Debug>:d>.dll"
-            "${ICU_INSTALL_DIR}/bin/icuio$<$<CONFIG:Debug>:d>.dll"
-            "${ICU_INSTALL_DIR}/bin/icutu$<$<CONFIG:Debug>:d>.dll"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${ICU_INSTALL_DIR}/bin"
             $<TARGET_FILE_DIR:handle_perf_benchmark>
-        COMMENT "Copying ICU DLLs to benchmark directory"
+        COMMENT "Copied all ICU DLLs to benchmark directory"
+        VERBATIM
     )
 endif()
 
