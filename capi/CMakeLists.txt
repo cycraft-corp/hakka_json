@@ -46,23 +46,13 @@ if(WIN32)
         "${ICU_LIB_DIR}/icuio$<$<CONFIG:Debug>:d>.lib"
         "${ICU_LIB_DIR}/icutu$<$<CONFIG:Debug>:d>.lib"
     )
-    # Copy ICU DLLs to output directory - separate commands for each file
+    # Copy all ICU DLLs to output directory (including versioned ones)
     add_custom_command(TARGET hakka_json POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${ICU_INSTALL_DIR}/bin/icuin$<$<CONFIG:Debug>:d>.dll"
-            "$<TARGET_FILE_DIR:hakka_json>/icuin$<$<CONFIG:Debug>:d>.dll"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${ICU_INSTALL_DIR}/bin/icuuc$<$<CONFIG:Debug>:d>.dll"
-            "$<TARGET_FILE_DIR:hakka_json>/icuuc$<$<CONFIG:Debug>:d>.dll"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${ICU_INSTALL_DIR}/bin/icudt.dll"
-            "$<TARGET_FILE_DIR:hakka_json>/icudt.dll"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${ICU_INSTALL_DIR}/bin/icuio$<$<CONFIG:Debug>:d>.dll"
-            "$<TARGET_FILE_DIR:hakka_json>/icuio$<$<CONFIG:Debug>:d>.dll"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${ICU_INSTALL_DIR}/bin/icutu$<$<CONFIG:Debug>:d>.dll"
-            "$<TARGET_FILE_DIR:hakka_json>/icutu$<$<CONFIG:Debug>:d>.dll"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${ICU_INSTALL_DIR}/bin"
+            $<TARGET_FILE_DIR:hakka_json>
+        COMMENT "Copied all ICU DLLs to capi output directory"
+        VERBATIM
     )
 else()
     target_link_libraries(hakka_json PRIVATE
