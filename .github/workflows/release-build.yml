@@ -138,10 +138,10 @@ jobs:
           configuration: |
             {
               "categories": [
-                {"title": "Features", "labels": ["feature"]},
+                {"title": "Features", "labels": ["feature", "feat", "enhancement"]},
                 {"title": "Fixes", "labels": ["fix", "bug"]},
-                {"title": "Documentation", "labels": ["docs"]},
-                {"title": "Maintenance", "labels": ["chore"]}
+                {"title": "Documentation", "labels": ["docs", "doc"]},
+                {"title": "Maintenance", "labels": ["chore", "maintenance"]}
               ]
             }
         env:
