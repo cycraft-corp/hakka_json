@@ -321,8 +321,8 @@ void example_cpp() {
 
 ## See Also
 
-- [Enum Types](../CAPI/enums.md) - Error codes and type enumerations
-- [Integer API](../CAPI/int.md) - Integer value manipulation
+<!-- - [Enum Types](../CAPI/enums.md) - Error codes and type enumerations -->
+<!-- - [Integer API](../CAPI/int.md) - Integer value manipulation -->
 - [Array API](../CAPI/array.md) - Array container operations
 - [Object API](../CAPI/object.md) - Object container operations
-- [Memory Management](../CAPI/memory.md) - Handle lifecycle and ownership
+<!-- - [Memory Management](../CAPI/memory.md) - Handle lifecycle and ownership -->
