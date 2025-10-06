@@ -325,7 +325,7 @@ uint64_t JsonObjectCompact::dump_size_impl() const
     constexpr auto sep_size = 2;      // ", " comma separator
     constexpr auto key_value_sep = 2; // ": " colon separator
 
-    auto overhead = braces_size + std::max<ssize_t>(static_cast<ssize_t>((length() - 1) * sep_size), 0l);
+    auto overhead = braces_size + std::max<std::ptrdiff_t>(static_cast<std::ptrdiff_t>((length() - 1) * sep_size), 0l);
     auto size = overhead;
 
     try {

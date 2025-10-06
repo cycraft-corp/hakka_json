@@ -115,11 +115,11 @@ extern_c HakkaJsonResultEnum DumpHakkaArray(HakkaHandle array, uint32_t max_dept
 
     if (result.value().size() > *buffer_size)
     {
-        *buffer_size = result.value().size();
+        *buffer_size = static_cast<uint64_t>(result.value().size());
         return HAKKA_JSON_NOT_ENOUGH_MEMORY;
     }
 
-    *buffer_size = result.value().size();
+    *buffer_size = static_cast<uint64_t>(result.value().size());
     std::memcpy(buffer, result.value().c_str(), result.value().size());
     return HAKKA_JSON_SUCCESS;
 }
@@ -236,7 +236,7 @@ extern_c HakkaJsonResultEnum GetHakkaArraySize(HakkaHandle array, uint32_t *size
     if (json_array == nullptr)
         return HAKKA_JSON_TYPE_ERROR;
 
-    *size = json_array->length();
+    *size = static_cast<uint32_t>(json_array->length());
     return HAKKA_JSON_SUCCESS;
 }
 

@@ -414,7 +414,7 @@ extern_c HakkaJsonResultEnum GetHakkaObjectSize(HakkaHandle object, uint32_t *si
         return HAKKA_JSON_TYPE_ERROR;
     }
 
-    *size = json_object->length();
+    *size = static_cast<uint32_t>(json_object->length());
     return HAKKA_JSON_SUCCESS;
 }
 

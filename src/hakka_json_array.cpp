@@ -242,7 +242,7 @@ uint64_t JsonArrayCompact::dump_size_impl() const
     // recursive size + separator + brackets
     constexpr auto brackets_size = 2; // []
     constexpr auto sep_size = 2;      // ", "
-    auto overhead = brackets_size + std::max<ssize_t>(static_cast<ssize_t>((length() - 1) * sep_size), 0l);
+    auto overhead = brackets_size + std::max<std::ptrdiff_t>(static_cast<std::ptrdiff_t>((length() - 1) * sep_size), 0l);
 
     uint64_t size = overhead;
     for (const auto &elem : elements_)
