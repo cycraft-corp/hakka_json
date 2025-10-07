@@ -1,4 +1,4 @@
 sources:
-  "1.0.0":
-    url: "https://github.com/cycraft-corp/hakka_json/archive/refs/tags/v1.0.0.tar.gz"
-    sha256: "REPLACE_WITH_ACTUAL_SHA256_CHECKSUM"
+  "__VERSION_PLACEHOLDER__":
+    url: "__URL_PLACEHOLDER__"
+    sha256: "__SHA256_PLACEHOLDER__"

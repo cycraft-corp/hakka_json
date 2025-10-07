@@ -11,7 +11,8 @@ jobs:
     name: Validate Version
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.cmake_version.outputs.version }}
+      base_version: ${{ steps.cmake_version.outputs.version }}
+      version: ${{ steps.tag_version.outputs.version }}
       tag: ${{ github.ref_name }}
 
     steps:
@@ -120,6 +121,39 @@ jobs:
       - name: Conan Profile Detect
         run: conan profile detect --force
 
+      - name: Generate conandata.yml for build (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          TARBALL_URL="https://github.com/${{ github.repository }}/archive/refs/tags/v${VERSION}.tar.gz"
+
+          # Replace placeholders in conandata.yml (tarball doesn't exist yet, use dummy SHA256)
+          sed -i.bak \
+            -e "s|__VERSION_PLACEHOLDER__|${VERSION}|g" \
+            -e "s|__URL_PLACEHOLDER__|${TARBALL_URL}|g" \
+            -e "s|__SHA256_PLACEHOLDER__|0000000000000000000000000000000000000000000000000000000000000000|g" \
+            conandata.yml
+
+          echo "Updated conandata.yml for version ${VERSION}"
+          cat conandata.yml
+
+      - name: Generate conandata.yml for build (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $VERSION = "${{ needs.validate-version.outputs.version }}"
+          $TARBALL_URL = "https://github.com/${{ github.repository }}/archive/refs/tags/v${VERSION}.tar.gz"
+
+          # Replace placeholders in conandata.yml (tarball doesn't exist yet, use dummy SHA256)
+          (Get-Content conandata.yml) `
+            -replace '__VERSION_PLACEHOLDER__', $VERSION `
+            -replace '__URL_PLACEHOLDER__', $TARBALL_URL `
+            -replace '__SHA256_PLACEHOLDER__', '0000000000000000000000000000000000000000000000000000000000000000' |
+            Set-Content conandata.yml
+
+          Write-Host "Updated conandata.yml for version $VERSION"
+          Get-Content conandata.yml
+
       - name: Create Conan Package
         run: conan create . --build=missing -s compiler.cppstd=23
 
@@ -180,7 +214,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
-          name: Release ${{ needs.validate-version.outputs.tag }}
+          name: Release ${{ needs.validate-version.outputs.version }}
           body: |
             ## What's Changed
             ${{ steps.changelog.outputs.changelog }}
@@ -234,8 +268,9 @@ jobs:
       - name: Generate conandata.yml
         run: |
           VERSION="${{ needs.validate-version.outputs.version }}"
-          TARBALL_URL="https://github.com/${{ github.repository }}/archive/v${VERSION}.tar.gz"
+          TARBALL_URL="https://github.com/${{ github.repository }}/archive/refs/tags/v${VERSION}.tar.gz"
 
+          # Download actual release tarball and calculate real SHA256
           curl -L "$TARBALL_URL" -o source.tar.gz
           SHA256=$(sha256sum source.tar.gz 2>/dev/null || shasum -a 256 source.tar.gz | awk '{print $1}')
 

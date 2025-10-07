@@ -76,9 +76,13 @@ class HakkaJsonConan(ConanFile):
         self.requires("tl-expected/1.1.0", transitive_headers=True)
 
     def source(self):
-        # For local testing, sources are exported via export_sources()
-        # For Conan Center, uncomment the line below to fetch from conandata.yml
-        get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        # For local/CI builds, sources are exported via export_sources()
+        # For Conan Center, fetch from conandata.yml tarball
+        if "sources" in self.conan_data and self.version in self.conan_data["sources"]:
+            # Only download if URL is not a placeholder
+            source_url = self.conan_data["sources"][self.version]["url"]
+            if not source_url.startswith("__") and not "0000000000" in self.conan_data["sources"][self.version]["sha256"]:
+                get(self, **self.conan_data["sources"][self.version], strip_root=True)
 
     def layout(self):
         cmake_layout(self)
