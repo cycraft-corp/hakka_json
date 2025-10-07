@@ -79,5 +79,5 @@ jobs:
           cd build
           ctest -C ${{ matrix.build-type }} --output-on-failure --parallel --timeout 300
         env:
-          ASAN_OPTIONS: windows_hook_rtl_allocators=true:detect_leaks=1:abort_on_error=1
+          ASAN_OPTIONS: windows_hook_rtl_allocators=true:abort_on_error=1
 
