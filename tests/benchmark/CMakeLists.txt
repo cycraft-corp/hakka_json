@@ -100,6 +100,23 @@ if(IPO_SUPPORTED)
     set_target_properties(benchmark_cppstd PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
+# Boost.JSON benchmark
+find_package(Boost 1.88 QUIET COMPONENTS json CONFIG)
+
+if(Boost_FOUND)
+    add_executable(benchmark_boost boost/boost_json.cpp)
+    target_link_libraries(benchmark_boost PRIVATE Boost::json)
+    target_compile_features(benchmark_boost PRIVATE cxx_std_17)
+    target_compile_options(benchmark_boost PRIVATE ${BENCHMARK_COMPILE_OPTIONS})
+    target_link_options(benchmark_boost PRIVATE ${BENCHMARK_LINK_OPTIONS})
+    if(IPO_SUPPORTED)
+        set_target_properties(benchmark_boost PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+    endif()
+    message(STATUS "Boost.JSON benchmark enabled")
+else()
+    message(STATUS "Boost.JSON not found, benchmark disabled")
+endif()
+
 # Python benchmark (uv-based wrappers)
 find_program(UV_EXECUTABLE uv)
 if(UV_EXECUTABLE)
@@ -170,6 +187,10 @@ endif()
 
 if(JANSSON_FOUND)
     add_dependencies(benchmarks benchmark_jansson)
+endif()
+
+if(Boost_FOUND)
+    add_dependencies(benchmarks benchmark_boost)
 endif()
 
 if(GO_EXECUTABLE)

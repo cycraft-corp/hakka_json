@@ -33,17 +33,18 @@ Modern C++ JSON library designed for **extreme memory efficiency**. Built with C
 **Test**: 481 MB [ClickHouse dataset from jsonbench.com](https://jsonbench.com/)
 
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': {'xyChart': {'backgroundColor': 'transparent', 'plotColorPalette': '#27ae60, #2980b9, #2471a3, #5d6d7e, #c0392b, #a93226, #922b21, #7b241c'}}}}%%
+%%{init: {'theme':'base', 'themeVariables': {'xyChart': {'backgroundColor': 'transparent', 'plotColorPalette': '#27ae60, #16a085, #2980b9, #2471a3, #5d6d7e, #c0392b, #a93226, #922b21, #7b241c'}}}}%%
 xychart-beta horizontal
     title "Memory Usage (MB) - Lower is Better"
-    x-axis ["hakka_json ⭐", golang, python3.13, nlohmann, cppstd, python3.10, jansson, "rust/serde"]
+    x-axis ["hakka_json ⭐", boost, golang, python3.13, nlohmann, cppstd, python3.10, jansson, "rust/serde"]
     y-axis "Memory (MB)" 1200 --> 3500
-    bar [1490, 2258, 2321, 2473, 2770, 2808, 3009, 3326]
+    bar [1490, 1575, 2258, 2321, 2473, 2770, 2808, 3009, 3326]
 ```
 
 | Library | Memory (MB) | Relative | File Size Multiplier |
 |---------|-------------|----------|----------------------|
 | **hakka_json** 🏆 | 1,490 | **1.00x** | **3.1x** |
+| boost_json | 1,575 | 1.06x | 3.3x |
 | golang | 2,258 | 1.52x | 4.7x |
 | python3.13 | 2,321 | 1.56x | 4.8x |
 | nlohmann/json | 2,473 | 1.66x | 5.1x |
@@ -53,9 +54,10 @@ xychart-beta horizontal
 | rust/serde_json | 3,326 | 2.23x | 6.9x |
 
 **🎯 Key Results:**
-- **33% less memory** than golang (2nd place)
+- **6% less memory** than boost_json (2nd place)
+- **33% less memory** than golang (3rd place)
 - **55% less memory** than rust/serde_json (last place)
-- **Only 3.1x file size** - competitors need 4.7x to 6.9x
+- **Only 3.1x file size** - competitors need 3.3x to 6.9x
 
 **📊 Full benchmark details**: [tests/benchmark/README.md](tests/benchmark/README.md)
 

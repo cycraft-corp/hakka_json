@@ -8,6 +8,7 @@ This directory provides a comparative analysis of resident memory consumption ac
 |----------------|---------|----------|-------------------------|
 | hakka_json | current | C++23 | Compact handle-based with string deduplication |
 | nlohmann/json | 3.12+ | C++17 | DOM tree with `std::variant` |
+| boost_json | 1.88+ | C++17 | DOM tree with custom allocator support |
 | jansson | 2.14+ | C | Reference-counted DOM tree |
 | cppstd | N/A | C++17 | Recursive descent parser with `std::variant` + `std::unordered_map` + `std::vector` |
 | Python | 3.10, 3.13 | Python | Native `dict`/`list` structures |
@@ -55,7 +56,7 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release -DHAKKA_JSON_ENABLE_BENCHMARKS=ON
 cmake --build build --target benchmarks
 ```
 
-Individual targets: `benchmark_hakka`, `benchmark_nlohmann`, `benchmark_jansson`, `benchmark_cppstd`, `benchmark_golang`, `benchmark_rust`
+Individual targets: `benchmark_hakka`, `benchmark_nlohmann`, `benchmark_boost`, `benchmark_jansson`, `benchmark_cppstd`, `benchmark_golang`, `benchmark_rust`
 
 ## Execution
 
@@ -64,6 +65,8 @@ All benchmarks accept a single positional argument specifying the input file pat
 ```bash
 cd build/tests/benchmark
 ./benchmark_hakka /path/to/input.json
+./benchmark_nlohmann /path/to/input.json
+./benchmark_boost /path/to/input.json
 ./benchmark_jansson /path/to/input.json
 ./benchmark_cppstd /path/to/input.json
 ./benchmark_golang /path/to/input.json
@@ -81,6 +84,7 @@ Output format: `<implementation> RSS: <delta_kb> KB`
 | Implementation | RSS Delta (KB) | RSS Delta (MB) | Memory Amplification Factor |
 |----------------|----------------|----------------|----------------------------|
 | hakka_json | 1,525,972 | 1,490 | 3.10x |
+| boost_json | 1,613,040 | 1,575 | 3.27x |
 | golang | 2,311,984 | 2,258 | 4.70x |
 | python3.13 | 2,376,168 | 2,321 | 4.83x |
 | nlohmann/json | 2,532,388 | 2,473 | 5.14x |
@@ -98,6 +102,7 @@ All values normalized to hakka_json as baseline:
 | Implementation | Relative RSS | Overhead vs. Baseline |
 |----------------|--------------|----------------------|
 | hakka_json | 1.00x | — |
+| boost_json | 1.06x | +6% |
 | golang | 1.52x | +52% |
 | python3.13 | 1.56x | +56% |
 | nlohmann/json | 1.66x | +66% |
@@ -110,7 +115,7 @@ All values normalized to hakka_json as baseline:
 
 ### Memory Efficiency Ordering
 
-The benchmark demonstrates substantial variation in memory overhead across implementations. hakka_json exhibits the lowest memory amplification factor (3.10x), approximately 34% lower than the second-place implementation (golang, 4.70x) and 55% lower than the highest consumer (rust/serde_json, 6.92x).
+The benchmark demonstrates substantial variation in memory overhead across implementations. hakka_json exhibits the lowest memory amplification factor (3.10x), with boost_json as a close second. hakka_json achieves approximately 30% lower memory usage than the third-place implementation (golang, 4.70x) and 55% lower than the highest consumer (rust/serde_json, 6.92x).
 
 ### Implementation Characteristics
 
@@ -121,6 +126,8 @@ The benchmark demonstrates substantial variation in memory overhead across imple
 **python**: CPython dict/list objects with reference counting and pre-allocated capacity.
 
 **nlohmann/json**: Header-only C++ library using `std::variant`-based DOM tree with template metaprogramming optimizations.
+
+**boost_json**: Boost C++ library with optimized DOM tree, custom allocator support, and parser designed for performance.
 
 **cppstd**: Naive recursive descent parser using standard library containers without optimization for memory efficiency.
 
@@ -141,6 +148,7 @@ The benchmark demonstrates substantial variation in memory overhead across imple
   - Rust 1.90+ with Cargo (optional)
   - jansson ≥2.14 (optional, `libjansson-dev` on Debian/Ubuntu)
   - nlohmann/json ≥3.12 (optional, `libnlohmann-json3-dev` on Debian/Ubuntu)
+  - Boost ≥1.88 with JSON component (optional, `boost` on Arch Linux, `libboost-json-dev` on Debian/Ubuntu)
 
 ## Implementation Details
 
@@ -187,7 +195,8 @@ To reproduce these results:
 
 ```bash
 # Download test data
-wget https://jsonbench.com/datasets/clickhouse/file_0001.json -O /tmp/test.json
+wget https://clickhouse-public-datasets.s3.amazonaws.com/bluesky/file_0001.json.gz -O /tmp/test.json.gz
+gzip -d /tmp/test.json
 
 # Build benchmarks
 cmake -B build -DCMAKE_BUILD_TYPE=Release -DHAKKA_JSON_ENABLE_BENCHMARKS=ON
