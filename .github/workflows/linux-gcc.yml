@@ -140,6 +140,7 @@ jobs:
           files: ./coverage.info
           flags: unittests
           name: gcc-${{ matrix.gcc-version }}-${{ matrix.build-type }}-coverage
+          slug: cycraft-corp/hakka_json
           fail_ci_if_error: false
           verbose: true
 
