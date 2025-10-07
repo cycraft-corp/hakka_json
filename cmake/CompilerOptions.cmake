@@ -71,6 +71,9 @@ target_compile_definitions(hakka_json_compiler_options INTERFACE
     $<$<CONFIG:Release>:NDEBUG>
 )
 
+# Optional benchmarks
+option(HAKKA_JSON_ENABLE_BENCHMARKS "Enable memory benchmarks for various JSON libraries" OFF)
+
 # Optional profiling
 option(HAKKA_JSON_ENABLE_PROFILING "Enable profiling" OFF)
 if(HAKKA_JSON_ENABLE_PROFILING)

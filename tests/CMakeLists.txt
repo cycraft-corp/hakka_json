@@ -2,6 +2,11 @@ add_subdirectory(core)
 add_subdirectory(capi)
 add_subdirectory(perf)
 
+# Benchmarks (opt-in)
+if(HAKKA_JSON_ENABLE_BENCHMARKS)
+    add_subdirectory(benchmark)
+endif()
+
 # add_executable(draft test_mem_draft.cpp)
 # target_link_libraries(draft PRIVATE hakka_json_core)
 # target_include_directories(draft PRIVATE
