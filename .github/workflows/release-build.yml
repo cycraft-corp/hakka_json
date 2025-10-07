@@ -29,15 +29,20 @@ jobs:
         id: tag_version
         run: |
           TAG_VERSION="${GITHUB_REF_NAME#v}"
+          # Extract base version (strip -rc suffix if present)
+          BASE_VERSION="${TAG_VERSION%-rc*}"
           echo "version=$TAG_VERSION" >> $GITHUB_OUTPUT
+          echo "base_version=$BASE_VERSION" >> $GITHUB_OUTPUT
           echo "Git tag version: $TAG_VERSION"
+          echo "Base version: $BASE_VERSION"
 
       - name: Validate Version Match
         run: |
-          if [ "${{ steps.cmake_version.outputs.version }}" != "${{ steps.tag_version.outputs.version }}" ]; then
+          if [ "${{ steps.cmake_version.outputs.version }}" != "${{ steps.tag_version.outputs.base_version }}" ]; then
             echo "Version mismatch detected!"
             echo "  CMakeLists.txt: ${{ steps.cmake_version.outputs.version }}"
-            echo "  Git tag: v${{ steps.tag_version.outputs.version }}"
+            echo "  Git tag base version: ${{ steps.tag_version.outputs.base_version }}"
+            echo "  Full tag: v${{ steps.tag_version.outputs.version }}"
             echo ""
             echo "Please update CMakeLists.txt VERSION before tagging."
             exit 1
@@ -160,11 +165,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Detect Prerelease
+        id: prerelease
+        run: |
+          if [[ "${{ github.ref_name }}" == *"-rc"* ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "This is a release candidate"
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            echo "This is a stable release"
+          fi
+
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
-          name: Release ${{ needs.validate-version.outputs.version }}
+          name: Release ${{ needs.validate-version.outputs.tag }}
           body: |
             ## What's Changed
             ${{ steps.changelog.outputs.changelog }}
@@ -183,7 +199,7 @@ jobs:
             - Pull Request: (will be added after creation)
           artifacts: "artifacts/**/*"
           draft: false
-          prerelease: false
+          prerelease: ${{ steps.prerelease.outputs.is_prerelease }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
   publish-to-conan-center:
