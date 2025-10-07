@@ -10,6 +10,17 @@ set(TEST_SOURCES
     hakka_json_string.cpp
 )
 
+# Windows: Create a single target to copy ICU DLLs (avoids parallel build race condition)
+if(WIN32)
+    add_custom_target(copy_icu_dlls_core_tests
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${ICU_INSTALL_DIR}/bin"
+            "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>"
+        COMMENT "Copying ICU DLLs to core tests directory"
+        VERBATIM
+    )
+endif()
+
 foreach(source ${TEST_SOURCES})
     get_filename_component(name ${source} NAME_WE)
     add_executable(t_${name} ${source})
@@ -27,15 +38,9 @@ foreach(source ${TEST_SOURCES})
         target_link_libraries(t_${name} PRIVATE hakka_json::coverage_options)
     endif()
 
-    # Windows: Copy ICU DLLs to test executable directory
+    # Windows: Depend on ICU DLL copy target
     if(WIN32)
-        add_custom_command(TARGET t_${name} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${ICU_INSTALL_DIR}/bin"
-                $<TARGET_FILE_DIR:t_${name}>
-            COMMENT "Copied all ICU DLLs to test directory"
-            VERBATIM
-        )
+        add_dependencies(t_${name} copy_icu_dlls_core_tests)
         # Delay test discovery until runtime to ensure DLLs are available
         gtest_discover_tests(t_${name}
             DISCOVERY_MODE PRE_TEST

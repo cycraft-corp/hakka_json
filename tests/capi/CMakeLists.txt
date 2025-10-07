@@ -6,6 +6,21 @@ set(TEST_SOURCES
     hakka_json_primitive.cpp
 )
 
+# Windows: Create a single target to copy ICU DLLs and hakka_json.dll (avoids parallel build race condition)
+if(WIN32)
+    add_custom_target(copy_dlls_capi_tests
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${ICU_INSTALL_DIR}/bin"
+            "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:hakka_json>
+            "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>"
+        COMMENT "Copying ICU DLLs and hakka_json.dll to capi tests directory"
+        VERBATIM
+    )
+    add_dependencies(copy_dlls_capi_tests hakka_json)
+endif()
+
 foreach(source ${TEST_SOURCES})
     get_filename_component(name ${source} NAME_WE)
     add_executable(capi_${name} ${source})
@@ -29,18 +44,9 @@ foreach(source ${TEST_SOURCES})
             ${CMAKE_SOURCE_DIR}/capi
     )
 
-    # Windows: Copy ICU DLLs and hakka_json.dll to test executable directory
+    # Windows: Depend on DLL copy target
     if(WIN32)
-        add_custom_command(TARGET capi_${name} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${ICU_INSTALL_DIR}/bin"
-                $<TARGET_FILE_DIR:capi_${name}>
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                $<TARGET_FILE:hakka_json>
-                $<TARGET_FILE_DIR:capi_${name}>
-            COMMENT "Copied all ICU DLLs and hakka_json.dll to test directory"
-            VERBATIM
-        )
+        add_dependencies(capi_${name} copy_dlls_capi_tests)
         # Delay test discovery until runtime to ensure DLLs are available
         gtest_discover_tests(capi_${name}
             DISCOVERY_MODE PRE_TEST

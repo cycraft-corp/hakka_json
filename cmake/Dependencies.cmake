@@ -42,6 +42,12 @@ function(_setup_icu)
 endfunction()
 _setup_icu()
 
+# Sanitizer options (must be declared before GoogleTest to ensure consistent compilation)
+option(HAKKA_JSON_ENABLE_SANITIZER_ADDRESS "Enable Address Sanitizer" OFF)
+option(HAKKA_JSON_ENABLE_SANITIZER_UNDEFINED "Enable Undefined Behavior Sanitizer" OFF)
+option(HAKKA_JSON_ENABLE_SANITIZER_THREAD "Enable Thread Sanitizer" OFF)
+option(HAKKA_JSON_ENABLE_SANITIZER_MEMORY "Enable Memory Sanitizer (Clang only)" OFF)
+
 # GoogleTest (tests only)
 if(HAKKA_JSON_BUILD_TESTS)
     if(HAKKA_JSON_USE_SYSTEM_DEPS)
@@ -56,6 +62,15 @@ if(HAKKA_JSON_BUILD_TESTS)
         set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
         FetchContent_MakeAvailable(googletest)
         include(GoogleTest)
+
+        # Apply ASAN flags to GoogleTest targets if enabled
+        if(HAKKA_JSON_ENABLE_SANITIZER_ADDRESS AND MSVC)
+            foreach(target gtest gtest_main gmock gmock_main)
+                if(TARGET ${target})
+                    target_compile_options(${target} PRIVATE /fsanitize=address)
+                endif()
+            endforeach()
+        endif()
     endif()
 
     # Coverage tools (gcov + lcov for coverage reports)

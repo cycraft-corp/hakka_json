@@ -26,7 +26,8 @@ target_compile_options(hakka_json_compiler_options INTERFACE
     $<$<CXX_COMPILER_ID:MSVC>:/utf-8>
 )
 
-# Debug: sanitizers (GNU/Clang only, exclude AppleClang)
+# Debug: sanitizers
+# GCC/Clang: Always enabled in Debug mode
 target_compile_options(hakka_json_compiler_options INTERFACE
     $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:GNU>>:-g -fsanitize=address,undefined,leak>
     $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:Clang>>:-g -fsanitize=address,undefined,leak>
@@ -39,6 +40,12 @@ target_link_options(hakka_json_compiler_options INTERFACE
     $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:Clang>>:-fsanitize=address,undefined,leak>
     $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:MSVC>>:/INCREMENTAL:NO /DEBUG:FULL>
 )
+
+# MSVC: Address Sanitizer (opt-in via HAKKA_JSON_ENABLE_SANITIZER_ADDRESS)
+if(HAKKA_JSON_ENABLE_SANITIZER_ADDRESS AND MSVC)
+    target_compile_options(hakka_json_compiler_options INTERFACE /fsanitize=address)
+    target_link_options(hakka_json_compiler_options INTERFACE /INCREMENTAL:NO)
+endif()
 
 # Release: optimization
 target_compile_options(hakka_json_compiler_options INTERFACE
