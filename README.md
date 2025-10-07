@@ -33,25 +33,12 @@ Modern C++ JSON library designed for **extreme memory efficiency**. Built with C
 **Test**: 481 MB [ClickHouse dataset from jsonbench.com](https://jsonbench.com/)
 
 ```mermaid
-%%{init: {'theme':'base'}}%%
-graph LR
-    subgraph "Memory Usage (MB)"
-        A["hakka_json<br/>1,490 MB<br/><b>⭐ 1.00x</b>"]
-        B["golang<br/>2,258 MB<br/>1.52x"]
-        C["python3.13<br/>2,321 MB<br/>1.56x"]
-        D["cppstd<br/>2,770 MB<br/>1.86x"]
-        E["python3.10<br/>2,808 MB<br/>1.88x"]
-        F["jansson<br/>3,009 MB<br/>2.02x"]
-        G["rust/serde_json<br/>3,326 MB<br/>2.23x"]
-    end
-
-    style A fill:#2ecc71,stroke:#27ae60,stroke-width:4px,color:#fff
-    style B fill:#3498db,stroke:#2980b9,stroke-width:2px,color:#fff
-    style C fill:#3498db,stroke:#2980b9,stroke-width:2px,color:#fff
-    style D fill:#e74c3c,stroke:#c0392b,stroke-width:2px,color:#fff
-    style E fill:#e74c3c,stroke:#c0392b,stroke-width:2px,color:#fff
-    style F fill:#e74c3c,stroke:#c0392b,stroke-width:2px,color:#fff
-    style G fill:#e74c3c,stroke:#c0392b,stroke-width:2px,color:#fff
+%%{init: {'theme':'base', 'themeVariables': {'xyChart': {'backgroundColor': 'transparent'}}}}%%
+xychart-beta horizontal
+    title "Memory Usage (MB) - Lower is Better"
+    x-axis [hakka_json ⭐, golang, python3.13, cppstd, python3.10, jansson, rust/serde_json]
+    y-axis "Memory (MB)" 1200 --> 3500
+    bar [1490, 2258, 2321, 2770, 2808, 3009, 3326]
 ```
 
 | Library | Memory (MB) | Relative | File Size Multiplier |
