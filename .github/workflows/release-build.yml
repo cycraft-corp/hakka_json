@@ -121,8 +121,8 @@ jobs:
         run: |
           apt-get update
           apt-get install -y python3 python3-pip python3-venv
-          # Skip pip upgrade to avoid conflict with Debian package
-          pip3 install conan --break-system-packages
+          # Install conan, ignoring Debian-installed packages
+          pip3 install conan --break-system-packages --ignore-installed distro
 
       - name: Install Conan (non-container)
         if: matrix.use-container == false
