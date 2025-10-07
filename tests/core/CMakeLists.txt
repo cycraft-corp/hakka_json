@@ -12,13 +12,29 @@ set(TEST_SOURCES
 
 # Windows: Create a single target to copy ICU DLLs (avoids parallel build race condition)
 if(WIN32)
-    add_custom_target(copy_icu_dlls_core_tests
+    # Use a dummy file as marker to ensure copy happens once per config
+    set(ICU_COPY_MARKER "${CMAKE_CURRENT_BINARY_DIR}/icu_dlls_copied_$<CONFIG>.stamp")
+    add_custom_command(
+        OUTPUT ${ICU_COPY_MARKER}
         COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${ICU_INSTALL_DIR}/bin"
             "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>"
+        COMMAND ${CMAKE_COMMAND} -E touch ${ICU_COPY_MARKER}
         COMMENT "Copying ICU DLLs to core tests directory"
         VERBATIM
     )
+    add_custom_target(copy_icu_dlls_core_tests DEPENDS ${ICU_COPY_MARKER})
+
+    # Copy ASAN runtime DLL if enabled
+    if(HAKKA_JSON_ENABLE_SANITIZER_ADDRESS AND ASAN_RUNTIME_DLL)
+        add_custom_command(TARGET copy_icu_dlls_core_tests POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${ASAN_RUNTIME_DLL}"
+                "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>"
+            COMMENT "Copying ASAN runtime DLL to core tests directory"
+            VERBATIM
+        )
+    endif()
 endif()
 
 foreach(source ${TEST_SOURCES})

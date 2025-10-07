@@ -26,6 +26,17 @@ if(WIN32)
         COMMENT "Copied all ICU DLLs to benchmark directory"
         VERBATIM
     )
+
+    # Copy ASAN runtime DLL if enabled
+    if(HAKKA_JSON_ENABLE_SANITIZER_ADDRESS AND ASAN_RUNTIME_DLL)
+        add_custom_command(TARGET handle_perf_benchmark POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${ASAN_RUNTIME_DLL}"
+                $<TARGET_FILE_DIR:handle_perf_benchmark>
+            COMMENT "Copying ASAN runtime DLL to benchmark directory"
+            VERBATIM
+        )
+    endif()
 endif()
 
 # Enable optimizations for performance testing

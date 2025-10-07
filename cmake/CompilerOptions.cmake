@@ -45,6 +45,20 @@ target_link_options(hakka_json_compiler_options INTERFACE
 if(HAKKA_JSON_ENABLE_SANITIZER_ADDRESS AND MSVC)
     target_compile_options(hakka_json_compiler_options INTERFACE /fsanitize=address)
     target_link_options(hakka_json_compiler_options INTERFACE /INCREMENTAL:NO)
+
+    # Locate ASAN runtime DLL for Windows testing
+    get_filename_component(COMPILER_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
+    find_file(ASAN_RUNTIME_DLL
+        NAMES clang_rt.asan_dynamic-x86_64.dll
+        PATHS "${COMPILER_DIR}"
+        NO_DEFAULT_PATH
+    )
+    if(ASAN_RUNTIME_DLL)
+        set(ASAN_RUNTIME_DLL "${ASAN_RUNTIME_DLL}" CACHE FILEPATH "ASAN runtime DLL path" FORCE)
+        message(STATUS "Found ASAN runtime: ${ASAN_RUNTIME_DLL}")
+    else()
+        message(WARNING "ASAN runtime DLL not found. Tests may fail to run.")
+    endif()
 endif()
 
 # Release: optimization
