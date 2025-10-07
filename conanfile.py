@@ -93,6 +93,7 @@ class HakkaJsonConan(ConanFile):
         tc.variables["HAKKA_JSON_ENABLE_TBB"] = False
         tc.variables["HAKKA_JSON_USE_SYSTEM_DEPS"] = True
         tc.variables["BUILD_SHARED_LIBS"] = self.options.shared
+        tc.variables["ICU_VERSION"] = "77.1"  # Specify ICU version to avoid GitHub API rate limits
         tc.generate()
 
         deps = CMakeDeps(self)

@@ -109,16 +109,34 @@ jobs:
         with:
           xcode-version: ${{ matrix.xcode }}
 
-      - name: Setup Python
+      - name: Setup Python (non-container)
+        if: matrix.use-container == false
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install Conan
+      - name: Install Python and Conan (container)
+        if: matrix.use-container == true
+        run: |
+          apt-get update
+          apt-get install -y python3 python3-pip python3-venv
+          python3 -m pip install --upgrade pip
+          pip3 install conan
+
+      - name: Install Conan (non-container)
+        if: matrix.use-container == false
         run: pip install conan
 
-      - name: Conan Profile Detect
+      - name: Conan Profile Detect (container)
+        if: matrix.use-container == true
+        run: |
+          # Ensure conan is in PATH
+          export PATH="$HOME/.local/bin:$PATH"
+          conan profile detect --force
+
+      - name: Conan Profile Detect (non-container)
+        if: matrix.use-container == false
         run: conan profile detect --force
 
       - name: Generate conandata.yml for build (Unix)
@@ -154,7 +172,14 @@ jobs:
           Write-Host "Updated conandata.yml for version $VERSION"
           Get-Content conandata.yml
 
-      - name: Create Conan Package
+      - name: Create Conan Package (container)
+        if: matrix.use-container == true
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          conan create . --build=missing -s compiler.cppstd=23
+
+      - name: Create Conan Package (non-container)
+        if: matrix.use-container == false
         run: conan create . --build=missing -s compiler.cppstd=23
 
       - name: Upload Package Artifacts
