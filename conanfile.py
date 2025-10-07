@@ -78,8 +78,7 @@ class HakkaJsonConan(ConanFile):
     def source(self):
         # For local testing, sources are exported via export_sources()
         # For Conan Center, uncomment the line below to fetch from conandata.yml
-        # get(self, **self.conan_data["sources"][self.version], strip_root=True)
-        pass
+        get(self, **self.conan_data["sources"][self.version], strip_root=True)
 
     def layout(self):
         cmake_layout(self)
