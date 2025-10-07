@@ -83,6 +83,7 @@ Output format: `<implementation> RSS: <delta_kb> KB`
 | hakka_json | 1,525,972 | 1,490 | 3.10x |
 | golang | 2,311,984 | 2,258 | 4.70x |
 | python3.13 | 2,376,168 | 2,321 | 4.83x |
+| nlohmann/json | 2,532,388 | 2,473 | 5.14x |
 | cppstd | 2,836,796 | 2,770 | 5.76x |
 | python3.10 | 2,874,956 | 2,808 | 5.84x |
 | jansson | 3,081,548 | 3,009 | 6.26x |
@@ -99,6 +100,7 @@ All values normalized to hakka_json as baseline:
 | hakka_json | 1.00x | — |
 | golang | 1.52x | +52% |
 | python3.13 | 1.56x | +56% |
+| nlohmann/json | 1.66x | +66% |
 | cppstd | 1.86x | +86% |
 | python3.10 | 1.88x | +88% |
 | jansson | 2.02x | +102% |
@@ -117,6 +119,8 @@ The benchmark demonstrates substantial variation in memory overhead across imple
 **golang**: Standard library `encoding/json` uses `map[string]interface{}` with interface boxing overhead.
 
 **python**: CPython dict/list objects with reference counting and pre-allocated capacity.
+
+**nlohmann/json**: Header-only C++ library using `std::variant`-based DOM tree with template metaprogramming optimizations.
 
 **cppstd**: Naive recursive descent parser using standard library containers without optimization for memory efficiency.
 

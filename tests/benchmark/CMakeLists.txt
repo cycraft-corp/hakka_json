@@ -35,6 +35,26 @@ endif()
 
 # nlohmann/json benchmark
 find_package(nlohmann_json 3.12 QUIET)
+
+if(NOT nlohmann_json_FOUND)
+    # Try FetchContent if find_package failed
+    include(FetchContent)
+    FetchContent_Declare(
+        nlohmann_json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG v3.12.0
+        GIT_SHALLOW TRUE
+    )
+
+    # Check if already populated by parent project
+    FetchContent_GetProperties(nlohmann_json)
+    if(NOT nlohmann_json_POPULATED)
+        FetchContent_MakeAvailable(nlohmann_json)
+    endif()
+
+    set(nlohmann_json_FOUND TRUE)
+endif()
+
 if(nlohmann_json_FOUND)
     add_executable(benchmark_nlohmann nlohmann/nlohmann.cpp)
     target_link_libraries(benchmark_nlohmann PRIVATE nlohmann_json::nlohmann_json)

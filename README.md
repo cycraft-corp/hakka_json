@@ -33,12 +33,12 @@ Modern C++ JSON library designed for **extreme memory efficiency**. Built with C
 **Test**: 481 MB [ClickHouse dataset from jsonbench.com](https://jsonbench.com/)
 
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': {'xyChart': {'backgroundColor': 'transparent'}}}}%%
+%%{init: {'theme':'base', 'themeVariables': {'xyChart': {'backgroundColor': 'transparent', 'plotColorPalette': '#27ae60, #2980b9, #2471a3, #5d6d7e, #c0392b, #a93226, #922b21, #7b241c'}}}}%%
 xychart-beta horizontal
     title "Memory Usage (MB) - Lower is Better"
-    x-axis [hakka_json ⭐, golang, python3.13, cppstd, python3.10, jansson, rust/serde_json]
+    x-axis ["hakka_json ⭐", golang, python3.13, nlohmann, cppstd, python3.10, jansson, "rust/serde"]
     y-axis "Memory (MB)" 1200 --> 3500
-    bar [1490, 2258, 2321, 2770, 2808, 3009, 3326]
+    bar [1490, 2258, 2321, 2473, 2770, 2808, 3009, 3326]
 ```
 
 | Library | Memory (MB) | Relative | File Size Multiplier |
@@ -46,6 +46,7 @@ xychart-beta horizontal
 | **hakka_json** 🏆 | 1,490 | **1.00x** | **3.1x** |
 | golang | 2,258 | 1.52x | 4.7x |
 | python3.13 | 2,321 | 1.56x | 4.8x |
+| nlohmann/json | 2,473 | 1.66x | 5.1x |
 | cppstd | 2,770 | 1.86x | 5.8x |
 | python3.10 | 2,808 | 1.88x | 5.8x |
 | jansson | 3,009 | 2.02x | 6.3x |
