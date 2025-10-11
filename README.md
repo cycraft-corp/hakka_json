@@ -10,7 +10,7 @@ Modern C++ JSON library designed for **extreme memory efficiency**. Built with C
 
 ## ✨ Features
 
-- **💾 Memory Champion**: Minimal runtime footprint with string deduplication
+- **💾 Memory Champion**: Minimal runtime footprint with immutable value deduplication
 - **📚 Read-Heavy Optimized**: Load once, read many times (R ≫ W)
 - **🌍 Unicode Ready**: Full ICU integration
 - **🔧 Dual APIs**: Modern C++ API + clean C API with C99 compatibility
@@ -20,9 +20,10 @@ Modern C++ JSON library designed for **extreme memory efficiency**. Built with C
 
 **Perfect when memory is your bottleneck!** 🌟
 
-- Read-heavy workloads with repeated string values
+- Read-heavy workloads with repeated immutable values (int, float, bool, null, string)
 - Memory-critical environments (embedded, mobile, IoT, large json data)
 - Frequent small appends to JSON structures
+- When you prefer reference counting over RAII semantics (optional but beneficial)
 
 [📖 **Full Documentation**](https://cycraft-corp.github.io/hakka_json/) | [🚀 **Getting Started**](https://cycraft-corp.github.io/hakka_json/)
 
