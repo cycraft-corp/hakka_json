@@ -145,7 +145,6 @@ jobs:
           VERSION="${{ needs.validate-version.outputs.version }}"
           TARBALL_URL="https://github.com/${{ github.repository }}/archive/refs/tags/v${VERSION}.tar.gz"
 
-          # Replace placeholders in conandata.yml (tarball doesn't exist yet, use dummy SHA256)
           sed -i.bak \
             -e "s|__VERSION_PLACEHOLDER__|${VERSION}|g" \
             -e "s|__URL_PLACEHOLDER__|${TARBALL_URL}|g" \
@@ -162,7 +161,6 @@ jobs:
           $VERSION = "${{ needs.validate-version.outputs.version }}"
           $TARBALL_URL = "https://github.com/${{ github.repository }}/archive/refs/tags/v${VERSION}.tar.gz"
 
-          # Replace placeholders in conandata.yml (tarball doesn't exist yet, use dummy SHA256)
           (Get-Content conandata.yml) `
             -replace '__VERSION_PLACEHOLDER__', $VERSION `
             -replace '__URL_PLACEHOLDER__', $TARBALL_URL `
@@ -182,21 +180,90 @@ jobs:
         if: matrix.use-container == false
         run: conan create . --build=missing -s compiler.cppstd=23
 
-      - name: Upload Package Artifacts (Unix)
-        if: runner.os != 'Windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: conan-package-${{ matrix.os }}-${{ matrix.compiler }}
-          path: ~/.conan2/p/b/hakka*/p/
-          if-no-files-found: warn
+      - name: Export Conan Package (container)
+        if: matrix.use-container == true
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          mkdir -p artifacts
 
-      - name: Upload Package Artifacts (Windows)
+          conan cache save "hakka_json/${VERSION}:*" \
+            --file "artifacts/hakka_json-${VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-conan.tgz"
+
+          PACKAGE_DIR=$(conan cache path "hakka_json/${VERSION}:*" | head -n 1)
+          if [ -n "$PACKAGE_DIR" ] && [ -d "$PACKAGE_DIR" ]; then
+            echo "Extracting binaries from: $PACKAGE_DIR"
+            mkdir -p "artifacts/binaries"
+
+            [ -d "$PACKAGE_DIR/lib" ] && cp -r "$PACKAGE_DIR/lib" "artifacts/binaries/"
+            [ -d "$PACKAGE_DIR/include" ] && cp -r "$PACKAGE_DIR/include" "artifacts/binaries/"
+
+            if [ -d "artifacts/binaries/lib" ] || [ -d "artifacts/binaries/include" ]; then
+              tar -czf "artifacts/hakka_json-${VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-binaries.tar.gz" \
+                -C artifacts/binaries .
+              rm -rf artifacts/binaries
+            fi
+          fi
+
+      - name: Export Conan Package (non-container)
+        if: matrix.use-container == false && runner.os != 'Windows'
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          mkdir -p artifacts
+
+          conan cache save "hakka_json/${VERSION}:*" \
+            --file "artifacts/hakka_json-${VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-conan.tgz"
+
+          PACKAGE_DIR=$(conan cache path "hakka_json/${VERSION}:*" | head -n 1)
+          if [ -n "$PACKAGE_DIR" ] && [ -d "$PACKAGE_DIR" ]; then
+            echo "Extracting binaries from: $PACKAGE_DIR"
+            mkdir -p "artifacts/binaries"
+
+            [ -d "$PACKAGE_DIR/lib" ] && cp -r "$PACKAGE_DIR/lib" "artifacts/binaries/"
+            [ -d "$PACKAGE_DIR/include" ] && cp -r "$PACKAGE_DIR/include" "artifacts/binaries/"
+
+            if [ -d "artifacts/binaries/lib" ] || [ -d "artifacts/binaries/include" ]; then
+              tar -czf "artifacts/hakka_json-${VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-binaries.tar.gz" \
+                -C artifacts/binaries .
+              rm -rf artifacts/binaries
+            fi
+          fi
+
+      - name: Export Conan Package (Windows)
         if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $VERSION = "${{ needs.validate-version.outputs.version }}"
+          New-Item -ItemType Directory -Force -Path "artifacts"
+
+          conan cache save "hakka_json/${VERSION}:*" `
+            --file "artifacts/hakka_json-${VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-conan.tgz"
+
+          $PACKAGE_DIR = (conan cache path "hakka_json/${VERSION}:*" | Select-Object -First 1).Trim()
+          if ($PACKAGE_DIR -and (Test-Path $PACKAGE_DIR)) {
+            Write-Host "Extracting binaries from: $PACKAGE_DIR"
+            New-Item -ItemType Directory -Force -Path "artifacts/binaries"
+
+            if (Test-Path "$PACKAGE_DIR/lib") {
+              Copy-Item -Recurse -Path "$PACKAGE_DIR/lib" -Destination "artifacts/binaries/"
+            }
+            if (Test-Path "$PACKAGE_DIR/include") {
+              Copy-Item -Recurse -Path "$PACKAGE_DIR/include" -Destination "artifacts/binaries/"
+            }
+
+            if ((Test-Path "artifacts/binaries/lib") -or (Test-Path "artifacts/binaries/include")) {
+              tar -czf "artifacts/hakka_json-${VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-binaries.tar.gz" `
+                -C artifacts/binaries .
+              Remove-Item -Recurse -Force "artifacts/binaries"
+            }
+          }
+
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: conan-package-${{ matrix.os }}-${{ matrix.compiler }}
-          path: C:\Users\runneradmin\.conan2\p\b\hakka*\p\
-          if-no-files-found: warn
+          name: hakka_json-${{ matrix.os }}-${{ matrix.compiler }}
+          path: artifacts/*.tar.gz
+          if-no-files-found: error
 
   create-github-release:
     name: Create GitHub Release
@@ -215,6 +282,41 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts/
+
+      - name: Generate SHA256 Hashes and conandata.yml
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          mkdir -p release-files
+
+          find artifacts -type f \( -name "*.tar.gz" -o -name "*.tgz" \) | while read file; do
+            filename=$(basename "$file")
+            sha256=$(sha256sum "$file" | awk '{print $1}')
+            echo "$sha256  $filename" >> release-files/SHA256SUMS.txt
+            echo "✓ $filename: $sha256"
+            mv "$file" "release-files/"
+          done
+
+          TARBALL_URL="https://github.com/${{ github.repository }}/archive/refs/tags/v${VERSION}.tar.gz"
+          curl -L "$TARBALL_URL" -o source.tar.gz
+          SOURCE_SHA256=$(sha256sum source.tar.gz | awk '{print $1}')
+          rm source.tar.gz
+
+          echo "$SOURCE_SHA256  v${VERSION}.tar.gz" >> release-files/SHA256SUMS.txt
+          echo "✓ Source tarball SHA256: $SOURCE_SHA256"
+
+          cat > release-files/conandata.yml <<EOF
+          sources:
+            "${VERSION}":
+              url: "${TARBALL_URL}"
+              sha256: "${SOURCE_SHA256}"
+          EOF
+
+          echo ""
+          echo "Generated conandata.yml for Conan Center Index submission:"
+          cat release-files/conandata.yml
+          echo ""
+          echo "All SHA256 hashes:"
+          cat release-files/SHA256SUMS.txt
 
       - name: Generate Changelog
         id: changelog
@@ -252,148 +354,60 @@ jobs:
             ## What's Changed
             ${{ steps.changelog.outputs.changelog }}
 
+            ## Requirements
+
+            **Minimum Compiler Support** (tested):
+            - Linux: GCC 11+ or Clang 15+
+            - macOS: Apple Clang 14+ (Xcode 14+)
+            - Windows: MSVC 2022+
+            - C++23 standard required
+
             ## Installation
+
+            ### Via Conan (Recommended)
             ```bash
-            # Via Conan (after Conan Center approval)
+            # Will build for your specific compiler/settings
             conan install hakka_json/${{ needs.validate-version.outputs.version }}
             ```
 
-            ## Artifacts
-            - Multi-platform Conan packages (Linux, macOS, Windows)
-            - [Coverage Report](https://codecov.io/gh/${{ github.repository }})
+            ### Via Conan Package Cache Export
+            Download the platform-specific Conan package (`*-conan.tgz`):
+            - Contains Conan cache export
+            - Can be imported: `conan cache restore <package>.tgz`
+            - Conan will rebuild if settings don't match
 
-            ## Conan Center
-            - Pull Request: (will be added after creation)
-          artifacts: "artifacts/**/*"
+            ### Via Standalone Binaries (Advanced)
+            Download platform-specific binaries (`*-binaries.tar.gz`):
+            - **Pre-compiled** with specific compilers (see below)
+            - May have ABI compatibility issues with different compilers/stdlib
+            - Includes: static libs, dynamic libs (Linux/macOS), headers
+
+            ## Artifacts
+
+            ### Conan Packages
+            - `hakka_json-${{ needs.validate-version.outputs.version }}-*-conan.tgz`
+
+            ### Standalone Binaries (built with)
+            - Linux: GCC 15, `*-ubuntu-latest-gcc-binaries.tar.gz`
+            - macOS: Apple Clang 15.4, `*-macos-14-apple-clang-binaries.tar.gz`
+            - Windows: MSVC 2022, `*-windows-2022-msvc-binaries.tar.gz` (DLLs only, see #2)
+
+            ### Verification
+            - `SHA256SUMS.txt` - SHA256 hashes for all artifacts
+            - `conandata.yml` - Ready-to-use for Conan Center Index submission
+          artifacts: "release-files/*"
           draft: false
           prerelease: ${{ steps.prerelease.outputs.is_prerelease }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  publish-to-conan-center:
-    name: Publish to Conan Center
-    needs: [validate-version, build-and-test]
-    runs-on: ubuntu-latest
-    environment: release
-
-    steps:
-      - name: Checkout Source Repository
-        uses: actions/checkout@v5
-        with:
-          path: source
-
-      - name: Checkout Conan Center Index
-        uses: actions/checkout@v5
-        with:
-          repository: conan-io/conan-center-index
-          path: cci
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Setup Recipe Directory
-        run: |
-          mkdir -p cci/recipes/hakka_json/all
-          cp source/conanfile.py cci/recipes/hakka_json/all/
-          cp -r source/test_package cci/recipes/hakka_json/all/
-
-      - name: Generate conandata.yml
-        run: |
-          VERSION="${{ needs.validate-version.outputs.version }}"
-          TARBALL_URL="https://github.com/${{ github.repository }}/archive/refs/tags/v${VERSION}.tar.gz"
-
-          # Download actual release tarball and calculate real SHA256
-          curl -L "$TARBALL_URL" -o source.tar.gz
-          SHA256=$(sha256sum source.tar.gz 2>/dev/null || shasum -a 256 source.tar.gz | awk '{print $1}')
-
-          cat > cci/recipes/hakka_json/all/conandata.yml <<EOF
-          sources:
-            "${VERSION}":
-              url: "${TARBALL_URL}"
-              sha256: "${SHA256}"
-          EOF
-
-          echo "Generated conandata.yml with SHA256: ${SHA256}"
-
-      - name: Update config.yml
-        run: |
-          VERSION="${{ needs.validate-version.outputs.version }}"
-
-          cat > cci/recipes/hakka_json/config.yml <<EOF
-          versions:
-            "${VERSION}":
-              folder: all
-          EOF
-
-          echo "Updated config.yml for version ${VERSION}"
-
-      - name: Install CCI Validation Hooks
-        run: |
-          cd cci
-          pip install -r .c3i/requirements.txt
-
-      - name: Run Recipe Validation
-        run: |
-          cd cci
-          python3 .c3i/run_validation.py recipes/hakka_json
-
-      # NOTE: The following step requires manual setup:
-      # 1. Fork conan-io/conan-center-index to your GitHub account
-      # 2. Update line 190 to checkout YOUR fork instead
-      # 3. Set up GitHub CLI (gh) authentication or use a PAT with push permissions
-      # 4. For first-time submission, this entire job should be done manually
-      #
-      # This automated approach only works for subsequent version updates
-      # after the initial recipe is approved in Conan Center Index.
-
-      - name: Create Pull Request to Conan Center
-        if: false  # Disabled - requires fork setup and manual configuration
-        uses: peter-evans/create-pull-request@v6
-        with:
-          path: cci
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: hakka_json/v${{ needs.validate-version.outputs.version }}
-          title: "(hakka_json) add version ${{ needs.validate-version.outputs.version }}"
-          body: |
-            ## Description
-            Add hakka_json version ${{ needs.validate-version.outputs.version }}
-
-            ## Checklist
-            - [x] Tarball URL and SHA256 verified
-            - [x] Recipe validation hooks passed
-            - [x] test_package builds successfully
-            - [x] Multi-platform builds tested (Linux, macOS, Windows)
-
-            ## Related
-            - Release: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.validate-version.outputs.version }}
-            - Package builds: See CI artifacts in release workflow
-
-            ---
-            This PR was automatically generated by the release workflow.
-          commit-message: "hakka_json: add version ${{ needs.validate-version.outputs.version }}"
-          delete-branch: true
-
-      - name: Manual Instructions
-        run: |
-          echo "=========================================="
-          echo "Conan Center Index Submission"
-          echo "=========================================="
-          echo ""
-          echo "The recipe has been validated and is ready for submission."
-          echo ""
-          echo "To submit to Conan Center Index:"
-          echo "1. Fork https://github.com/conan-io/conan-center-index"
-          echo "2. Clone your fork locally"
-          echo "3. Copy the generated files:"
-          echo "   - cci/recipes/hakka_json/all/conandata.yml"
-          echo "   - cci/recipes/hakka_json/all/conanfile.py"
-          echo "   - cci/recipes/hakka_json/all/test_package/"
-          echo "   - cci/recipes/hakka_json/config.yml"
-          echo "4. Commit and push to your fork"
-          echo "5. Create PR to conan-io/conan-center-index"
-          echo ""
-          echo "Recipe location in this workflow:"
-          echo "  cci/recipes/hakka_json/"
-          echo ""
-          echo "=========================================="
+  # Note: Conan Center Index submission must be done manually
+  # See: https://github.com/conan-io/conan-center-index/blob/master/docs/how_to_add_packages.md
+  #
+  # Steps to submit to Conan Center Index:
+  # 1. Fork https://github.com/conan-io/conan-center-index
+  # 2. Create recipes/hakka_json/all/ directory structure
+  # 3. Copy conanfile.py and test_package/ from this repository
+  # 4. Download conandata.yml from GitHub releases (already has correct SHA256)
+  # 5. Create config.yml to register the version
+  # 6. Run local validation with CCI hooks: pip install -r .c3i/requirements.txt && python3 .c3i/run_validation.py recipes/hakka_json
+  # 7. Submit PR to conan-io/conan-center-index
