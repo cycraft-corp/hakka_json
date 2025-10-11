@@ -242,7 +242,7 @@ jobs:
           conan cache save "hakka_json/${CONAN_VERSION}:*" `
             --file "artifacts/hakka_json-${TAG_VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-conan.tgz"
 
-          $PKG_REF = (conan list "hakka_json/${CONAN_VERSION}:*" --format=compact 2>$null | Select-String "hakka_json/${CONAN_VERSION}:" | Select-Object -First 1).ToString().Trim()
+          $PKG_REF = (conan list hakka_json --format=compact 2>$null | Select-String "hakka_json/${CONAN_VERSION}" | Select-Object -First 1).ToString().Trim()
           if ($PKG_REF) {
             $PACKAGE_DIR = (conan cache path "$PKG_REF" 2>$null | Select-Object -First 1)
             if ($PACKAGE_DIR) {
