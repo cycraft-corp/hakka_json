@@ -184,13 +184,14 @@ jobs:
         if: matrix.use-container == true
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          VERSION="${{ needs.validate-version.outputs.version }}"
+          CONAN_VERSION="${{ needs.validate-version.outputs.base_version }}"
+          TAG_VERSION="${{ needs.validate-version.outputs.version }}"
           mkdir -p artifacts
 
-          conan cache save "hakka_json/${VERSION}:*" \
-            --file "artifacts/hakka_json-${VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-conan.tgz"
+          conan cache save "hakka_json/${CONAN_VERSION}:*" \
+            --file "artifacts/hakka_json-${TAG_VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-conan.tgz"
 
-          PACKAGE_DIR=$(conan cache path "hakka_json/${VERSION}:*" | head -n 1)
+          PACKAGE_DIR=$(conan cache path "hakka_json/${CONAN_VERSION}:*" | head -n 1)
           if [ -n "$PACKAGE_DIR" ] && [ -d "$PACKAGE_DIR" ]; then
             echo "Extracting binaries from: $PACKAGE_DIR"
             mkdir -p "artifacts/binaries"
@@ -199,7 +200,7 @@ jobs:
             [ -d "$PACKAGE_DIR/include" ] && cp -r "$PACKAGE_DIR/include" "artifacts/binaries/"
 
             if [ -d "artifacts/binaries/lib" ] || [ -d "artifacts/binaries/include" ]; then
-              tar -czf "artifacts/hakka_json-${VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-binaries.tar.gz" \
+              tar -czf "artifacts/hakka_json-${TAG_VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-binaries.tar.gz" \
                 -C artifacts/binaries .
               rm -rf artifacts/binaries
             fi
@@ -208,13 +209,14 @@ jobs:
       - name: Export Conan Package (non-container)
         if: matrix.use-container == false && runner.os != 'Windows'
         run: |
-          VERSION="${{ needs.validate-version.outputs.version }}"
+          CONAN_VERSION="${{ needs.validate-version.outputs.base_version }}"
+          TAG_VERSION="${{ needs.validate-version.outputs.version }}"
           mkdir -p artifacts
 
-          conan cache save "hakka_json/${VERSION}:*" \
-            --file "artifacts/hakka_json-${VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-conan.tgz"
+          conan cache save "hakka_json/${CONAN_VERSION}:*" \
+            --file "artifacts/hakka_json-${TAG_VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-conan.tgz"
 
-          PACKAGE_DIR=$(conan cache path "hakka_json/${VERSION}:*" | head -n 1)
+          PACKAGE_DIR=$(conan cache path "hakka_json/${CONAN_VERSION}:*" | head -n 1)
           if [ -n "$PACKAGE_DIR" ] && [ -d "$PACKAGE_DIR" ]; then
             echo "Extracting binaries from: $PACKAGE_DIR"
             mkdir -p "artifacts/binaries"
@@ -223,7 +225,7 @@ jobs:
             [ -d "$PACKAGE_DIR/include" ] && cp -r "$PACKAGE_DIR/include" "artifacts/binaries/"
 
             if [ -d "artifacts/binaries/lib" ] || [ -d "artifacts/binaries/include" ]; then
-              tar -czf "artifacts/hakka_json-${VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-binaries.tar.gz" \
+              tar -czf "artifacts/hakka_json-${TAG_VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-binaries.tar.gz" \
                 -C artifacts/binaries .
               rm -rf artifacts/binaries
             fi
@@ -233,13 +235,14 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $VERSION = "${{ needs.validate-version.outputs.version }}"
+          $CONAN_VERSION = "${{ needs.validate-version.outputs.base_version }}"
+          $TAG_VERSION = "${{ needs.validate-version.outputs.version }}"
           New-Item -ItemType Directory -Force -Path "artifacts"
 
-          conan cache save "hakka_json/${VERSION}:*" `
-            --file "artifacts/hakka_json-${VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-conan.tgz"
+          conan cache save "hakka_json/${CONAN_VERSION}:*" `
+            --file "artifacts/hakka_json-${TAG_VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-conan.tgz"
 
-          $PACKAGE_DIR = (conan cache path "hakka_json/${VERSION}:*" | Select-Object -First 1).Trim()
+          $PACKAGE_DIR = (conan cache path "hakka_json/${CONAN_VERSION}:*" | Select-Object -First 1).Trim()
           if ($PACKAGE_DIR -and (Test-Path $PACKAGE_DIR)) {
             Write-Host "Extracting binaries from: $PACKAGE_DIR"
             New-Item -ItemType Directory -Force -Path "artifacts/binaries"
@@ -252,7 +255,7 @@ jobs:
             }
 
             if ((Test-Path "artifacts/binaries/lib") -or (Test-Path "artifacts/binaries/include")) {
-              tar -czf "artifacts/hakka_json-${VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-binaries.tar.gz" `
+              tar -czf "artifacts/hakka_json-${TAG_VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-binaries.tar.gz" `
                 -C artifacts/binaries .
               Remove-Item -Recurse -Force "artifacts/binaries"
             }
@@ -262,7 +265,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: hakka_json-${{ matrix.os }}-${{ matrix.compiler }}
-          path: artifacts/*.tar.gz
+          path: |
+            artifacts/*.tar.gz
+            artifacts/*.tgz
           if-no-files-found: error
 
   create-github-release:
