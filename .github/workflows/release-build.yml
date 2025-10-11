@@ -242,7 +242,13 @@ jobs:
           conan cache save "hakka_json/${CONAN_VERSION}:*" `
             --file "artifacts/hakka_json-${TAG_VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-conan.tgz"
 
-          $PACKAGE_DIR = (conan cache path "hakka_json/${CONAN_VERSION}:*" | Select-Object -First 1).Trim()
+          $PKG_REF = (conan list "hakka_json/${CONAN_VERSION}:*" --format=compact 2>$null | Select-String "hakka_json/${CONAN_VERSION}:" | Select-Object -First 1).ToString().Trim()
+          if ($PKG_REF) {
+            $PACKAGE_DIR = (conan cache path "$PKG_REF" 2>$null | Select-Object -First 1)
+            if ($PACKAGE_DIR) {
+              $PACKAGE_DIR = $PACKAGE_DIR.Trim()
+            }
+          }
           if ($PACKAGE_DIR -and (Test-Path $PACKAGE_DIR)) {
             Write-Host "Extracting binaries from: $PACKAGE_DIR"
             New-Item -ItemType Directory -Force -Path "artifacts/binaries"
