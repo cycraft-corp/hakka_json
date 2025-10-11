@@ -187,7 +187,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: conan-package-${{ matrix.os }}-${{ matrix.compiler }}
-          path: /Users/runner/.conan2/p/b/hakka*/p/
+          path: ~/.conan2/p/b/hakka*/p/
           if-no-files-found: warn
 
       - name: Upload Package Artifacts (Windows)
