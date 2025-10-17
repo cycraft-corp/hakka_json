@@ -68,11 +68,17 @@ namespace
                     ss << "\\t";
                     break;
                 default:
-                    if ('\x00' <= c && c <= '\x1f')
+                    // Cast to int is safe for control characters (0x00-0x1f) regardless of char signedness.
+                    // On x86/x64, char is typically signed; on GCC ARM, it's typically unsigned.
+                    // Since the range check ensures c is in [0, 31], the int conversion always produces
+                    // the correct positive value (0-31) needed for the \uXXXX hex formatting.
+                    // Without this cast, negative values from signed char would produce incorrect output
+                    // (e.g., -1 would format as 0xFFFFFFFF instead of 0x0001).
+                    if ('\x00' <= static_cast<int>(c) && static_cast<int>(c) <= '\x1f')
                     {
                         ss << "\\u"
                            << std::hex << std::uppercase
-                           << std::setw(4) << std::setfill('0') << (int)c;
+                           << std::setw(4) << std::setfill('0') << static_cast<int>(c);
                     }
                     else
                     {
