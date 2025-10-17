@@ -13,12 +13,17 @@ uint64_t get_hash(const JsonHandleCompact& handle) {
             return ptr->hash();
         }
         else if constexpr (std::is_same_v<T, const JsonBoolCompact*>) {
+            // JsonBoolCompact is an alias for JsonFloatCompact in the NaN-boxing implementation
+            // TRUE and FALSE are represented as special NaN values in JsonFloatCompact
+            // This reinterpret_cast is safe because they're the same underlying type
             return reinterpret_cast<const JsonFloatCompact*>(ptr)->hash();
         }
         else if constexpr (std::is_same_v<T, const JsonIntCompact*>) {
             return ptr->hash();
         }
-        return 0;
+        // Should never reach here for scalar types
+        assert(false && "Unexpected type in get_hash");
+        return static_cast<uint64_t>(-1); // Distinctive value to catch issues
     }, view);
 }
 
