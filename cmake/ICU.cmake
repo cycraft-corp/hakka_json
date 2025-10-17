@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.12)
 set(ICU_VERSION "" CACHE STRING "Specify the version of ICU to use (e.g., 76.1). Leave empty to use the latest release.")
 set(ICU_ROOT "" CACHE PATH "Specify the installation path of ICU, if already installed")
 set(ICU_MSBUILD_PATH "" CACHE PATH "Path to msbuild.exe for building on Windows")
-set(ICU_ARCH "x64" CACHE STRING "Target architecture: x86 or x64")
+set(ICU_ARCH "x64" CACHE STRING "Target architecture: x86 or x64 or aarch64")
 
 # Internal variables
 set(ICU_SRC_DIR "${CMAKE_BINARY_DIR}/icu-src")
@@ -84,16 +84,16 @@ function(build_icu_windows)
     endif()
 
     # Map ICU_ARCH to MSBuild platform
-    if(ICU_ARCH STREQUAL "x86")
+    if(ICU_ARCH STREQUAL "x86" OR ICU_ARCH STREQUAL "Win32" OR ICU_ARCH STREQUAL "i386" OR ICU_ARCH STREQUAL "i686")
         set(MSBUILD_PLATFORM "Win32")
         set(WINDOWS_SRC_BIN_DIR "${ICU_SRC_DIR}/bin")
         set(WINDOWS_SRC_LIB_DIR "${ICU_SRC_DIR}/lib")
-    elseif(ICU_ARCH STREQUAL "x64")
+    elseif(ICU_ARCH STREQUAL "x64" OR ICU_ARCH STREQUAL "ARM64" OR ICU_ARCH STREQUAL "aarch64" OR ICU_ARCH STREQUAL "arm64")
         set(MSBUILD_PLATFORM "x64")
         set(WINDOWS_SRC_BIN_DIR "${ICU_SRC_DIR}/bin64")
         set(WINDOWS_SRC_LIB_DIR "${ICU_SRC_DIR}/lib64")
     else()
-        message(FATAL_ERROR "Unsupported architecture: ${ICU_ARCH}. Please specify 'x86' or 'x64'.")
+        message(FATAL_ERROR "Unsupported architecture: ${ICU_ARCH}. Please specify 'x86' or 'x64' or 'ARM64' or 'aarch64' or 'arm64'.")
     endif()
 
     ExternalProject_Add(
