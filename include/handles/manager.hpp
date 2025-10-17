@@ -140,8 +140,10 @@ protected:
     * @brief Mapping from hash values to indices in `handles_`.
     *
     * This map allows quick lookup of objects based on their hash values, facilitating efficient retrieval.
+    * Uses a vector of indices to support hash collisions (e.g., for Python-compatible hashing where
+    * 0.0, False, and 0 all hash to the same value).
     */
-    std::unordered_map<std::size_t, std::size_t> hash_to_index_map_;
+    std::unordered_map<std::size_t, std::vector<std::size_t>> hash_to_index_map_;
 
 public:
     JsonHandleManagerCompact() = default;
