@@ -4,7 +4,6 @@
 #include <handles/strict_fp_block.hpp>
 
 #include <bit>
-#include <cmath>
 #include <cstring>
 #include <string>
 #include <cstdio>
@@ -162,93 +161,9 @@ uint64_t JsonFloatCompact::dump_size_impl() const
 
 uint64_t JsonFloatCompact::free_hash(double value)
 {
-    // Python hash algorithm constants (64-bit system)
-    constexpr int _PyHASH_BITS = 61;
-    constexpr uint64_t _PyHASH_MODULUS = (1ULL << _PyHASH_BITS) - 1;  // 2305843009213693951
-    constexpr int64_t _PyHASH_INF = 314159;
-
-    // Helper lambda for Python's pointer-like hash
-    // Rotates bits right by 4 to avoid hash collisions
-    auto pointer_hash = [](uint64_t x) -> uint64_t {
-        // Bottom 3 or 4 bits are likely to be 0; rotate x by 4 to the right
-        x = (x >> 4) | (x << (8 * sizeof(uint64_t) - 4));
-
-        // Python converts -1 to -2 to avoid using -1 as sentinel
-        if (x == static_cast<uint64_t>(-1)) {
-            x = static_cast<uint64_t>(-2);
-        }
-        return x;
-    };
-
-    // Check if this is a nanboxed special value (NULL, TRUE, FALSE, INVALID)
-    // Use exact bitwise comparison against the actual NaN constants
-    if (is_exact_nan_value(value, TRUE_NAN)) {
-        return 1;  // hash(True) = 1 in Python
-    }
-    if (is_exact_nan_value(value, FALSE_NAN)) {
-        return 0;  // hash(False) = 0 in Python
-    }
-    if (is_exact_nan_value(value, NULL_NAN)) {
-        // hash(None) in Python - use pointer-like hash on a fixed address
-        // In CPython, this is _Py_HashPointer(&_Py_NoneStruct)
-        uint64_t null_nan_bits = std::bit_cast<uint64_t>(NULL_NAN);
-        return pointer_hash(null_nan_bits);
-    }
-    if (is_exact_nan_value(value, INVALID_NAN)) {
-        // INVALID has no Python equivalent, use distinct hash
-        uint64_t invalid_nan_bits = std::bit_cast<uint64_t>(INVALID_NAN);
-        return pointer_hash(invalid_nan_bits);
-    }
-
-    // Get bit representation for regular NaN check
+    // Hash the bit representation directly to ensure special NaNs have unique hashes
     uint64_t val_bits = std::bit_cast<uint64_t>(value);
-
-    // For regular floats, use Python's hash algorithm
-    // Handle special cases: infinity and NaN
-    if (!std::isfinite(value)) {
-        if (std::isinf(value)) {
-            return value > 0 ? _PyHASH_INF : static_cast<uint64_t>(-_PyHASH_INF);
-        } else {
-            // Regular NaN: use pointer-like hash
-            return pointer_hash(val_bits);
-        }
-    }
-
-    // Python's hash algorithm for finite floats
-    int e;
-    double m = std::frexp(value, &e);
-
-    int sign = 1;
-    if (m < 0) {
-        sign = -1;
-        m = -m;
-    }
-
-    // Process 28 bits at a time
-    uint64_t x = 0;
-    while (m) {
-        x = ((x << 28) & _PyHASH_MODULUS) | (x >> (_PyHASH_BITS - 28));
-        m *= 268435456.0;  // 2^28
-        e -= 28;
-        uint64_t y = static_cast<uint64_t>(m);  // Pull out integer part
-        m -= y;
-        x += y;
-        if (x >= _PyHASH_MODULUS)
-            x -= _PyHASH_MODULUS;
-    }
-
-    // Adjust for the exponent; first reduce it modulo _PyHASH_BITS
-    e = e >= 0 ? e % _PyHASH_BITS : _PyHASH_BITS - 1 - ((-1 - e) % _PyHASH_BITS);
-    x = ((x << e) & _PyHASH_MODULUS) | (x >> (_PyHASH_BITS - e));
-
-    // Apply sign
-    x = x * sign;
-
-    // Python converts -1 to -2 to avoid using -1 as sentinel
-    if (x == static_cast<uint64_t>(-1))
-        x = static_cast<uint64_t>(-2);
-
-    return x;
+    return std::hash<uint64_t>{}(val_bits);
 }
 
 tl::expected<PrimitiveType, HakkaJsonResultEnum> JsonFloatCompact::get_impl() const

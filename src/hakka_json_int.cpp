@@ -72,7 +72,7 @@ tl::expected<int, HakkaJsonResultEnum> JsonIntCompact::compare_impl(const JsonHa
 }
 
 uint64_t JsonIntCompact::hash_impl() const {
-    return static_cast<uint64_t>(value_);
+    return std::hash<ValueType>{}(value_);
 }
 
 uint64_t JsonIntCompact::dump_size_impl() const {
