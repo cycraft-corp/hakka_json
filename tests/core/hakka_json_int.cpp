@@ -336,3 +336,86 @@ TEST(JsonInt, EdgeCaseToBytes)
     ASSERT_EQ(result, HAKKA_JSON_SUCCESS);
     ASSERT_STREQ(buffer_large, "42");
 }
+
+TEST(JsonInt, Hash)
+{
+    // Test that hash returns the value directly (42 -> 42)
+    {
+        auto json_int = JsonIntCompact::create(42);
+        ASSERT_TRUE(json_int);
+
+        auto view = json_int.get_view();
+        auto hash_result = std::visit([](auto&& ptr) -> uint64_t {
+            using T = std::decay_t<decltype(ptr)>;
+            if constexpr (std::is_same_v<T, const JsonIntCompact*>) {
+                return ptr->hash();
+            }
+            return 0;
+        }, view);
+        ASSERT_EQ(hash_result, 42);
+    }
+
+    // Test with zero
+    {
+        auto json_int = JsonIntCompact::create(0);
+        ASSERT_TRUE(json_int);
+
+        auto view = json_int.get_view();
+        auto hash_result = std::visit([](auto&& ptr) -> uint64_t {
+            using T = std::decay_t<decltype(ptr)>;
+            if constexpr (std::is_same_v<T, const JsonIntCompact*>) {
+                return ptr->hash();
+            }
+            return 0;
+        }, view);
+        ASSERT_EQ(hash_result, 0);
+    }
+
+    // Test with negative value (cast to uint64_t)
+    {
+        auto json_int = JsonIntCompact::create(-42);
+        ASSERT_TRUE(json_int);
+
+        auto view = json_int.get_view();
+        auto hash_result = std::visit([](auto&& ptr) -> uint64_t {
+            using T = std::decay_t<decltype(ptr)>;
+            if constexpr (std::is_same_v<T, const JsonIntCompact*>) {
+                return ptr->hash();
+            }
+            return 0;
+        }, view);
+        ASSERT_EQ(hash_result, static_cast<uint64_t>(-42));
+    }
+
+    // Test with large positive value
+    {
+        auto json_int = JsonIntCompact::create(1000000);
+        ASSERT_TRUE(json_int);
+
+        auto view = json_int.get_view();
+        auto hash_result = std::visit([](auto&& ptr) -> uint64_t {
+            using T = std::decay_t<decltype(ptr)>;
+            if constexpr (std::is_same_v<T, const JsonIntCompact*>) {
+                return ptr->hash();
+            }
+            return 0;
+        }, view);
+        ASSERT_EQ(hash_result, 1000000);
+    }
+
+    // Test with max positive value that fits in uint64_t
+    {
+        auto json_int = JsonIntCompact::create(std::numeric_limits<int64_t>::max());
+        ASSERT_TRUE(json_int);
+
+        auto view = json_int.get_view();
+        auto hash_result = std::visit([](auto&& ptr) -> uint64_t {
+            using T = std::decay_t<decltype(ptr)>;
+            if constexpr (std::is_same_v<T, const JsonIntCompact*>) {
+                return ptr->hash();
+            }
+            return 0;
+        }, view);
+        ASSERT_EQ(hash_result, static_cast<uint64_t>(std::numeric_limits<int64_t>::max()));
+    }
+}

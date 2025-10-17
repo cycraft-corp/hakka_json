@@ -272,7 +272,16 @@ void detail::JsonHandleManagerIntCompact::release(HandleManagerToken token)
 
 HandleManagerToken detail::JsonHandleManagerFloatCompact::create(double &&value)
 {
-    auto hash_value = JsonFloatCompact::free_hash(value);
+    // In Python's hashing algorithm, both hash(False) and hash(0.0) return zero.
+    // However, we need to represent False as a float value here due to the NaN-boxing mechanism.
+    // Therefore, swap the actual value with FALSE_NAN to avoid collition with other values.
+    uint64_t hash_value = 0;
+    if (value == 0.0) [[unlikely]] {
+        hash_value = std::hash<double>{}(FALSE_NAN); 
+    } else {
+        hash_value = JsonFloatCompact::free_hash(value);
+    }
+
     std::lock_guard lock(mutex_);
     auto it = hash_to_index_map_.find(hash_value);
     if (it != hash_to_index_map_.end())
