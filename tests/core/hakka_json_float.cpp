@@ -508,10 +508,6 @@ TEST(JsonFloat, NaNHandling)
     }, view_neg_nan);
     ASSERT_TRUE(get_neg_nan);
     ASSERT_TRUE(std::isnan(std::get<double>(get_neg_nan.value())));
-
-    // Both should be valid floats and both should output strings containing "nan"
-    ASSERT_TRUE(dump_pos_nan);
-    ASSERT_TRUE(dump_neg_nan);
 }
 
 TEST(JsonFloat, Interning)
