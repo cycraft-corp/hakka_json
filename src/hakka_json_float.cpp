@@ -7,6 +7,8 @@
 #include <cstring>
 #include <string>
 #include <cstdio>
+#include <cmath>
+#include <limits>
 
 using namespace hakka;
 
@@ -25,6 +27,24 @@ JsonFloatCompact::JsonFloatCompact(ValueType value) : JsonPrimitiveCompact(value
 JsonFloatCompact::~JsonFloatCompact() { dec_ref(); }
 
 JsonHandleCompact JsonFloatCompact::create(ValueType value) {
+    // Normalize NaN values to avoid collision with special NaN-boxed values (NULL, TRUE, FALSE, INVALID)
+    // If the value is NaN and matches one of our special NaN patterns, convert it to a canonical positive NaN
+    if (std::isnan(value))
+    {
+        uint64_t bits = std::bit_cast<uint64_t>(value);
+        uint64_t null_nan_bits = std::bit_cast<uint64_t>(NULL_NAN);
+        uint64_t true_nan_bits = std::bit_cast<uint64_t>(TRUE_NAN);
+        uint64_t false_nan_bits = std::bit_cast<uint64_t>(FALSE_NAN);
+        uint64_t invalid_nan_bits = std::bit_cast<uint64_t>(INVALID_NAN);
+        
+        // If the NaN value collides with any special NaN, normalize it to a canonical positive NaN
+        if (bits == null_nan_bits || bits == true_nan_bits || bits == false_nan_bits || bits == invalid_nan_bits)
+        {
+            // Use the standard positive quiet NaN (0x7ff8000000000000) which doesn't collide
+            value = std::numeric_limits<double>::quiet_NaN();
+        }
+    }
+    
     return JsonHandleCompact(ScalarManagerCompact::get_instance().create(std::move(value)));
 }
 

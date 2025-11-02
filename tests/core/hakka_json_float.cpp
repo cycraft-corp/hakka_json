@@ -455,6 +455,65 @@ TEST(JsonFloat, SpecialValues)
     ASSERT_NE(dump_nan.value().find("nan"), std::string::npos);
 }
 
+TEST(JsonFloat, NaNHandling)
+{
+    // Test positive NaN (quiet_NaN)
+    auto json_pos_nan = JsonFloatCompact::create(std::numeric_limits<double>::quiet_NaN());
+    ASSERT_TRUE(json_pos_nan);
+    ASSERT_EQ(json_pos_nan.get_type(), HakkaJsonType::HAKKA_JSON_FLOAT);
+
+    auto view_pos_nan = json_pos_nan.get_view();
+    auto dump_pos_nan = std::visit([](auto&& ptr) -> tl::expected<std::string, HakkaJsonResultEnum> {
+        using T = std::decay_t<decltype(ptr)>;
+        if constexpr (std::is_same_v<T, const JsonFloatCompact*>) {
+            return ptr->dump(512);
+        }
+        return tl::make_unexpected(HAKKA_JSON_TYPE_ERROR);
+    }, view_pos_nan);
+    ASSERT_TRUE(dump_pos_nan);
+    ASSERT_NE(dump_pos_nan.value().find("nan"), std::string::npos);
+
+    auto get_pos_nan = std::visit([](auto&& ptr) -> tl::expected<PrimitiveType, HakkaJsonResultEnum> {
+        using T = std::decay_t<decltype(ptr)>;
+        if constexpr (std::is_same_v<T, const JsonFloatCompact*>) {
+            return ptr->get();
+        }
+        return tl::make_unexpected(HAKKA_JSON_TYPE_ERROR);
+    }, view_pos_nan);
+    ASSERT_TRUE(get_pos_nan);
+    ASSERT_TRUE(std::isnan(std::get<double>(get_pos_nan.value())));
+
+    // Test negative NaN (-quiet_NaN)
+    auto json_neg_nan = JsonFloatCompact::create(-std::numeric_limits<double>::quiet_NaN());
+    ASSERT_TRUE(json_neg_nan);
+    ASSERT_EQ(json_neg_nan.get_type(), HakkaJsonType::HAKKA_JSON_FLOAT);
+
+    auto view_neg_nan = json_neg_nan.get_view();
+    auto dump_neg_nan = std::visit([](auto&& ptr) -> tl::expected<std::string, HakkaJsonResultEnum> {
+        using T = std::decay_t<decltype(ptr)>;
+        if constexpr (std::is_same_v<T, const JsonFloatCompact*>) {
+            return ptr->dump(512);
+        }
+        return tl::make_unexpected(HAKKA_JSON_TYPE_ERROR);
+    }, view_neg_nan);
+    ASSERT_TRUE(dump_neg_nan);
+    ASSERT_NE(dump_neg_nan.value().find("nan"), std::string::npos);
+
+    auto get_neg_nan = std::visit([](auto&& ptr) -> tl::expected<PrimitiveType, HakkaJsonResultEnum> {
+        using T = std::decay_t<decltype(ptr)>;
+        if constexpr (std::is_same_v<T, const JsonFloatCompact*>) {
+            return ptr->get();
+        }
+        return tl::make_unexpected(HAKKA_JSON_TYPE_ERROR);
+    }, view_neg_nan);
+    ASSERT_TRUE(get_neg_nan);
+    ASSERT_TRUE(std::isnan(std::get<double>(get_neg_nan.value())));
+
+    // Both should be valid floats and both should output strings containing "nan"
+    ASSERT_TRUE(dump_pos_nan);
+    ASSERT_TRUE(dump_neg_nan);
+}
+
 TEST(JsonFloat, Interning)
 {
     auto json_float1 = JsonFloatCompact::create(42.42);

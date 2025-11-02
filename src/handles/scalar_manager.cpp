@@ -8,6 +8,9 @@
 #include <cstring>
 #include <algorithm>
 #include <array>
+#include <cmath>
+#include <bit>
+#include <limits>
 
 using namespace hakka;
 
