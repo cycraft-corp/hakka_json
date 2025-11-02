@@ -7,7 +7,6 @@ set(TEST_SOURCES
     hakka_json_invalid.cpp
     hakka_json_null.cpp
     hakka_json_object.cpp
-    hakka_json_python_hashing.cpp
     hakka_json_string.cpp
 )
 

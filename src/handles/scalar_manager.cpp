@@ -190,21 +190,12 @@ HandleManagerToken detail::JsonHandleManagerIntCompact::create(int64_t &&value)
     auto it = hash_to_index_map_.find(hash_value);
     if (it != hash_to_index_map_.end())
     {
-        // For integers, hash collisions should be rare with std::hash
-        // but check for exact match anyway
-        const auto &indices = it->second;
-        for (const auto &index_of_active : indices)
-        {
-            const auto *existing = handles_[index_of_active].get<JsonIntCompact>();
-            if (existing->value_ == value)
-            {
-                existing->inc_ref();
-                return static_cast<HandleManagerToken>(index_of_active) | int_mask;
-            }
-        }
+        const auto &index_of_active = it->second;
+        handles_[index_of_active].get<JsonIntCompact>()->inc_ref();
+        return static_cast<HandleManagerToken>(index_of_active) | int_mask;
     }
 
-    // No exact match found, create new entry
+    // try to get a free index
     size_t index = static_cast<size_t>(-1);
     if (!freelist_.empty())
     {
@@ -219,7 +210,7 @@ HandleManagerToken detail::JsonHandleManagerIntCompact::create(int64_t &&value)
         handles_.emplace_back(JsonIntCompact::create_unique(std::move(value)));
     }
 
-    hash_to_index_map_[hash_value].push_back(index);
+    hash_to_index_map_[hash_value] = index;
     return static_cast<HandleManagerToken>(index) | int_mask;
 }
 
@@ -248,21 +239,8 @@ void detail::JsonHandleManagerIntCompact::release(HandleManagerToken token)
     if (target.get<JsonIntCompact>()->dec_ref() != 0)
         return; // No need to shrink the vector if nothing is released
 
-    // Release the object - remove from hash map
-    auto hash_value = target.get<JsonIntCompact>()->hash();
-    auto it = hash_to_index_map_.find(hash_value);
-    if (it != hash_to_index_map_.end())
-    {
-        auto &indices = it->second;
-        // Remove this index from the vector
-        indices.erase(std::remove(indices.begin(), indices.end(), static_cast<size_t>(index)), indices.end());
-        // If the vector is now empty, remove the hash entry entirely
-        if (indices.empty())
-        {
-            hash_to_index_map_.erase(it);
-        }
-    }
-    
+    // Release the object
+    hash_to_index_map_.erase(target.get<JsonIntCompact>()->hash());
     freelist_.push_back(index);
     std::push_heap(freelist_.begin(), freelist_.end(), std::greater<size_t>());
     handles_[index].emplace(nullptr); // unique_ptr will delete the object
@@ -299,25 +277,12 @@ HandleManagerToken detail::JsonHandleManagerFloatCompact::create(double &&value)
     auto it = hash_to_index_map_.find(hash_value);
     if (it != hash_to_index_map_.end())
     {
-        // Check all indices with this hash for an exact match (bitwise comparison for floats/NaNs)
-        const auto &indices = it->second;
-        uint64_t value_bits = std::bit_cast<uint64_t>(value);
-        
-        for (const auto &index_of_active : indices)
-        {
-            const auto *existing = handles_[index_of_active].get<JsonFloatCompact>();
-            uint64_t existing_bits = std::bit_cast<uint64_t>(existing->value_);
-            
-            if (value_bits == existing_bits)
-            {
-                // Found exact match, reuse it
-                existing->inc_ref();
-                return static_cast<HandleManagerToken>(index_of_active) | float_mask;
-            }
-        }
+        const auto &index_of_active = it->second;
+        handles_[index_of_active].get<JsonFloatCompact>()->inc_ref();
+        return static_cast<HandleManagerToken>(index_of_active) | float_mask;
     }
 
-    // No exact match found, create new entry
+    // try to get a free index
     size_t index = static_cast<size_t>(-1);
     if (!freelist_.empty())
     {
@@ -332,7 +297,7 @@ HandleManagerToken detail::JsonHandleManagerFloatCompact::create(double &&value)
         handles_.emplace_back(JsonFloatCompact::create_unique(std::move(value)));
     }
 
-    hash_to_index_map_[hash_value].push_back(index);
+    hash_to_index_map_[hash_value] = index;
     return static_cast<HandleManagerToken>(index) | float_mask;
 }
 
@@ -360,21 +325,8 @@ void detail::JsonHandleManagerFloatCompact::release(HandleManagerToken token)
     if (target.get<JsonFloatCompact>()->dec_ref() != 0)
         return; // No need to shrink the vector if nothing is released
 
-    // Release the object - remove from hash map
-    auto hash_value = target.get<JsonFloatCompact>()->hash();
-    auto it = hash_to_index_map_.find(hash_value);
-    if (it != hash_to_index_map_.end())
-    {
-        auto &indices = it->second;
-        // Remove this index from the vector
-        indices.erase(std::remove(indices.begin(), indices.end(), static_cast<size_t>(index)), indices.end());
-        // If the vector is now empty, remove the hash entry entirely
-        if (indices.empty())
-        {
-            hash_to_index_map_.erase(it);
-        }
-    }
-    
+    // Release the object
+    hash_to_index_map_.erase(target.get<JsonFloatCompact>()->hash());
     freelist_.push_back(index);
     std::push_heap(freelist_.begin(), freelist_.end(), std::greater<size_t>());
     handles_[index].emplace(nullptr); // unique_ptr will delete the object

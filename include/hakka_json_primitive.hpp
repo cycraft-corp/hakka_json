@@ -28,7 +28,8 @@ public:
     };
     bool is_valid() const { return true; }
 
-    T value_;  // Made public for manager access (used for value comparison during interning)
+protected:
+    T value_;
     mutable std::atomic<uint64_t> ref_count = 1;
 };
 

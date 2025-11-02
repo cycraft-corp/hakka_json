@@ -162,25 +162,19 @@ uint64_t JsonFloatCompact::dump_size_impl() const
 
 uint64_t JsonFloatCompact::free_hash(double value)
 {
-    // Python-compatible hashing: ensure values that are equal have the same hash
-    
-    // Handle special NaN values (for bool representation)
-    // In Python, False == 0 and True == 1, so they should hash the same
-    if (is_exact_nan_value(value, FALSE_NAN)) {
-        return std::hash<int64_t>{}(0);
-    }
-    if (is_exact_nan_value(value, TRUE_NAN)) {
-        return std::hash<int64_t>{}(1);
-    }
-    
-    // For other special NaNs (NULL_NAN, INVALID_NAN), hash their bit representation
-    if (is_exact_nan_value(value, NULL_NAN) || is_exact_nan_value(value, INVALID_NAN)) {
+    // Check if this is a NaN-boxed sentinel value (False, True, Null, Invalid)
+    // These get unique hashes based on their bit patterns to avoid collisions
+    if (is_exact_nan_value(value, FALSE_NAN) || 
+        is_exact_nan_value(value, TRUE_NAN) ||
+        is_exact_nan_value(value, NULL_NAN) || 
+        is_exact_nan_value(value, INVALID_NAN)) {
+        // Hash the bit representation to get a unique value
         uint64_t val_bits = std::bit_cast<uint64_t>(value);
         return std::hash<uint64_t>{}(val_bits);
     }
     
     // For regular floats: if the value is an exact integer, hash it as an integer
-    // This ensures hash(0.0) == hash(0), hash(1.0) == hash(1), etc.
+    // This provides better interoperability with integer types
     double intpart;
     if (std::modf(value, &intpart) == 0.0 && std::isfinite(value)) {
         // Value is an integer-valued float

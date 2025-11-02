@@ -41,21 +41,8 @@ void StringManagerCompact::release(HandleManagerToken token)
     if (target.get<JsonStringCompact>()->dec_ref() != 0)
         return; // No need to shrink the vector if nothing is released
 
-    // Release the object - remove from hash map
-    auto hash_value = target.get<JsonStringCompact>()->hash();
-    auto it = hash_to_index_map_.find(hash_value);
-    if (it != hash_to_index_map_.end())
-    {
-        auto &indices = it->second;
-        // Remove this index from the vector
-        indices.erase(std::remove(indices.begin(), indices.end(), static_cast<size_t>(index)), indices.end());
-        // If the vector is now empty, remove the hash entry entirely
-        if (indices.empty())
-        {
-            hash_to_index_map_.erase(it);
-        }
-    }
-    
+    // Release the object
+    hash_to_index_map_.erase(target.get<JsonStringCompact>()->hash());
     freelist_.push_back(index);
     std::push_heap(freelist_.begin(), freelist_.end(), std::greater<size_t>());
     handles_[index].emplace(nullptr);
@@ -92,20 +79,12 @@ HandleManagerToken StringManagerCompact::create(std::string_view value)
     auto it = hash_to_index_map_.find(hash_value);
     if (it != hash_to_index_map_.end())
     {
-        // Check all indices with this hash for an exact match
-        const auto &indices = it->second;
-        for (const auto &token : indices)
-        {
-            const auto *existing = handles_[token].get<JsonStringCompact>();
-            if (existing->value_.to_string_view() == value)
-            {
-                existing->inc_ref();
-                return static_cast<HandleManagerToken>(token) | string_mask;
-            }
-        }
+        auto token = it->second;
+        handles_[token].get<JsonStringCompact>()->inc_ref();
+        return static_cast<HandleManagerToken>(token) | string_mask;
     }
 
-    // No exact match found, create new entry
+    // try to get a free index
     size_t index = static_cast<size_t>(-1);
     if (!freelist_.empty())
     {
@@ -120,7 +99,7 @@ HandleManagerToken StringManagerCompact::create(std::string_view value)
         handles_.emplace_back(JsonStringCompact::create_unique(value));
     }
 
-    hash_to_index_map_[hash_value].push_back(index);
+    hash_to_index_map_[hash_value] = index;
     return static_cast<HandleManagerToken>(index) | string_mask;
 }
 
