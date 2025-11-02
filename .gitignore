@@ -4,3 +4,4 @@ build/
 target/release/
 target/debug/
 .cache/
+_codeql_detected_source_root
