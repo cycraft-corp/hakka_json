@@ -487,3 +487,77 @@ TEST(JsonFloat, PerformanceTest)
         ASSERT_EQ(*result, 0);
     }
 }
+
+TEST(JsonFloat, HashConsistency)
+{
+    // Test that regular floats and NaN-boxed sentinels have distinct hashes
+    // This prevents hash collisions in the interning table
+    
+    auto float_zero = JsonFloatCompact::create(0.0);
+    auto json_false = JsonFloatCompact::create(false);
+    auto json_true = JsonFloatCompact::create(true);
+    auto float_one = JsonFloatCompact::create(1.0);
+    
+    ASSERT_TRUE(float_zero);
+    ASSERT_TRUE(json_false);
+    ASSERT_TRUE(json_true);
+    ASSERT_TRUE(float_one);
+    
+    // Get hash values
+    auto view_float_zero = float_zero.get_view();
+    auto hash_float_zero = std::visit([](auto&& ptr) -> uint64_t {
+        using T = std::decay_t<decltype(ptr)>;
+        if constexpr (std::is_same_v<T, const JsonFloatCompact*>) {
+            return ptr->hash();
+        }
+        else if constexpr (std::is_same_v<T, const JsonBoolCompact*>) {
+            return reinterpret_cast<const JsonFloatCompact*>(ptr)->hash();
+        }
+        return 0;
+    }, view_float_zero);
+    
+    auto view_false = json_false.get_view();
+    auto hash_false = std::visit([](auto&& ptr) -> uint64_t {
+        using T = std::decay_t<decltype(ptr)>;
+        if constexpr (std::is_same_v<T, const JsonFloatCompact*>) {
+            return ptr->hash();
+        }
+        else if constexpr (std::is_same_v<T, const JsonBoolCompact*>) {
+            return reinterpret_cast<const JsonFloatCompact*>(ptr)->hash();
+        }
+        return 0;
+    }, view_false);
+    
+    auto view_true = json_true.get_view();
+    auto hash_true = std::visit([](auto&& ptr) -> uint64_t {
+        using T = std::decay_t<decltype(ptr)>;
+        if constexpr (std::is_same_v<T, const JsonFloatCompact*>) {
+            return ptr->hash();
+        }
+        else if constexpr (std::is_same_v<T, const JsonBoolCompact*>) {
+            return reinterpret_cast<const JsonFloatCompact*>(ptr)->hash();
+        }
+        return 0;
+    }, view_true);
+    
+    auto view_float_one = float_one.get_view();
+    auto hash_float_one = std::visit([](auto&& ptr) -> uint64_t {
+        using T = std::decay_t<decltype(ptr)>;
+        if constexpr (std::is_same_v<T, const JsonFloatCompact*>) {
+            return ptr->hash();
+        }
+        else if constexpr (std::is_same_v<T, const JsonBoolCompact*>) {
+            return reinterpret_cast<const JsonFloatCompact*>(ptr)->hash();
+        }
+        return 0;
+    }, view_float_one);
+    
+    // NaN-boxed sentinels should have different hashes from regular floats
+    // This prevents hash collisions in the interning table
+    ASSERT_NE(hash_false, hash_float_zero) << "False and 0.0 must have different hashes";
+    ASSERT_NE(hash_true, hash_float_one) << "True and 1.0 must have different hashes";
+    
+    // The values should still be distinct objects
+    ASSERT_NE(static_cast<uint64_t>(json_false), static_cast<uint64_t>(float_zero));
+    ASSERT_NE(static_cast<uint64_t>(json_true), static_cast<uint64_t>(float_one));
+}
