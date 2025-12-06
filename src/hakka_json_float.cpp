@@ -4,6 +4,7 @@
 #include <handles/strict_fp_block.hpp>
 
 #include <bit>
+#include <cmath>
 #include <cstring>
 #include <string>
 #include <cstdio>
@@ -183,7 +184,29 @@ uint64_t JsonFloatCompact::dump_size_impl() const
 
 uint64_t JsonFloatCompact::free_hash(double value)
 {
-    // Hash the bit representation directly to ensure special NaNs have unique hashes
+    // Check if this is a NaN-boxed sentinel value (False, True, Null, Invalid)
+    // These get unique hashes based on their bit patterns to avoid collisions
+    if (is_exact_nan_value(value, FALSE_NAN) || 
+        is_exact_nan_value(value, TRUE_NAN) ||
+        is_exact_nan_value(value, NULL_NAN) || 
+        is_exact_nan_value(value, INVALID_NAN)) {
+        // Hash the bit representation to get a unique value
+        uint64_t val_bits = std::bit_cast<uint64_t>(value);
+        return std::hash<uint64_t>{}(val_bits);
+    }
+    
+    // For regular floats: if the value is an exact integer, hash it as an integer
+    // This provides better interoperability with integer types
+    double intpart;
+    if (std::modf(value, &intpart) == 0.0 && std::isfinite(value)) {
+        // Value is an integer-valued float
+        if (value >= static_cast<double>(INT64_MIN) && value <= static_cast<double>(INT64_MAX)) {
+            int64_t int_val = static_cast<int64_t>(value);
+            return std::hash<int64_t>{}(int_val);
+        }
+    }
+    
+    // For non-integer floats, hash the bit representation
     uint64_t val_bits = std::bit_cast<uint64_t>(value);
     return std::hash<uint64_t>{}(val_bits);
 }
