@@ -4,8 +4,8 @@ import path from 'path'
 
 export default defineConfig(({ command }) => ({
   plugins: [react()],
-  // Base path: '/' for dev, '/nvl-compare/' for production build
-  base: command === 'serve' ? '/' : '/nvl-compare/',
+  // Base path: '/' for dev, '/hakka_json/nvl-compare/' for GitHub Pages production
+  base: command === 'serve' ? '/' : '/hakka_json/nvl-compare/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -22,4 +22,10 @@ export default defineConfig(({ command }) => ({
     target: 'es2020',
   },
   publicDir: 'public',
+  optimizeDeps: {
+    include: ['@neo4j-nvl/base', '@neo4j-nvl/react', '@neo4j-nvl/interaction-handlers'],
+  },
+  worker: {
+    format: 'es',
+  },
 }))
