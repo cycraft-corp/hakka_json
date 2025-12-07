@@ -1,6 +1,11 @@
 # ICU Dependency Resolution
 # Handles ICU resolution via find_package() with fallback to ExternalProject
 #
+# IMPORTANT: Static linking third-party libraries is a major principle in this repository.
+# ICU must be built with --disable-renaming for static linking to work correctly.
+# Most system ICU packages are built WITH renaming enabled, which causes symbol mismatch
+# when statically linking. Therefore, ExternalProject is preferred by default.
+#
 # Exports:
 #   HAKKA_ICU_USING_SYSTEM - TRUE if using system ICU, FALSE otherwise
 #   HAKKA_ICU_USING_FETCH - TRUE if using ExternalProject ICU, FALSE otherwise
@@ -20,12 +25,14 @@ if(HAKKA_JSON_FORCE_FETCH_CONTENT)
     set(_use_external_project TRUE)
 elseif(HAKKA_JSON_FORCE_SYSTEM_DEPS)
     message(STATUS "ICU: FORCE_SYSTEM_DEPS enabled, requiring system package")
+    message(WARNING "ICU: System ICU may have symbol renaming enabled, which can cause linking issues with static builds. If you encounter undefined reference errors, use FORCE_FETCH_CONTENT instead.")
     set(_use_find_package TRUE)
     set(_require_system TRUE)
 elseif(HAKKA_JSON_USE_SYSTEM_DEPS)
-    message(STATUS "ICU: Trying system package first")
-    set(_use_find_package TRUE)
-    set(_require_system FALSE)
+    # For ICU, prefer ExternalProject to ensure --disable-renaming for static linking
+    # Only try system package if explicitly configured
+    message(STATUS "ICU: Preferring ExternalProject for static linking compatibility")
+    set(_use_external_project TRUE)
 else()
     message(STATUS "ICU: USE_SYSTEM_DEPS disabled, using ExternalProject")
     set(_use_external_project TRUE)
