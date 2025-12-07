@@ -2,10 +2,10 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [react()],
-  // Base path for GitHub Pages deployment under /nvl-compare/
-  base: '/nvl-compare/',
+  // Base path: '/' for dev, '/nvl-compare/' for production build
+  base: command === 'serve' ? '/' : '/nvl-compare/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -22,4 +22,4 @@ export default defineConfig({
     target: 'es2020',
   },
   publicDir: 'public',
-})
+}))
