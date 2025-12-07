@@ -1,0 +1,8 @@
+{
+    global:
+        # Export only hakka_* symbols for C API
+        hakka_*;
+    local:
+        # Hide all other symbols (including C++ and third-party)
+        *;
+};

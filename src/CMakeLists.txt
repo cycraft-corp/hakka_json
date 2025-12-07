@@ -15,6 +15,13 @@ add_library(hakka_json_core STATIC
     json_deserializer.cpp
 )
 
+# Set visibility presets for static library (symbols hidden by default)
+set_target_properties(hakka_json_core PROPERTIES
+    CXX_VISIBILITY_PRESET hidden
+    C_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN ON
+)
+
 # Include directories
 target_include_directories(hakka_json_core
     PUBLIC
@@ -39,23 +46,15 @@ if(HAKKA_JSON_ENABLE_COVERAGE)
     target_link_libraries(hakka_json_core PRIVATE hakka_json::coverage_options)
 endif()
 
-# ICU dependencies - platform specific library names
-add_dependencies(hakka_json_core icu_project_libs)
-target_include_directories(hakka_json_core PRIVATE ${ICU_INCLUDE_DIR})
-
-if(WIN32)
-    target_link_libraries(hakka_json_core PRIVATE
-        "${ICU_LIB_DIR}/icuin$<$<CONFIG:Debug>:d>.lib"
-        "${ICU_LIB_DIR}/icuuc$<$<CONFIG:Debug>:d>.lib"
-        "${ICU_LIB_DIR}/icudt.lib"
-        "${ICU_LIB_DIR}/icuio$<$<CONFIG:Debug>:d>.lib"
-        "${ICU_LIB_DIR}/icutu$<$<CONFIG:Debug>:d>.lib"
-    )
-else()
-    target_link_libraries(hakka_json_core PRIVATE
-        icutu icui18n icuio icuuc icudata
-    )
+# ICU dependencies
+if(HAKKA_ICU_USING_FETCH)
+    # When using ExternalProject, add explicit dependencies and includes
+    add_dependencies(hakka_json_core icu_project_libs)
+    target_include_directories(hakka_json_core PRIVATE ${ICU_INCLUDE_DIR})
 endif()
+
+# Link ICU libraries (works for both system and ExternalProject)
+target_link_libraries(hakka_json_core PRIVATE ${HAKKA_ICU_LIBRARIES})
 
 # GCC needs atomic
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

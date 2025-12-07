@@ -5,11 +5,25 @@ add_library(hakka_json SHARED
     hakka_json_primitive.cpp
 )
 
-# Windows: Export all symbols to generate import library
+# Symbol visibility settings for shared library
 if(WIN32)
-    set_target_properties(hakka_json PROPERTIES
-        WINDOWS_EXPORT_ALL_SYMBOLS ON
-    )
+    # Windows: Use export header for selective symbol export
+    target_compile_definitions(hakka_json PRIVATE HAKKA_JSON_BUILDING_DLL)
+    # Note: WINDOWS_EXPORT_ALL_SYMBOLS is intentionally NOT used for controlled exports
+else()
+    # Linux: Use version script to export only hakka_* symbols
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        set_target_properties(hakka_json PROPERTIES
+            LINK_FLAGS "-Wl,--version-script=${CMAKE_SOURCE_DIR}/cmake/exports_linux.map"
+        )
+    endif()
+    
+    # macOS: Use exported symbols list
+    if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+        set_target_properties(hakka_json PROPERTIES
+            LINK_FLAGS "-Wl,-exported_symbols_list,${CMAKE_SOURCE_DIR}/cmake/exports_macos.exp"
+        )
+    endif()
 endif()
 
 # Include directories
@@ -32,33 +46,26 @@ if(HAKKA_JSON_ENABLE_COVERAGE)
     target_link_libraries(hakka_json PRIVATE hakka_json::coverage_options)
 endif()
 
-# ICU dependencies (explicit, same as core)
-add_dependencies(hakka_json icu_project_libs)
-target_include_directories(hakka_json PRIVATE ${ICU_INCLUDE_DIR})
-
-if(WIN32)
-    # Link ICU import libraries directly by full path to ensure they're found
-    # Debug builds have 'd' suffix
-    target_link_libraries(hakka_json PRIVATE
-        "${ICU_LIB_DIR}/icuin$<$<CONFIG:Debug>:d>.lib"
-        "${ICU_LIB_DIR}/icuuc$<$<CONFIG:Debug>:d>.lib"
-        "${ICU_LIB_DIR}/icudt.lib"
-        "${ICU_LIB_DIR}/icuio$<$<CONFIG:Debug>:d>.lib"
-        "${ICU_LIB_DIR}/icutu$<$<CONFIG:Debug>:d>.lib"
-    )
-    # Copy all ICU DLLs to output directory (including versioned ones)
-    add_custom_command(TARGET hakka_json POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${ICU_INSTALL_DIR}/bin"
-            $<TARGET_FILE_DIR:hakka_json>
-        COMMENT "Copied all ICU DLLs to capi output directory"
-        VERBATIM
-    )
-else()
-    target_link_libraries(hakka_json PRIVATE
-        icutu icui18n icuio icuuc icudata
-    )
+# ICU dependencies
+if(HAKKA_ICU_USING_FETCH)
+    # When using ExternalProject, add explicit dependencies and includes
+    add_dependencies(hakka_json icu_project_libs)
+    target_include_directories(hakka_json PRIVATE ${ICU_INCLUDE_DIR})
+    
+    # Copy ICU DLLs to output directory on Windows
+    if(WIN32)
+        add_custom_command(TARGET hakka_json POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${ICU_INSTALL_DIR}/bin"
+                $<TARGET_FILE_DIR:hakka_json>
+            COMMENT "Copied all ICU DLLs to capi output directory"
+            VERBATIM
+        )
+    endif()
 endif()
+
+# Link ICU libraries (works for both system and ExternalProject)
+target_link_libraries(hakka_json PRIVATE ${HAKKA_ICU_LIBRARIES})
 
 # GCC needs atomic
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

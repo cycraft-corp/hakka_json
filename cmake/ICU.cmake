@@ -191,8 +191,34 @@ if (WIN32)
             IMPORTED_LOCATION "${ICU_INSTALL_DIR}/bin/${lib}.dll"
             IMPORTED_IMPLIB "${LIB_IMPORT_PATH}"
         )
+        # Add U_STATIC_IMPLEMENTATION for static builds (though Windows uses shared by default)
+        if(BUILD_SHARED_LIBS)
+            set_target_properties(${lib} PROPERTIES
+                INTERFACE_COMPILE_DEFINITIONS ""
+            )
+        else()
+            set_target_properties(${lib} PROPERTIES
+                INTERFACE_COMPILE_DEFINITIONS "U_STATIC_IMPLEMENTATION"
+            )
+        endif()
         add_dependencies(${lib} icu_project)
         add_dependencies(icu_project_libs ${lib})
+        
+        # Create ICU:: alias for consistency
+        if(NOT TARGET ICU::${lib})
+            # Map library name to component name
+            if(lib STREQUAL "icutu")
+                add_library(ICU::tu ALIAS ${lib})
+            elseif(lib STREQUAL "icuin")
+                add_library(ICU::i18n ALIAS ${lib})
+            elseif(lib STREQUAL "icuio")
+                add_library(ICU::io ALIAS ${lib})
+            elseif(lib STREQUAL "icuuc")
+                add_library(ICU::uc ALIAS ${lib})
+            elseif(lib STREQUAL "icudt")
+                add_library(ICU::data ALIAS ${lib})
+            endif()
+        endif()
     endforeach(lib ${ICU_WINDOWS_LIBRARY_NAMES})
 else()
     # On Unix-like systems, libraries have .a extension
@@ -216,10 +242,35 @@ else()
         set_target_properties(${lib}_shared PROPERTIES 
             IMPORTED_LOCATION "${LIB_SHARED_PATH}"
         )
+        
+        # Add U_STATIC_IMPLEMENTATION for static builds
+        set_target_properties(${lib} PROPERTIES
+            INTERFACE_COMPILE_DEFINITIONS "U_STATIC_IMPLEMENTATION"
+        )
+        # Shared libraries don't need U_STATIC_IMPLEMENTATION
+        set_target_properties(${lib}_shared PROPERTIES
+            INTERFACE_COMPILE_DEFINITIONS ""
+        )
 
         add_dependencies(${lib} icu_project)
         add_dependencies(${lib}_shared icu_project)
         add_dependencies(icu_project_libs ${lib} ${lib}_shared)
+        
+        # Create ICU:: alias for consistency
+        if(NOT TARGET ICU::${lib})
+            # Map library name to component name
+            if(lib STREQUAL "icutu")
+                add_library(ICU::tu ALIAS ${lib})
+            elseif(lib STREQUAL "icui18n")
+                add_library(ICU::i18n ALIAS ${lib})
+            elseif(lib STREQUAL "icuio")
+                add_library(ICU::io ALIAS ${lib})
+            elseif(lib STREQUAL "icuuc")
+                add_library(ICU::uc ALIAS ${lib})
+            elseif(lib STREQUAL "icudata")
+                add_library(ICU::data ALIAS ${lib})
+            endif()
+        endif()
     endforeach()
 endif()
 set(ICU_LIBRARIES "${ICU_LIBRARIES}" PARENT_SCOPE)

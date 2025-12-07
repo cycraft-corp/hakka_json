@@ -1,0 +1,3 @@
+# Export only hakka_* symbols for C API
+# macOS exported symbols list format
+_hakka_*
