@@ -4,11 +4,8 @@ import { ImplementationSelector } from './ImplementationSelector';
 import { StatsPanel } from './StatsPanel';
 import { Legend } from './Legend';
 import { JsonInput } from './JsonInput';
-import { useGraphData } from '../hooks/useGraphData';
 import { useGraphGenerator, useTheme } from '../hooks';
 import type { ImplementationId, NvlNode as GraphNode, GraphData } from '../types/graph';
-
-export type DataMode = 'static' | 'dynamic';
 
 export interface ComparisonViewProps {
   /** Initial left panel implementation */
@@ -21,15 +18,13 @@ export interface ComparisonViewProps {
   showLegend?: boolean;
   /** Callback when node is clicked in either panel */
   onNodeClick?: (node: GraphNode, side: 'left' | 'right') => void;
-  /** Initial data mode */
-  initialMode?: DataMode;
   /** Additional CSS classes */
   className?: string;
 }
 
 /**
  * Side-by-side comparison view for JSON library memory graphs
- * Supports both static (pre-computed) and dynamic (user input) modes
+ * Users enter JSON and see real-time memory graph generation
  *
  * @example
  * ```tsx
@@ -38,7 +33,6 @@ export interface ComparisonViewProps {
  *   initialRight="serde_json"
  *   graphHeight={500}
  *   showLegend
- *   initialMode="dynamic"
  * />
  * ```
  */
@@ -48,12 +42,8 @@ export function ComparisonView({
   graphHeight = 500,
   showLegend = true,
   onNodeClick,
-  initialMode = 'dynamic',
   className = '',
 }: ComparisonViewProps): JSX.Element {
-  // Data mode toggle
-  const [mode, setMode] = useState<DataMode>(initialMode);
-
   // Selected implementations
   const [leftImpl, setLeftImpl] = useState<ImplementationId>(initialLeft);
   const [rightImpl, setRightImpl] = useState<ImplementationId>(initialRight);
@@ -103,10 +93,6 @@ export function ComparisonView({
     document.body.style.userSelect = 'none';
   }, [inputHeight]);
 
-  // Static data (from files)
-  const leftStaticData = useGraphData(leftImpl);
-  const rightStaticData = useGraphData(rightImpl);
-
   // Dynamic data (from user input)
   const {
     jsonInput,
@@ -117,24 +103,16 @@ export function ComparisonView({
     setSample,
   } = useGraphGenerator();
 
-  // Generate dynamic graphs when JSON changes
-  const leftDynamicData = useMemo<GraphData | null>(() => {
-    if (mode !== 'dynamic' || !isValid) return null;
+  // Generate graphs when JSON changes
+  const leftData = useMemo<GraphData | null>(() => {
+    if (!isValid) return null;
     return generateFor(leftImpl);
-  }, [mode, isValid, generateFor, leftImpl]);
+  }, [isValid, generateFor, leftImpl]);
 
-  const rightDynamicData = useMemo<GraphData | null>(() => {
-    if (mode !== 'dynamic' || !isValid) return null;
+  const rightData = useMemo<GraphData | null>(() => {
+    if (!isValid) return null;
     return generateFor(rightImpl);
-  }, [mode, isValid, generateFor, rightImpl]);
-
-  // Select active data based on mode
-  const leftData = mode === 'static' ? leftStaticData.data : leftDynamicData;
-  const rightData = mode === 'static' ? rightStaticData.data : rightDynamicData;
-  const leftLoading = mode === 'static' && leftStaticData.loading;
-  const rightLoading = mode === 'static' && rightStaticData.loading;
-  const leftError = mode === 'static' ? leftStaticData.error : null;
-  const rightError = mode === 'static' ? rightStaticData.error : null;
+  }, [isValid, generateFor, rightImpl]);
 
   // Handle node hover - highlight matching values across panels
   const handleNodeHover = useCallback((node: GraphNode | null) => {
@@ -174,7 +152,7 @@ export function ComparisonView({
 
   return (
     <div className={`flex flex-col h-screen transition-colors duration-200 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} ${className}`}>
-      {/* Header with mode toggle */}
+      {/* Header */}
       <header className={`px-8 py-4 border-b ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
         <div className="flex items-center justify-between">
           <div>
@@ -182,81 +160,45 @@ export function ComparisonView({
             <p className={`text-sm mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>HakkaJson vs Others</p>
           </div>
 
-          {/* Controls */}
-          <div className="flex items-center gap-4">
-            {/* Mode Toggle */}
-            <div className="flex items-center gap-2">
-              <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Data Mode:</span>
-              <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-slate-700' : 'border-slate-300'}`}>
-                <button
-                  onClick={() => setMode('static')}
-                  className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                    mode === 'static'
-                      ? 'bg-emerald-600 text-white'
-                      : isDark
-                      ? 'bg-slate-800 text-slate-400 hover:text-slate-200'
-                      : 'bg-slate-100 text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Static Files
-                </button>
-                <button
-                  onClick={() => setMode('dynamic')}
-                  className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                    mode === 'dynamic'
-                      ? 'bg-emerald-600 text-white'
-                      : isDark
-                      ? 'bg-slate-800 text-slate-400 hover:text-slate-200'
-                      : 'bg-slate-100 text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  User Input
-                </button>
-              </div>
-            </div>
-
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className={`p-2 rounded-lg transition-colors ${isDark ? 'bg-slate-800 hover:bg-slate-700' : 'bg-slate-200 hover:bg-slate-300'}`}
-              title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
-            >
-              {isDark ? (
-                <SunIcon className="w-5 h-5 text-amber-400" />
-              ) : (
-                <MoonIcon className="w-5 h-5 text-slate-600" />
-              )}
-            </button>
-          </div>
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className={`p-2 rounded-lg transition-colors ${isDark ? 'bg-slate-800 hover:bg-slate-700' : 'bg-slate-200 hover:bg-slate-300'}`}
+            title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+          >
+            {isDark ? (
+              <SunIcon className="w-5 h-5 text-amber-400" />
+            ) : (
+              <MoonIcon className="w-5 h-5 text-slate-600" />
+            )}
+          </button>
         </div>
       </header>
 
-      {/* JSON Input (only in dynamic mode) - resizable */}
-      {mode === 'dynamic' && (
-        <div className={`relative border-b ${isDark ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-100/50'}`}>
-          <div
-            className="px-8 py-4 overflow-auto"
-            style={{ height: inputHeight }}
-          >
-            <JsonInput
-              value={jsonInput}
-              onChange={setJsonInput}
-              error={parseError}
-              isValid={isValid}
-              onSelectSample={setSample}
-              isDark={isDark}
-            />
-          </div>
-          {/* Resize handle */}
-          <div
-            ref={resizeRef}
-            onMouseDown={handleResizeStart}
-            className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-emerald-500/30 transition-colors group"
-          >
-            <div className={`absolute left-1/2 -translate-x-1/2 bottom-0.5 w-12 h-1 rounded-full transition-colors ${isDark ? 'bg-slate-600' : 'bg-slate-400'} group-hover:bg-emerald-500`} />
-          </div>
+      {/* JSON Input - resizable */}
+      <div className={`relative border-b ${isDark ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-100/50'}`}>
+        <div
+          className="px-8 py-4 overflow-auto"
+          style={{ height: inputHeight }}
+        >
+          <JsonInput
+            value={jsonInput}
+            onChange={setJsonInput}
+            error={parseError}
+            isValid={isValid}
+            onSelectSample={setSample}
+            isDark={isDark}
+          />
         </div>
-      )}
+        {/* Resize handle */}
+        <div
+          ref={resizeRef}
+          onMouseDown={handleResizeStart}
+          className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-emerald-500/30 transition-colors group"
+        >
+          <div className={`absolute left-1/2 -translate-x-1/2 bottom-0.5 w-12 h-1 rounded-full transition-colors ${isDark ? 'bg-slate-600' : 'bg-slate-400'} group-hover:bg-emerald-500`} />
+        </div>
+      </div>
 
       {/* Main comparison area */}
       <div className="flex flex-1 gap-0 p-4 min-h-0">
@@ -273,9 +215,7 @@ export function ComparisonView({
           </div>
 
           <div className="flex-1 min-h-0 relative" style={{ height: graphHeight }}>
-            {leftLoading && <LoadingState />}
-            {leftError && <ErrorState error={leftError} />}
-            {mode === 'dynamic' && !isValid && <InvalidJsonState />}
+            {!isValid && <InvalidJsonState />}
             {leftData && (
               <GraphViewer
                 data={leftData}
@@ -310,9 +250,7 @@ export function ComparisonView({
           </div>
 
           <div className="flex-1 min-h-0 relative" style={{ height: graphHeight }}>
-            {rightLoading && <LoadingState />}
-            {rightError && <ErrorState error={rightError} />}
-            {mode === 'dynamic' && !isValid && <InvalidJsonState />}
+            {!isValid && <InvalidJsonState />}
             {rightData && (
               <GraphViewer
                 data={rightData}
@@ -338,28 +276,6 @@ export function ComparisonView({
           <Legend compact isDark={isDark} />
         </footer>
       )}
-    </div>
-  );
-}
-
-/** Loading state component */
-function LoadingState(): JSX.Element {
-  return (
-    <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-400">
-      <div className="w-8 h-8 border-3 border-slate-700 border-t-emerald-500 rounded-full animate-spin" />
-      <span>Loading graph data...</span>
-    </div>
-  );
-}
-
-/** Error state component */
-function ErrorState({ error }: { error: Error }): JSX.Element {
-  return (
-    <div className="flex flex-col items-center justify-center h-full gap-4 text-red-400">
-      <div className="w-8 h-8 flex items-center justify-center bg-red-500 text-white rounded-full font-bold">
-        !
-      </div>
-      <span>{error.message}</span>
     </div>
   );
 }

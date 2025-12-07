@@ -1,6 +1,3 @@
-// Data hooks (Phase 4)
-export { useGraphData, preloadGraphData, clearGraphDataCache } from './useGraphData';
-
 // UI hooks (Phase 6)
 export { useKeyboardShortcuts, SHORTCUTS } from './useKeyboardShortcuts';
 export type { KeyboardShortcutsConfig } from './useKeyboardShortcuts';

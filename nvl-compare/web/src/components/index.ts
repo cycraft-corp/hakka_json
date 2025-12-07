@@ -7,7 +7,7 @@ export type { default as NodeTooltipComponent } from './NodeTooltip';
 
 // Comparison interface (Phase 5)
 export { ComparisonView } from './ComparisonView';
-export type { ComparisonViewProps, DataMode } from './ComparisonView';
+export type { ComparisonViewProps } from './ComparisonView';
 
 export { ImplementationSelector, IMPLEMENTATIONS } from './ImplementationSelector';
 export type { ImplementationSelectorProps } from './ImplementationSelector';
