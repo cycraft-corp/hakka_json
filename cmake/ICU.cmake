@@ -163,6 +163,9 @@ function(build_icu_windows)
             COMMAND ${CMAKE_COMMAND} -E echo "Renaming ICU DLLs to remove version suffix..."
             COMMAND cmd /c "for %f in (\"${ICU_INSTALL_DIR}/bin/icu*[0-9].dll\") do @copy /y \"%f\" \"%~dpnf.dll\" >nul 2>&1 || echo Skipped %~nxf"
             COMMAND cmd /c "for %f in (\"${ICU_INSTALL_DIR}/bin/icu*[0-9]d.dll\") do @set \"name=%~nf\" && set \"name=!name:~0,-1!\" && copy /y \"%f\" \"%~dpf!name!d.dll\" >nul 2>&1 || echo Skipped %~nxf"
+            COMMAND ${CMAKE_COMMAND} -E echo "Renaming ICU .lib files to remove version suffix..."
+            COMMAND cmd /c "for %f in (\"${ICU_INSTALL_DIR}/lib/icu*[0-9].lib\") do @copy /y \"%f\" \"%~dpnf.lib\" >nul 2>&1 || echo Skipped %~nxf"
+            COMMAND cmd /c "for %f in (\"${ICU_INSTALL_DIR}/lib/icu*[0-9]d.lib\") do @set \"name=%~nf\" && set \"name=!name:~0,-1!\" && copy /y \"%f\" \"%~dpf!name!d.lib\" >nul 2>&1 || echo Skipped %~nxf"
         LOG_DOWNLOAD ON
         LOG_BUILD ON
         LOG_INSTALL ON
