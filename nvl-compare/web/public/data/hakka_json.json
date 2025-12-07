@@ -1,0 +1,358 @@
+{
+  "id": "hakka_json",
+  "name": "HakkaJson",
+  "language": "C++",
+  "description": "Handle-based architecture with NaN-boxing and string interning",
+  "stats": {
+    "nodeCount": 31,
+    "edgeCount": 35,
+    "totalBytes": 456,
+    "overheadBytes": 32,
+    "overheadPercent": 7.0,
+    "uniqueStrings": 11,
+    "duplicateStrings": 0,
+    "internedStrings": 11,
+    "nanBoxedValues": 5
+  },
+  "nodes": [
+    {
+      "id": "registry",
+      "label": "Registry",
+      "caption": "ManagerRegistry",
+      "properties": {
+        "type": "hakka-registry",
+        "implementation": "hakka",
+        "address": "0x1000",
+        "sizeBytes": 32
+      }
+    },
+    {
+      "id": "scalar-mgr",
+      "label": "ScalarMgr",
+      "caption": "ScalarManagerCompact",
+      "properties": {
+        "type": "hakka-scalar-manager",
+        "implementation": "hakka",
+        "address": "0x1020"
+      }
+    },
+    {
+      "id": "string-mgr",
+      "label": "StringMgr",
+      "caption": "StringManagerCompact",
+      "properties": {
+        "type": "hakka-string-manager",
+        "implementation": "hakka",
+        "address": "0x1040"
+      }
+    },
+    {
+      "id": "array-mgr",
+      "label": "ArrayMgr",
+      "caption": "ArrayManagerCompact",
+      "properties": {
+        "type": "hakka-array-manager",
+        "implementation": "hakka",
+        "address": "0x1060"
+      }
+    },
+    {
+      "id": "object-mgr",
+      "label": "ObjectMgr",
+      "caption": "ObjectManagerCompact",
+      "properties": {
+        "type": "hakka-object-manager",
+        "implementation": "hakka",
+        "address": "0x1080"
+      }
+    },
+    {
+      "id": "root-handle",
+      "label": "H:root",
+      "caption": "0xC0000000",
+      "properties": {
+        "type": "hakka-handle",
+        "implementation": "hakka",
+        "sizeBytes": 4,
+        "tokenBits": "type:11 index:0"
+      }
+    },
+    {
+      "id": "root-obj",
+      "label": "{}",
+      "caption": "root object",
+      "properties": {
+        "type": "hakka-object-value",
+        "implementation": "hakka",
+        "sizeBytes": 64
+      }
+    },
+    {
+      "id": "meta-handle",
+      "label": "H:meta",
+      "caption": "0xC0000001",
+      "properties": {
+        "type": "hakka-handle",
+        "implementation": "hakka",
+        "sizeBytes": 4,
+        "tokenBits": "type:11 index:1"
+      }
+    },
+    {
+      "id": "meta-obj",
+      "label": "{}",
+      "caption": "meta object",
+      "properties": {
+        "type": "hakka-object-value",
+        "implementation": "hakka",
+        "sizeBytes": 32
+      }
+    },
+    {
+      "id": "tags-handle",
+      "label": "H:tags",
+      "caption": "0x80000000",
+      "properties": {
+        "type": "hakka-handle",
+        "implementation": "hakka",
+        "sizeBytes": 4,
+        "tokenBits": "type:10 index:0"
+      }
+    },
+    {
+      "id": "tags-arr",
+      "label": "[]",
+      "caption": "tags array",
+      "properties": {
+        "type": "hakka-array-value",
+        "implementation": "hakka",
+        "sizeBytes": 24
+      }
+    },
+    {
+      "id": "str-name",
+      "label": "\"name\"",
+      "caption": "interned",
+      "properties": {
+        "type": "hakka-interned-string",
+        "implementation": "hakka",
+        "value": "name",
+        "sizeBytes": 12,
+        "isInterned": true
+      }
+    },
+    {
+      "id": "str-test",
+      "label": "\"test\"",
+      "caption": "interned",
+      "properties": {
+        "type": "hakka-interned-string",
+        "implementation": "hakka",
+        "value": "test",
+        "sizeBytes": 12,
+        "isInterned": true
+      }
+    },
+    {
+      "id": "str-count",
+      "label": "\"count\"",
+      "caption": "interned",
+      "properties": {
+        "type": "hakka-interned-string",
+        "implementation": "hakka",
+        "value": "count",
+        "sizeBytes": 13,
+        "isInterned": true
+      }
+    },
+    {
+      "id": "str-ratio",
+      "label": "\"ratio\"",
+      "caption": "interned",
+      "properties": {
+        "type": "hakka-interned-string",
+        "implementation": "hakka",
+        "value": "ratio",
+        "sizeBytes": 13,
+        "isInterned": true
+      }
+    },
+    {
+      "id": "str-active",
+      "label": "\"active\"",
+      "caption": "interned",
+      "properties": {
+        "type": "hakka-interned-string",
+        "implementation": "hakka",
+        "value": "active",
+        "sizeBytes": 14,
+        "isInterned": true
+      }
+    },
+    {
+      "id": "str-data",
+      "label": "\"data\"",
+      "caption": "interned",
+      "properties": {
+        "type": "hakka-interned-string",
+        "implementation": "hakka",
+        "value": "data",
+        "sizeBytes": 12,
+        "isInterned": true
+      }
+    },
+    {
+      "id": "str-tags",
+      "label": "\"tags\"",
+      "caption": "interned",
+      "properties": {
+        "type": "hakka-interned-string",
+        "implementation": "hakka",
+        "value": "tags",
+        "sizeBytes": 12,
+        "isInterned": true
+      }
+    },
+    {
+      "id": "str-meta",
+      "label": "\"meta\"",
+      "caption": "interned",
+      "properties": {
+        "type": "hakka-interned-string",
+        "implementation": "hakka",
+        "value": "meta",
+        "sizeBytes": 12,
+        "isInterned": true
+      }
+    },
+    {
+      "id": "str-version",
+      "label": "\"version\"",
+      "caption": "interned",
+      "properties": {
+        "type": "hakka-interned-string",
+        "implementation": "hakka",
+        "value": "version",
+        "sizeBytes": 15,
+        "isInterned": true
+      }
+    },
+    {
+      "id": "str-1.0",
+      "label": "\"1.0\"",
+      "caption": "interned",
+      "properties": {
+        "type": "hakka-interned-string",
+        "implementation": "hakka",
+        "value": "1.0",
+        "sizeBytes": 11,
+        "isInterned": true
+      }
+    },
+    {
+      "id": "str-alpha",
+      "label": "\"alpha\"",
+      "caption": "interned",
+      "properties": {
+        "type": "hakka-interned-string",
+        "implementation": "hakka",
+        "value": "alpha",
+        "sizeBytes": 13,
+        "isInterned": true
+      }
+    },
+    {
+      "id": "str-beta",
+      "label": "\"beta\"",
+      "caption": "interned",
+      "properties": {
+        "type": "hakka-interned-string",
+        "implementation": "hakka",
+        "value": "beta",
+        "sizeBytes": 12,
+        "isInterned": true
+      }
+    },
+    {
+      "id": "val-42",
+      "label": "42",
+      "caption": "NaN-boxed int",
+      "properties": {
+        "type": "hakka-nan-boxed",
+        "implementation": "hakka",
+        "value": "42",
+        "sizeBytes": 8
+      }
+    },
+    {
+      "id": "val-3.14",
+      "label": "3.14159",
+      "caption": "NaN-boxed float",
+      "properties": {
+        "type": "hakka-nan-boxed",
+        "implementation": "hakka",
+        "value": "3.14159",
+        "sizeBytes": 8
+      }
+    },
+    {
+      "id": "val-true",
+      "label": "true",
+      "caption": "NaN-boxed bool",
+      "properties": {
+        "type": "hakka-nan-boxed",
+        "implementation": "hakka",
+        "value": "true",
+        "sizeBytes": 8
+      }
+    },
+    {
+      "id": "val-null",
+      "label": "null",
+      "caption": "NaN-boxed null",
+      "properties": {
+        "type": "hakka-nan-boxed",
+        "implementation": "hakka",
+        "value": "null",
+        "sizeBytes": 8
+      }
+    }
+  ],
+  "relationships": [
+    { "id": "r1", "from": "registry", "to": "scalar-mgr", "type": "registry-manages" },
+    { "id": "r2", "from": "registry", "to": "string-mgr", "type": "registry-manages" },
+    { "id": "r3", "from": "registry", "to": "array-mgr", "type": "registry-manages" },
+    { "id": "r4", "from": "registry", "to": "object-mgr", "type": "registry-manages" },
+    { "id": "r5", "from": "root-handle", "to": "object-mgr", "type": "handle-resolves", "caption": "type:11" },
+    { "id": "r6", "from": "root-handle", "to": "root-obj", "type": "handle-indexes", "caption": "idx:0" },
+    { "id": "r7", "from": "meta-handle", "to": "object-mgr", "type": "handle-resolves", "caption": "type:11" },
+    { "id": "r8", "from": "meta-handle", "to": "meta-obj", "type": "handle-indexes", "caption": "idx:1" },
+    { "id": "r9", "from": "tags-handle", "to": "array-mgr", "type": "handle-resolves", "caption": "type:10" },
+    { "id": "r10", "from": "tags-handle", "to": "tags-arr", "type": "handle-indexes", "caption": "idx:0" },
+    { "id": "r11", "from": "root-obj", "to": "str-name", "type": "value-contains", "properties": { "key": "name" } },
+    { "id": "r12", "from": "root-obj", "to": "str-test", "type": "value-contains", "properties": { "key": "name.value" } },
+    { "id": "r13", "from": "root-obj", "to": "str-count", "type": "value-contains", "properties": { "key": "count" } },
+    { "id": "r14", "from": "root-obj", "to": "val-42", "type": "value-contains", "properties": { "key": "count.value" } },
+    { "id": "r15", "from": "root-obj", "to": "str-ratio", "type": "value-contains", "properties": { "key": "ratio" } },
+    { "id": "r16", "from": "root-obj", "to": "val-3.14", "type": "value-contains", "properties": { "key": "ratio.value" } },
+    { "id": "r17", "from": "root-obj", "to": "str-active", "type": "value-contains", "properties": { "key": "active" } },
+    { "id": "r18", "from": "root-obj", "to": "val-true", "type": "value-contains", "properties": { "key": "active.value" } },
+    { "id": "r19", "from": "root-obj", "to": "str-data", "type": "value-contains", "properties": { "key": "data" } },
+    { "id": "r20", "from": "root-obj", "to": "val-null", "type": "value-contains", "properties": { "key": "data.value" } },
+    { "id": "r21", "from": "root-obj", "to": "str-tags", "type": "value-contains", "properties": { "key": "tags" } },
+    { "id": "r22", "from": "root-obj", "to": "tags-handle", "type": "value-contains", "properties": { "key": "tags.value" } },
+    { "id": "r23", "from": "root-obj", "to": "str-meta", "type": "value-contains", "properties": { "key": "meta" } },
+    { "id": "r24", "from": "root-obj", "to": "meta-handle", "type": "value-contains", "properties": { "key": "meta.value" } },
+    { "id": "r25", "from": "tags-arr", "to": "str-alpha", "type": "value-contains", "properties": { "index": 0 } },
+    { "id": "r26", "from": "tags-arr", "to": "str-beta", "type": "value-contains", "properties": { "index": 1 } },
+    { "id": "r27", "from": "tags-arr", "to": "str-alpha", "type": "string-interned-at", "caption": "shared!", "properties": { "index": 2 } },
+    { "id": "r28", "from": "meta-obj", "to": "str-version", "type": "value-contains", "properties": { "key": "version" } },
+    { "id": "r29", "from": "meta-obj", "to": "str-1.0", "type": "value-contains", "properties": { "key": "version.value" } },
+    { "id": "r30", "from": "meta-obj", "to": "str-name", "type": "string-interned-at", "caption": "shared!", "properties": { "key": "name" } },
+    { "id": "r31", "from": "meta-obj", "to": "str-test", "type": "string-interned-at", "caption": "shared!", "properties": { "key": "name.value" } },
+    { "id": "r32", "from": "object-mgr", "to": "root-obj", "type": "manager-stores" },
+    { "id": "r33", "from": "object-mgr", "to": "meta-obj", "type": "manager-stores" },
+    { "id": "r34", "from": "array-mgr", "to": "tags-arr", "type": "manager-stores" },
+    { "id": "r35", "from": "string-mgr", "to": "str-name", "type": "manager-stores" }
+  ]
+}

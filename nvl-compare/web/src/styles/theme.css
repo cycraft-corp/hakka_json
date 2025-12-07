@@ -1,0 +1,269 @@
+/**
+ * Theme CSS Custom Properties
+ * Presentation-optimized dark theme for JSON Memory Graph Comparison
+ */
+
+:root {
+  /* ========== Color System ========== */
+
+  /* Background layers */
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --bg-elevated: #475569;
+
+  /* Text hierarchy */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-inverse: #0f172a;
+
+  /* Border colors */
+  --border-color: #334155;
+  --border-light: #475569;
+  --border-focus: #10b981;
+
+  /* Accent (HakkaJson brand) */
+  --accent: #10b981;
+  --accent-light: #34d399;
+  --accent-dark: #059669;
+  --accent-alpha: rgba(16, 185, 129, 0.2);
+
+  /* Status colors */
+  --success: #10b981;
+  --warning: #fbbf24;
+  --error: #f87171;
+  --info: #60a5fa;
+
+  /* Implementation colors */
+  --hakka: #10b981;
+  --serde: #f97316;
+  --cpython: #3b82f6;
+  --golang: #06b6d4;
+  --jansson: #8b5cf6;
+
+  /* ========== Typography ========== */
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', Menlo, monospace;
+
+  /* Presentation-optimized sizes */
+  --text-xs: 0.875rem;     /* 14px */
+  --text-sm: 1rem;         /* 16px */
+  --text-base: 1.125rem;   /* 18px - larger for readability */
+  --text-lg: 1.25rem;      /* 20px */
+  --text-xl: 1.5rem;       /* 24px */
+  --text-2xl: 1.875rem;    /* 30px */
+  --text-3xl: 2rem;        /* 32px */
+  --text-stat: 2.5rem;     /* 40px - for stats */
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  /* ========== Spacing ========== */
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* ========== Effects ========== */
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+  --shadow-glow: 0 0 20px rgba(16, 185, 129, 0.3);
+
+  /* ========== Transitions ========== */
+
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 350ms;
+
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* ========== Z-Index Scale ========== */
+
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal: 300;
+  --z-tooltip: 400;
+  --z-overlay: 500;
+}
+
+/* ========== Base Styles ========== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--text-primary);
+  background: var(--bg-primary);
+}
+
+/* ========== Focus Styles ========== */
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ========== Selection ========== */
+
+::selection {
+  background: var(--accent-alpha);
+  color: var(--text-primary);
+}
+
+/* ========== Scrollbar (WebKit) ========== */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-light);
+}
+
+/* ========== Fullscreen Mode ========== */
+
+.fullscreen-mode {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+}
+
+.fullscreen-mode .comparison-header {
+  padding: var(--space-2) var(--space-4);
+}
+
+.fullscreen-mode .comparison-header h1 {
+  font-size: var(--text-lg);
+}
+
+/* ========== Presentation Mode ========== */
+
+.presentation-mode {
+  /* Even larger fonts for projector */
+  --text-base: 1.25rem;
+  --text-lg: 1.5rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.25rem;
+}
+
+.presentation-mode .stat-value {
+  font-size: var(--text-stat);
+}
+
+/* ========== Light Theme ========== */
+
+[data-theme='light'] {
+  /* Background layers */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #f1f5f9;
+  --bg-tertiary: #e2e8f0;
+  --bg-elevated: #cbd5e1;
+
+  /* Text hierarchy */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-inverse: #f8fafc;
+
+  /* Border colors */
+  --border-color: #cbd5e1;
+  --border-light: #94a3b8;
+  --border-focus: #059669;
+
+  /* Accent (HakkaJson brand) - slightly darker for light mode */
+  --accent: #059669;
+  --accent-light: #10b981;
+  --accent-dark: #047857;
+  --accent-alpha: rgba(5, 150, 105, 0.15);
+
+  /* Status colors - slightly adjusted for light backgrounds */
+  --success: #059669;
+  --warning: #d97706;
+  --error: #dc2626;
+  --info: #2563eb;
+
+  /* Shadows - lighter for light mode */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 20px rgba(5, 150, 105, 0.2);
+}
+
+/* Light theme scrollbar */
+[data-theme='light'] ::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+[data-theme='light'] ::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+}
+
+[data-theme='light'] ::-webkit-scrollbar-thumb:hover {
+  background: var(--border-light);
+}
+
+/* ========== High Contrast Mode ========== */
+
+@media (prefers-contrast: high) {
+  :root {
+    --bg-primary: #000000;
+    --bg-secondary: #1a1a1a;
+    --text-primary: #ffffff;
+    --border-color: #666666;
+  }
+}
+
+/* ========== Reduced Motion ========== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

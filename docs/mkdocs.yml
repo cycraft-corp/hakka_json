@@ -47,6 +47,8 @@ nav:
   - Home:
       - Home/index.md
       - Build: Home/build.md
+  - Tools:
+      - Memory Visualizer: '/nvl-compare/'
   - API:
       - C++:
           - Data Types Overview: API/C++/DataTypesOverview.md

@@ -1,4 +1,4 @@
-name: mkdocs
+name: Documentation & Tools
 
 on:
   push:
@@ -7,23 +7,46 @@ on:
       - 'docs/content/**'
       - 'docs/mkdocs.yml'
       - 'docs/pyproject.toml'
+      - 'nvl-compare/web/**'
       - '.github/workflows/mkdocs.yml'
   pull_request:
     branches: [main, master]
     paths:
       - 'docs/content/**'
       - 'docs/mkdocs.yml'
+      - 'nvl-compare/web/**'
   workflow_dispatch:
 
 jobs:
-  build-docs:
-    name: Build Documentation
+  build:
+    name: Build Documentation & NVL-Compare
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
+      # ─────────────────────────────────────────────────────────
+      # NVL-Compare (Vite React App)
+      # ─────────────────────────────────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: nvl-compare/web/package-lock.json
+
+      - name: Install NVL-Compare Dependencies
+        working-directory: nvl-compare/web
+        run: npm ci
+
+      - name: Build NVL-Compare
+        working-directory: nvl-compare/web
+        run: npm run build
+
+      # ─────────────────────────────────────────────────────────
+      # MkDocs Documentation
+      # ─────────────────────────────────────────────────────────
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -43,9 +66,6 @@ jobs:
       - name: Install Poetry
         run: pipx install poetry
 
-      - name: Verify Poetry Installation
-        run: poetry --version
-
       - name: Install Documentation Dependencies
         working-directory: docs
         run: poetry install
@@ -54,15 +74,23 @@ jobs:
         working-directory: docs
         run: poetry run mkdocs build --strict
 
+      # ─────────────────────────────────────────────────────────
+      # Combine Outputs
+      # ─────────────────────────────────────────────────────────
+      - name: Copy NVL-Compare to Site
+        run: |
+          mkdir -p docs/site/nvl-compare
+          cp -r nvl-compare/web/dist/* docs/site/nvl-compare/
+
       - name: Upload Pages Artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs/site
 
-  deploy-docs:
+  deploy:
     name: Deploy to GitHub Pages
-    needs: build-docs
+    needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
