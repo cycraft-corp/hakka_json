@@ -1,8 +1,7 @@
-#ifndef _WIN32
-// Workaround that the not found the U_DISABLE_RENAMING macro in icu headers on Windows
-// we know the ICU library is NOT recommended to DISABLE_RENAMING, except for static linking
-// But, we want to produce both static and dynamic linking version of this Hakka Json library
-// So, we just disable the renaming by default except for Windows.
+#ifdef HAKKA_ICU_DISABLE_RENAMING
+// When ICU is built with --disable-renaming (as in our ExternalProject build),
+// or when system ICU doesn't have renaming enabled, we define U_DISABLE_RENAMING
+// to prevent symbol name mangling. This is required for proper static linking.
 #define U_DISABLE_RENAMING 1
 #endif
 

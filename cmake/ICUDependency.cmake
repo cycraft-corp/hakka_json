@@ -3,18 +3,52 @@
 #
 # IMPORTANT: Static linking third-party libraries is a major principle in this repository.
 # ICU must be built with --disable-renaming for static linking to work correctly.
-# Most system ICU packages are built WITH renaming enabled, which causes symbol mismatch
-# when statically linking. Therefore, ExternalProject is preferred by default.
+# This module detects whether system ICU has renaming enabled and adapts accordingly.
 #
 # Exports:
 #   HAKKA_ICU_USING_SYSTEM - TRUE if using system ICU, FALSE otherwise
 #   HAKKA_ICU_USING_FETCH - TRUE if using ExternalProject ICU, FALSE otherwise
 #   HAKKA_ICU_LIBRARIES - Ordered list of ICU:: targets (ICU::tu ICU::i18n ICU::io ICU::uc ICU::data)
+#   HAKKA_ICU_HAS_RENAMING - TRUE if ICU has symbol renaming enabled, FALSE otherwise
 
 # Initialize variables
 set(HAKKA_ICU_USING_SYSTEM FALSE CACHE INTERNAL "Using system ICU")
 set(HAKKA_ICU_USING_FETCH FALSE CACHE INTERNAL "Using ExternalProject ICU")
 set(HAKKA_ICU_LIBRARIES "" CACHE INTERNAL "Ordered ICU libraries")
+set(HAKKA_ICU_HAS_RENAMING FALSE CACHE INTERNAL "ICU has symbol renaming enabled")
+
+# Function to detect if ICU has symbol renaming enabled
+function(_detect_icu_renaming)
+    # Try to compile a small test program that checks for U_ICU_VERSION_SUFFIX
+    set(TEST_SOURCE "${CMAKE_BINARY_DIR}/test_icu_renaming.cpp")
+    file(WRITE "${TEST_SOURCE}" "
+#include <unicode/uvernum.h>
+int main() {
+#ifdef U_ICU_VERSION_SUFFIX
+    return 1; // Has renaming
+#else
+    return 0; // No renaming
+#endif
+}
+")
+    
+    try_run(
+        RUN_RESULT COMPILE_RESULT
+        "${CMAKE_BINARY_DIR}"
+        "${TEST_SOURCE}"
+        CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${ICU_INCLUDE_DIRS}"
+        COMPILE_OUTPUT_VARIABLE COMPILE_OUTPUT
+        RUN_OUTPUT_VARIABLE RUN_OUTPUT
+    )
+    
+    if(COMPILE_RESULT AND RUN_RESULT EQUAL 1)
+        set(HAKKA_ICU_HAS_RENAMING TRUE CACHE INTERNAL "ICU has symbol renaming enabled")
+        message(STATUS "ICU: Detected symbol renaming enabled")
+    else()
+        set(HAKKA_ICU_HAS_RENAMING FALSE CACHE INTERNAL "ICU has symbol renaming enabled")
+        message(STATUS "ICU: Detected symbol renaming disabled")
+    endif()
+endfunction()
 
 # Determine which resolution path to use
 set(_use_find_package FALSE)
@@ -25,14 +59,13 @@ if(HAKKA_JSON_FORCE_FETCH_CONTENT)
     set(_use_external_project TRUE)
 elseif(HAKKA_JSON_FORCE_SYSTEM_DEPS)
     message(STATUS "ICU: FORCE_SYSTEM_DEPS enabled, requiring system package")
-    message(WARNING "ICU: System ICU may have symbol renaming enabled, which can cause linking issues with static builds. If you encounter undefined reference errors, use FORCE_FETCH_CONTENT instead.")
     set(_use_find_package TRUE)
     set(_require_system TRUE)
 elseif(HAKKA_JSON_USE_SYSTEM_DEPS)
-    # For ICU, prefer ExternalProject to ensure --disable-renaming for static linking
-    # Only try system package if explicitly configured
-    message(STATUS "ICU: Preferring ExternalProject for static linking compatibility")
-    set(_use_external_project TRUE)
+    # Try system package first
+    message(STATUS "ICU: Trying system package first")
+    set(_use_find_package TRUE)
+    set(_require_system FALSE)
 else()
     message(STATUS "ICU: USE_SYSTEM_DEPS disabled, using ExternalProject")
     set(_use_external_project TRUE)
@@ -48,6 +81,16 @@ if(_use_find_package)
     
     if(ICU_FOUND)
         message(STATUS "ICU: Found system installation (version ${ICU_VERSION})")
+        
+        # Detect if ICU has symbol renaming enabled
+        _detect_icu_renaming()
+        
+        if(HAKKA_ICU_HAS_RENAMING)
+            message(STATUS "ICU: System ICU has symbol renaming enabled - will adapt code accordingly")
+        else()
+            message(STATUS "ICU: System ICU has symbol renaming disabled - perfect for static linking")
+        endif()
+        
         set(HAKKA_ICU_USING_SYSTEM TRUE CACHE INTERNAL "Using system ICU")
         
         # Create ICU:: aliases if they don't exist

@@ -47,14 +47,28 @@ if(HAKKA_JSON_ENABLE_COVERAGE)
 endif()
 
 # ICU dependencies
+# Link ICU libraries (works for both system and ExternalProject)
+target_link_libraries(hakka_json_core PRIVATE ${HAKKA_ICU_LIBRARIES})
+
 if(HAKKA_ICU_USING_FETCH)
     # When using ExternalProject, add explicit dependencies and includes
     add_dependencies(hakka_json_core icu_project_libs)
     target_include_directories(hakka_json_core PRIVATE ${ICU_INCLUDE_DIR})
+    # ExternalProject ICU is built with --disable-renaming, so we can define U_DISABLE_RENAMING
+    target_compile_definitions(hakka_json_core PRIVATE HAKKA_ICU_DISABLE_RENAMING)
+elseif(HAKKA_ICU_USING_SYSTEM)
+    # When using system ICU, include directories should come from ICU:: targets
+    # but add explicitly to ensure they're available
+    if(ICU_INCLUDE_DIRS)
+        target_include_directories(hakka_json_core PRIVATE ${ICU_INCLUDE_DIRS})
+    endif()
+    
+    # If system ICU has renaming, do NOT define U_DISABLE_RENAMING
+    # If system ICU doesn't have renaming, define U_DISABLE_RENAMING
+    if(NOT HAKKA_ICU_HAS_RENAMING)
+        target_compile_definitions(hakka_json_core PRIVATE HAKKA_ICU_DISABLE_RENAMING)
+    endif()
 endif()
-
-# Link ICU libraries (works for both system and ExternalProject)
-target_link_libraries(hakka_json_core PRIVATE ${HAKKA_ICU_LIBRARIES})
 
 # GCC needs atomic
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
