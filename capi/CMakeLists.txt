@@ -5,13 +5,17 @@ add_library(hakka_json SHARED
     hakka_json_primitive.cpp
 )
 
+# Note: We do NOT set CXX_VISIBILITY_PRESET here because it would hide all symbols by default,
+# including the C API functions. Instead, we rely on version scripts (Linux/macOS) and
+# selective export definitions (Windows) to control which symbols are exported.
+
 # Symbol visibility settings for shared library
 if(WIN32)
     # Windows: Use export header for selective symbol export
     target_compile_definitions(hakka_json PRIVATE HAKKA_JSON_BUILDING_DLL)
     # Note: WINDOWS_EXPORT_ALL_SYMBOLS is intentionally NOT used for controlled exports
 else()
-    # Linux: Use version script to export only hakka_* symbols
+    # Linux: Use version script to export only Hakka* symbols (C API)
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         set_target_properties(hakka_json PROPERTIES
             LINK_FLAGS "-Wl,--version-script=${CMAKE_SOURCE_DIR}/cmake/exports_linux.map"

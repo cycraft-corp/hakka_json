@@ -15,12 +15,9 @@ add_library(hakka_json_core STATIC
     json_deserializer.cpp
 )
 
-# Set visibility presets for static library (symbols hidden by default)
-set_target_properties(hakka_json_core PROPERTIES
-    CXX_VISIBILITY_PRESET hidden
-    C_VISIBILITY_PRESET hidden
-    VISIBILITY_INLINES_HIDDEN ON
-)
+# Note: Visibility presets are not set on static library as they're only relevant for shared libraries.
+# The C++ API from hakka_json_core is available to unit tests and other consumers.
+# Symbol visibility is controlled at the shared library level (hakka_json C API).
 
 # Include directories
 target_include_directories(hakka_json_core
