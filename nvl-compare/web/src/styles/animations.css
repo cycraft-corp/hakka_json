@@ -1,0 +1,355 @@
+/**
+ * Animation Effects for NVL Graph Visualization
+ * Smooth, professional transitions for presentation
+ */
+
+/* ========== Fade Animations ========== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn var(--duration-normal) var(--ease-out);
+}
+
+.animate-fade-out {
+  animation: fadeOut var(--duration-normal) var(--ease-in);
+}
+
+/* ========== Slide Animations ========== */
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp var(--duration-normal) var(--ease-out);
+}
+
+.animate-slide-down {
+  animation: slideDown var(--duration-normal) var(--ease-out);
+}
+
+/* ========== Scale Animations ========== */
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  70% {
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scaleIn var(--duration-normal) var(--ease-out);
+}
+
+.animate-pop-in {
+  animation: popIn var(--duration-slow) var(--ease-bounce);
+}
+
+/* ========== Node Highlight Animation ========== */
+
+@keyframes nodeHighlight {
+  0% {
+    box-shadow: 0 0 0 0 var(--accent-alpha);
+  }
+  50% {
+    box-shadow: 0 0 0 12px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes nodePulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.node-highlight {
+  animation: nodeHighlight 0.6s var(--ease-out);
+}
+
+.node-pulse {
+  animation: nodePulse 1.5s var(--ease-default) infinite;
+}
+
+/* ========== Graph Loading Animation ========== */
+
+@keyframes graphReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+.graph-reveal {
+  animation: graphReveal var(--duration-slow) var(--ease-out);
+}
+
+/* ========== Spinner ========== */
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.spinner-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+}
+
+.spinner-lg {
+  width: 3rem;
+  height: 3rem;
+  border-width: 4px;
+}
+
+/* ========== Skeleton Loading ========== */
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 25%,
+    var(--bg-tertiary) 50%,
+    var(--bg-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-md);
+}
+
+/* ========== Transition Utilities ========== */
+
+.transition-all {
+  transition: all var(--duration-normal) var(--ease-default);
+}
+
+.transition-colors {
+  transition: color var(--duration-fast) var(--ease-default),
+              background-color var(--duration-fast) var(--ease-default),
+              border-color var(--duration-fast) var(--ease-default);
+}
+
+.transition-opacity {
+  transition: opacity var(--duration-normal) var(--ease-default);
+}
+
+.transition-transform {
+  transition: transform var(--duration-normal) var(--ease-default);
+}
+
+.transition-shadow {
+  transition: box-shadow var(--duration-normal) var(--ease-default);
+}
+
+/* ========== Hover Effects ========== */
+
+.hover-lift {
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+.hover-glow {
+  transition: box-shadow var(--duration-normal) var(--ease-default);
+}
+
+.hover-glow:hover {
+  box-shadow: var(--shadow-glow);
+}
+
+.hover-scale {
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* ========== Panel Transitions ========== */
+
+.panel-enter {
+  animation: slideInLeft var(--duration-normal) var(--ease-out);
+}
+
+.panel-enter-right {
+  animation: slideInRight var(--duration-normal) var(--ease-out);
+}
+
+/* ========== Stats Counter Animation ========== */
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stat-animate {
+  animation: countUp var(--duration-slow) var(--ease-out);
+}
+
+/* Staggered animation for multiple stats */
+.stats-grid > *:nth-child(1) { animation-delay: 0ms; }
+.stats-grid > *:nth-child(2) { animation-delay: 50ms; }
+.stats-grid > *:nth-child(3) { animation-delay: 100ms; }
+.stats-grid > *:nth-child(4) { animation-delay: 150ms; }
+.stats-grid > *:nth-child(5) { animation-delay: 200ms; }
+
+/* ========== Overhead Bar Animation ========== */
+
+@keyframes barGrow {
+  from {
+    width: 0;
+  }
+}
+
+.overhead-bar-fill {
+  animation: barGrow var(--duration-slow) var(--ease-out);
+}
+
+/* ========== Tooltip Animation ========== */
+
+@keyframes tooltipIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.tooltip-animate {
+  animation: tooltipIn var(--duration-fast) var(--ease-out);
+}
+
+/* ========== Keyboard Shortcut Overlay ========== */
+
+@keyframes overlayIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
+}
+
+.overlay-animate {
+  animation: overlayIn var(--duration-normal) var(--ease-out);
+}

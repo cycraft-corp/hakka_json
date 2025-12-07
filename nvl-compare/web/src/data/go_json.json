@@ -1,0 +1,283 @@
+{
+  "id": "go_json",
+  "name": "encoding/json",
+  "language": "Go",
+  "description": "interface{} boxing with hmap buckets, all numbers as float64",
+  "stats": {
+    "nodeCount": 45,
+    "edgeCount": 52,
+    "totalBytes": 1584,
+    "overheadBytes": 640,
+    "overheadPercent": 40.4,
+    "uniqueStrings": 11,
+    "duplicateStrings": 4,
+    "interfaceWrappers": 15
+  },
+  "nodes": [
+    {
+      "id": "root-iface",
+      "label": "interface{}",
+      "caption": "16 bytes",
+      "properties": {
+        "type": "go-interface",
+        "implementation": "go",
+        "sizeBytes": 16,
+        "isOverhead": true
+      }
+    },
+    {
+      "id": "root-hmap",
+      "label": "hmap",
+      "caption": "48 bytes",
+      "properties": {
+        "type": "go-hmap",
+        "implementation": "go",
+        "sizeBytes": 48
+      }
+    },
+    {
+      "id": "root-bucket",
+      "label": "bmap",
+      "caption": "272 bytes!",
+      "properties": {
+        "type": "go-bucket",
+        "implementation": "go",
+        "sizeBytes": 272
+      }
+    },
+    {
+      "id": "meta-iface",
+      "label": "interface{}",
+      "caption": "16 bytes",
+      "properties": {
+        "type": "go-interface",
+        "implementation": "go",
+        "sizeBytes": 16,
+        "isOverhead": true
+      }
+    },
+    {
+      "id": "meta-hmap",
+      "label": "hmap",
+      "caption": "48 bytes",
+      "properties": {
+        "type": "go-hmap",
+        "implementation": "go",
+        "sizeBytes": 48
+      }
+    },
+    {
+      "id": "meta-bucket",
+      "label": "bmap",
+      "caption": "272 bytes!",
+      "properties": {
+        "type": "go-bucket",
+        "implementation": "go",
+        "sizeBytes": 272
+      }
+    },
+    {
+      "id": "tags-iface",
+      "label": "interface{}",
+      "properties": {
+        "type": "go-interface",
+        "implementation": "go",
+        "sizeBytes": 16,
+        "isOverhead": true
+      }
+    },
+    {
+      "id": "tags-slice",
+      "label": "[]interface{}",
+      "caption": "24 bytes",
+      "properties": {
+        "type": "go-slice",
+        "implementation": "go",
+        "sizeBytes": 24
+      }
+    },
+    {
+      "id": "tags-data",
+      "label": "[3]interface{}",
+      "caption": "48 bytes",
+      "properties": {
+        "type": "go-slice-data",
+        "implementation": "go",
+        "sizeBytes": 48
+      }
+    },
+    {
+      "id": "str-name-1",
+      "label": "string:name",
+      "properties": {
+        "type": "go-string",
+        "implementation": "go",
+        "value": "name",
+        "sizeBytes": 16
+      }
+    },
+    {
+      "id": "str-name-2",
+      "label": "string:name",
+      "caption": "(DUP!)",
+      "properties": {
+        "type": "go-string",
+        "implementation": "go",
+        "value": "name",
+        "sizeBytes": 16,
+        "isDuplicate": true
+      }
+    },
+    {
+      "id": "str-test-1",
+      "label": "string:test",
+      "properties": {
+        "type": "go-string",
+        "implementation": "go",
+        "value": "test",
+        "sizeBytes": 16
+      }
+    },
+    {
+      "id": "str-test-2",
+      "label": "string:test",
+      "caption": "(DUP!)",
+      "properties": {
+        "type": "go-string",
+        "implementation": "go",
+        "value": "test",
+        "sizeBytes": 16,
+        "isDuplicate": true
+      }
+    },
+    {
+      "id": "val-test-1-iface",
+      "label": "interface{}",
+      "properties": {
+        "type": "go-interface",
+        "implementation": "go",
+        "sizeBytes": 16,
+        "isOverhead": true
+      }
+    },
+    {
+      "id": "num-42",
+      "label": "float64(42)",
+      "caption": "int->float64!",
+      "properties": {
+        "type": "go-float64",
+        "implementation": "go",
+        "value": "42.0",
+        "sizeBytes": 8
+      }
+    },
+    {
+      "id": "num-42-iface",
+      "label": "interface{}",
+      "properties": {
+        "type": "go-interface",
+        "implementation": "go",
+        "sizeBytes": 16,
+        "isOverhead": true
+      }
+    },
+    {
+      "id": "num-3.14",
+      "label": "float64",
+      "properties": {
+        "type": "go-float64",
+        "implementation": "go",
+        "value": "3.14159",
+        "sizeBytes": 8
+      }
+    },
+    {
+      "id": "num-3.14-iface",
+      "label": "interface{}",
+      "properties": {
+        "type": "go-interface",
+        "implementation": "go",
+        "sizeBytes": 16,
+        "isOverhead": true
+      }
+    },
+    {
+      "id": "bool-true-iface",
+      "label": "interface{}",
+      "properties": {
+        "type": "go-interface",
+        "implementation": "go",
+        "sizeBytes": 16,
+        "isOverhead": true
+      }
+    },
+    {
+      "id": "nil-iface",
+      "label": "interface{}",
+      "caption": "nil",
+      "properties": {
+        "type": "go-interface",
+        "implementation": "go",
+        "value": "nil",
+        "sizeBytes": 16,
+        "isOverhead": true
+      }
+    },
+    {
+      "id": "str-alpha-1",
+      "label": "string:alpha",
+      "properties": {
+        "type": "go-string",
+        "implementation": "go",
+        "value": "alpha",
+        "sizeBytes": 16
+      }
+    },
+    {
+      "id": "str-alpha-2",
+      "label": "string:alpha",
+      "caption": "(DUP!)",
+      "properties": {
+        "type": "go-string",
+        "implementation": "go",
+        "value": "alpha",
+        "sizeBytes": 16,
+        "isDuplicate": true
+      }
+    },
+    {
+      "id": "str-beta",
+      "label": "string:beta",
+      "properties": {
+        "type": "go-string",
+        "implementation": "go",
+        "value": "beta",
+        "sizeBytes": 16
+      }
+    }
+  ],
+  "relationships": [
+    { "id": "r1", "from": "root-iface", "to": "root-hmap", "type": "iface-data" },
+    { "id": "r2", "from": "root-hmap", "to": "root-bucket", "type": "hmap-to-buckets" },
+    { "id": "r3", "from": "root-bucket", "to": "str-name-1", "type": "bucket-entry", "properties": { "key": "name" } },
+    { "id": "r4", "from": "root-bucket", "to": "val-test-1-iface", "type": "bucket-entry" },
+    { "id": "r5", "from": "val-test-1-iface", "to": "str-test-1", "type": "iface-data" },
+    { "id": "r6", "from": "root-bucket", "to": "num-42-iface", "type": "bucket-entry" },
+    { "id": "r7", "from": "num-42-iface", "to": "num-42", "type": "iface-data" },
+    { "id": "r8", "from": "root-bucket", "to": "num-3.14-iface", "type": "bucket-entry" },
+    { "id": "r9", "from": "num-3.14-iface", "to": "num-3.14", "type": "iface-data" },
+    { "id": "r10", "from": "root-bucket", "to": "bool-true-iface", "type": "bucket-entry" },
+    { "id": "r11", "from": "root-bucket", "to": "nil-iface", "type": "bucket-entry" },
+    { "id": "r12", "from": "root-bucket", "to": "tags-iface", "type": "bucket-entry" },
+    { "id": "r13", "from": "tags-iface", "to": "tags-slice", "type": "iface-data" },
+    { "id": "r14", "from": "tags-slice", "to": "tags-data", "type": "slice-to-data" },
+    { "id": "r15", "from": "tags-data", "to": "str-alpha-1", "type": "slice-element", "properties": { "index": 0 } },
+    { "id": "r16", "from": "tags-data", "to": "str-beta", "type": "slice-element", "properties": { "index": 1 } },
+    { "id": "r17", "from": "tags-data", "to": "str-alpha-2", "type": "slice-element", "properties": { "index": 2 } },
+    { "id": "r18", "from": "root-bucket", "to": "meta-iface", "type": "bucket-entry" },
+    { "id": "r19", "from": "meta-iface", "to": "meta-hmap", "type": "iface-data" },
+    { "id": "r20", "from": "meta-hmap", "to": "meta-bucket", "type": "hmap-to-buckets" },
+    { "id": "r21", "from": "meta-bucket", "to": "str-name-2", "type": "bucket-entry" },
+    { "id": "r22", "from": "meta-bucket", "to": "str-test-2", "type": "bucket-entry" }
+  ]
+}

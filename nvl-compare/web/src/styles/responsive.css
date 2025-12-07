@@ -1,0 +1,307 @@
+/**
+ * Responsive Design Utilities
+ * Adapts comparison view for different screen sizes
+ */
+
+/* ========== Breakpoints ========== */
+/*
+ * sm: 640px   - Mobile landscape
+ * md: 768px   - Tablet portrait
+ * lg: 1024px  - Tablet landscape / Small desktop
+ * xl: 1280px  - Desktop
+ * 2xl: 1536px - Large desktop / Presentation
+ */
+
+/* ========== Comparison View Responsive ========== */
+
+/* Mobile: Stack panels vertically */
+@media (max-width: 767px) {
+  .comparison-panels {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .comparison-divider {
+    display: none;
+  }
+
+  .comparison-panel {
+    min-height: 400px;
+  }
+
+  .panel-graph {
+    height: 300px !important;
+  }
+
+  .comparison-header h1 {
+    font-size: var(--text-lg);
+  }
+
+  .comparison-header .subtitle {
+    display: none;
+  }
+
+  /* Stack legend items */
+  .legend {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .legend-section {
+    width: 100%;
+  }
+}
+
+/* Tablet: Narrower panels */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .comparison-panels {
+    padding: var(--space-3);
+  }
+
+  .panel-header {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .panel-stats {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Desktop: Full layout */
+@media (min-width: 1024px) {
+  .comparison-panels {
+    gap: 0;
+  }
+
+  .comparison-divider {
+    width: var(--space-4);
+  }
+}
+
+/* Large desktop / Presentation */
+@media (min-width: 1536px) {
+  :root {
+    --text-base: 1.25rem;
+    --text-lg: 1.5rem;
+    --text-xl: 1.75rem;
+  }
+
+  .comparison-header {
+    padding: var(--space-6) var(--space-8);
+  }
+
+  .comparison-header h1 {
+    font-size: var(--text-2xl);
+  }
+
+  .stat-value {
+    font-size: var(--text-stat);
+  }
+}
+
+/* ========== Implementation Selector Responsive ========== */
+
+@media (max-width: 639px) {
+  .implementation-selector {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+  }
+
+  .impl-indicator {
+    display: none;
+  }
+}
+
+/* ========== Stats Panel Responsive ========== */
+
+@media (max-width: 639px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+  }
+
+  .stat-value {
+    font-size: var(--text-lg);
+  }
+
+  .overhead-bar-container {
+    margin-top: var(--space-3);
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ========== Legend Responsive ========== */
+
+@media (max-width: 639px) {
+  .legend--compact {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .legend-item {
+    flex: 0 0 45%;
+  }
+}
+
+/* ========== Tooltip Responsive ========== */
+
+@media (max-width: 767px) {
+  .node-tooltip {
+    max-width: 80vw;
+    font-size: var(--text-sm);
+  }
+}
+
+/* ========== Keyboard Help Responsive ========== */
+
+@media (max-width: 639px) {
+  .keyboard-help-modal {
+    width: 95%;
+    max-height: 90vh;
+  }
+
+  .keyboard-help-header {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .keyboard-help-content {
+    padding: var(--space-4);
+  }
+
+  .shortcut-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+  }
+
+  .shortcut-key {
+    min-width: auto;
+  }
+}
+
+/* ========== Hide Elements on Small Screens ========== */
+
+.hide-mobile {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .hide-mobile {
+    display: initial;
+  }
+
+  .hide-desktop {
+    display: none;
+  }
+}
+
+/* ========== Touch-Friendly Targets ========== */
+
+@media (pointer: coarse) {
+  .impl-select {
+    min-height: 48px;
+    padding: var(--space-3) var(--space-8) var(--space-3) var(--space-4);
+  }
+
+  .shortcut-item {
+    padding: var(--space-3) 0;
+  }
+
+  button,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* ========== Print Styles ========== */
+
+@media print {
+  .comparison-view {
+    background: white;
+    color: black;
+  }
+
+  .comparison-header,
+  .comparison-footer,
+  .panel-header {
+    background: white;
+    border-color: #ccc;
+  }
+
+  .keyboard-help-overlay {
+    display: none;
+  }
+
+  .impl-select {
+    background: white;
+    color: black;
+    border: 1px solid #ccc;
+  }
+}
+
+/* ========== Orientation Handling ========== */
+
+@media (orientation: portrait) and (max-height: 600px) {
+  .panel-graph {
+    height: 250px !important;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .comparison-header {
+    padding: var(--space-2) var(--space-4);
+  }
+
+  .comparison-header h1 {
+    font-size: var(--text-base);
+  }
+
+  .comparison-header .subtitle {
+    display: none;
+  }
+
+  .comparison-footer {
+    padding: var(--space-2) var(--space-4);
+  }
+}
+
+/* ========== Keyboard Hint ========== */
+
+.keyboard-hint {
+  position: fixed;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  opacity: 0.7;
+  transition: opacity var(--duration-fast) var(--ease-default);
+  z-index: var(--z-dropdown);
+}
+
+.keyboard-hint:hover {
+  opacity: 1;
+}
+
+.keyboard-hint kbd {
+  padding: 0.125rem 0.375rem;
+  margin: 0 0.25rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+}

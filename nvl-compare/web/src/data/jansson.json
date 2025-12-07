@@ -1,0 +1,334 @@
+{
+  "id": "jansson",
+  "name": "Jansson",
+  "language": "C",
+  "description": "Reference-counted json_t with hashtable collision chains",
+  "stats": {
+    "nodeCount": 50,
+    "edgeCount": 55,
+    "totalBytes": 1408,
+    "overheadBytes": 528,
+    "overheadPercent": 37.5,
+    "uniqueStrings": 11,
+    "duplicateStrings": 4,
+    "refCountedObjects": 22
+  },
+  "nodes": [
+    {
+      "id": "root-obj",
+      "label": "json_object",
+      "caption": "refcnt:1",
+      "properties": {
+        "type": "jansson-object",
+        "implementation": "jansson",
+        "sizeBytes": 56,
+        "refCount": 1
+      }
+    },
+    {
+      "id": "root-ht",
+      "label": "hashtable_t",
+      "caption": "7 pairs",
+      "properties": {
+        "type": "jansson-hashtable",
+        "implementation": "jansson",
+        "sizeBytes": 40
+      }
+    },
+    {
+      "id": "pair-name",
+      "label": "pair:name",
+      "caption": "56 bytes",
+      "properties": {
+        "type": "jansson-pair",
+        "implementation": "jansson",
+        "sizeBytes": 56
+      }
+    },
+    {
+      "id": "pair-count",
+      "label": "pair:count",
+      "properties": {
+        "type": "jansson-pair",
+        "implementation": "jansson",
+        "sizeBytes": 56
+      }
+    },
+    {
+      "id": "pair-ratio",
+      "label": "pair:ratio",
+      "properties": {
+        "type": "jansson-pair",
+        "implementation": "jansson",
+        "sizeBytes": 56
+      }
+    },
+    {
+      "id": "pair-active",
+      "label": "pair:active",
+      "properties": {
+        "type": "jansson-pair",
+        "implementation": "jansson",
+        "sizeBytes": 56
+      }
+    },
+    {
+      "id": "pair-data",
+      "label": "pair:data",
+      "properties": {
+        "type": "jansson-pair",
+        "implementation": "jansson",
+        "sizeBytes": 56
+      }
+    },
+    {
+      "id": "pair-tags",
+      "label": "pair:tags",
+      "properties": {
+        "type": "jansson-pair",
+        "implementation": "jansson",
+        "sizeBytes": 56
+      }
+    },
+    {
+      "id": "pair-meta",
+      "label": "pair:meta",
+      "properties": {
+        "type": "jansson-pair",
+        "implementation": "jansson",
+        "sizeBytes": 56
+      }
+    },
+    {
+      "id": "meta-obj",
+      "label": "json_object",
+      "caption": "refcnt:1",
+      "properties": {
+        "type": "jansson-object",
+        "implementation": "jansson",
+        "sizeBytes": 56,
+        "refCount": 1
+      }
+    },
+    {
+      "id": "meta-ht",
+      "label": "hashtable_t",
+      "properties": {
+        "type": "jansson-hashtable",
+        "implementation": "jansson",
+        "sizeBytes": 40
+      }
+    },
+    {
+      "id": "meta-pair-version",
+      "label": "pair:version",
+      "properties": {
+        "type": "jansson-pair",
+        "implementation": "jansson",
+        "sizeBytes": 56
+      }
+    },
+    {
+      "id": "meta-pair-name",
+      "label": "pair:name",
+      "caption": "(DUP key!)",
+      "properties": {
+        "type": "jansson-pair",
+        "implementation": "jansson",
+        "sizeBytes": 56,
+        "isDuplicate": true
+      }
+    },
+    {
+      "id": "tags-arr",
+      "label": "json_array",
+      "caption": "refcnt:1",
+      "properties": {
+        "type": "jansson-array",
+        "implementation": "jansson",
+        "sizeBytes": 32,
+        "refCount": 1
+      }
+    },
+    {
+      "id": "tags-elements",
+      "label": "json_t*[3]",
+      "properties": {
+        "type": "jansson-array-data",
+        "implementation": "jansson",
+        "sizeBytes": 24
+      }
+    },
+    {
+      "id": "str-name-1",
+      "label": "json_string",
+      "caption": "\"name\"",
+      "properties": {
+        "type": "jansson-string",
+        "implementation": "jansson",
+        "value": "name",
+        "sizeBytes": 32,
+        "refCount": 1
+      }
+    },
+    {
+      "id": "str-name-1-data",
+      "label": "char*",
+      "properties": {
+        "type": "jansson-string-data",
+        "implementation": "jansson",
+        "value": "name",
+        "sizeBytes": 5
+      }
+    },
+    {
+      "id": "str-name-2",
+      "label": "json_string",
+      "caption": "\"name\" (DUP!)",
+      "properties": {
+        "type": "jansson-string",
+        "implementation": "jansson",
+        "value": "name",
+        "sizeBytes": 32,
+        "isDuplicate": true,
+        "refCount": 1
+      }
+    },
+    {
+      "id": "str-test-1",
+      "label": "json_string",
+      "caption": "\"test\"",
+      "properties": {
+        "type": "jansson-string",
+        "implementation": "jansson",
+        "value": "test",
+        "sizeBytes": 32,
+        "refCount": 1
+      }
+    },
+    {
+      "id": "str-test-2",
+      "label": "json_string",
+      "caption": "\"test\" (DUP!)",
+      "properties": {
+        "type": "jansson-string",
+        "implementation": "jansson",
+        "value": "test",
+        "sizeBytes": 32,
+        "isDuplicate": true,
+        "refCount": 1
+      }
+    },
+    {
+      "id": "int-42",
+      "label": "json_integer",
+      "caption": "42",
+      "properties": {
+        "type": "jansson-integer",
+        "implementation": "jansson",
+        "value": "42",
+        "sizeBytes": 24,
+        "refCount": 1
+      }
+    },
+    {
+      "id": "real-3.14",
+      "label": "json_real",
+      "caption": "3.14159",
+      "properties": {
+        "type": "jansson-real",
+        "implementation": "jansson",
+        "value": "3.14159",
+        "sizeBytes": 24,
+        "refCount": 1
+      }
+    },
+    {
+      "id": "bool-true",
+      "label": "json_true",
+      "caption": "singleton",
+      "properties": {
+        "type": "jansson-true",
+        "implementation": "jansson",
+        "value": "true",
+        "sizeBytes": 0
+      }
+    },
+    {
+      "id": "null-val",
+      "label": "json_null",
+      "caption": "singleton",
+      "properties": {
+        "type": "jansson-null",
+        "implementation": "jansson",
+        "value": "null",
+        "sizeBytes": 0
+      }
+    },
+    {
+      "id": "str-alpha-1",
+      "label": "json_string",
+      "caption": "\"alpha\"",
+      "properties": {
+        "type": "jansson-string",
+        "implementation": "jansson",
+        "value": "alpha",
+        "sizeBytes": 32,
+        "refCount": 1
+      }
+    },
+    {
+      "id": "str-alpha-2",
+      "label": "json_string",
+      "caption": "\"alpha\" (DUP!)",
+      "properties": {
+        "type": "jansson-string",
+        "implementation": "jansson",
+        "value": "alpha",
+        "sizeBytes": 32,
+        "isDuplicate": true,
+        "refCount": 1
+      }
+    },
+    {
+      "id": "str-beta",
+      "label": "json_string",
+      "caption": "\"beta\"",
+      "properties": {
+        "type": "jansson-string",
+        "implementation": "jansson",
+        "value": "beta",
+        "sizeBytes": 32,
+        "refCount": 1
+      }
+    }
+  ],
+  "relationships": [
+    { "id": "r1", "from": "root-obj", "to": "root-ht", "type": "object-to-hashtable" },
+    { "id": "r2", "from": "root-ht", "to": "pair-name", "type": "hashtable-to-pair" },
+    { "id": "r3", "from": "root-ht", "to": "pair-count", "type": "hashtable-to-pair" },
+    { "id": "r4", "from": "root-ht", "to": "pair-ratio", "type": "hashtable-to-pair" },
+    { "id": "r5", "from": "root-ht", "to": "pair-active", "type": "hashtable-to-pair" },
+    { "id": "r6", "from": "root-ht", "to": "pair-data", "type": "hashtable-to-pair" },
+    { "id": "r7", "from": "root-ht", "to": "pair-tags", "type": "hashtable-to-pair" },
+    { "id": "r8", "from": "root-ht", "to": "pair-meta", "type": "hashtable-to-pair" },
+    { "id": "r9", "from": "pair-name", "to": "str-name-1", "type": "pair-to-key" },
+    { "id": "r10", "from": "str-name-1", "to": "str-name-1-data", "type": "pair-to-key" },
+    { "id": "r11", "from": "pair-name", "to": "str-test-1", "type": "pair-to-value" },
+    { "id": "r12", "from": "pair-count", "to": "int-42", "type": "pair-to-value" },
+    { "id": "r13", "from": "pair-ratio", "to": "real-3.14", "type": "pair-to-value" },
+    { "id": "r14", "from": "pair-active", "to": "bool-true", "type": "pair-to-value" },
+    { "id": "r15", "from": "pair-data", "to": "null-val", "type": "pair-to-value" },
+    { "id": "r16", "from": "pair-tags", "to": "tags-arr", "type": "pair-to-value" },
+    { "id": "r17", "from": "tags-arr", "to": "tags-elements", "type": "array-to-elements" },
+    { "id": "r18", "from": "tags-elements", "to": "str-alpha-1", "type": "element-ptr", "properties": { "index": 0 } },
+    { "id": "r19", "from": "tags-elements", "to": "str-beta", "type": "element-ptr", "properties": { "index": 1 } },
+    { "id": "r20", "from": "tags-elements", "to": "str-alpha-2", "type": "element-ptr", "properties": { "index": 2 } },
+    { "id": "r21", "from": "pair-meta", "to": "meta-obj", "type": "pair-to-value" },
+    { "id": "r22", "from": "meta-obj", "to": "meta-ht", "type": "object-to-hashtable" },
+    { "id": "r23", "from": "meta-ht", "to": "meta-pair-version", "type": "hashtable-to-pair" },
+    { "id": "r24", "from": "meta-ht", "to": "meta-pair-name", "type": "hashtable-to-pair" },
+    { "id": "r25", "from": "meta-pair-name", "to": "str-name-2", "type": "pair-to-key" },
+    { "id": "r26", "from": "meta-pair-name", "to": "str-test-2", "type": "pair-to-value" }
+  ]
+}

@@ -1,0 +1,258 @@
+{
+  "id": "serde_json",
+  "name": "serde_json",
+  "language": "Rust",
+  "description": "Value enum with ownership model, no string interning",
+  "stats": {
+    "nodeCount": 48,
+    "edgeCount": 47,
+    "totalBytes": 1056,
+    "overheadBytes": 384,
+    "overheadPercent": 36.4,
+    "uniqueStrings": 11,
+    "duplicateStrings": 4
+  },
+  "nodes": [
+    {
+      "id": "root-val",
+      "label": "Value::Object",
+      "caption": "24 bytes",
+      "properties": {
+        "type": "serde-value-enum",
+        "implementation": "serde",
+        "sizeBytes": 24
+      }
+    },
+    {
+      "id": "root-map",
+      "label": "IndexMap",
+      "caption": "7 entries",
+      "properties": {
+        "type": "serde-indexmap",
+        "implementation": "serde",
+        "sizeBytes": 128
+      }
+    },
+    {
+      "id": "meta-val",
+      "label": "Value::Object",
+      "caption": "24 bytes",
+      "properties": {
+        "type": "serde-value-enum",
+        "implementation": "serde",
+        "sizeBytes": 24
+      }
+    },
+    {
+      "id": "meta-map",
+      "label": "IndexMap",
+      "caption": "2 entries",
+      "properties": {
+        "type": "serde-indexmap",
+        "implementation": "serde",
+        "sizeBytes": 64
+      }
+    },
+    {
+      "id": "tags-val",
+      "label": "Value::Array",
+      "caption": "24 bytes",
+      "properties": {
+        "type": "serde-value-enum",
+        "implementation": "serde",
+        "sizeBytes": 24
+      }
+    },
+    {
+      "id": "tags-vec",
+      "label": "Vec<Value>",
+      "caption": "3 elements",
+      "properties": {
+        "type": "serde-vec",
+        "implementation": "serde",
+        "sizeBytes": 24
+      }
+    },
+    {
+      "id": "tags-data",
+      "label": "[Value;3]",
+      "caption": "heap",
+      "properties": {
+        "type": "serde-vec-data",
+        "implementation": "serde",
+        "sizeBytes": 72
+      }
+    },
+    {
+      "id": "str-name-1",
+      "label": "String:name",
+      "properties": {
+        "type": "serde-string",
+        "implementation": "serde",
+        "value": "name",
+        "sizeBytes": 24
+      }
+    },
+    {
+      "id": "str-name-1-data",
+      "label": "\"name\"",
+      "properties": {
+        "type": "serde-string-data",
+        "implementation": "serde",
+        "sizeBytes": 4
+      }
+    },
+    {
+      "id": "str-name-2",
+      "label": "String:name",
+      "caption": "(DUP!)",
+      "properties": {
+        "type": "serde-string",
+        "implementation": "serde",
+        "value": "name",
+        "sizeBytes": 24,
+        "isDuplicate": true
+      }
+    },
+    {
+      "id": "str-test-1-val",
+      "label": "Value::String",
+      "properties": {
+        "type": "serde-value-enum",
+        "implementation": "serde",
+        "sizeBytes": 24
+      }
+    },
+    {
+      "id": "str-test-1",
+      "label": "String:test",
+      "properties": {
+        "type": "serde-string",
+        "implementation": "serde",
+        "value": "test",
+        "sizeBytes": 24
+      }
+    },
+    {
+      "id": "str-test-2-val",
+      "label": "Value::String",
+      "caption": "(DUP!)",
+      "properties": {
+        "type": "serde-value-enum",
+        "implementation": "serde",
+        "sizeBytes": 24,
+        "isDuplicate": true
+      }
+    },
+    {
+      "id": "num-42-val",
+      "label": "Value::Number",
+      "properties": {
+        "type": "serde-value-enum",
+        "implementation": "serde",
+        "sizeBytes": 24
+      }
+    },
+    {
+      "id": "num-42",
+      "label": "N::PosInt(42)",
+      "properties": {
+        "type": "serde-number",
+        "implementation": "serde",
+        "value": "42",
+        "sizeBytes": 16
+      }
+    },
+    {
+      "id": "num-3.14-val",
+      "label": "Value::Number",
+      "properties": {
+        "type": "serde-value-enum",
+        "implementation": "serde",
+        "sizeBytes": 24
+      }
+    },
+    {
+      "id": "num-3.14",
+      "label": "N::Float(3.14)",
+      "properties": {
+        "type": "serde-number",
+        "implementation": "serde",
+        "value": "3.14159",
+        "sizeBytes": 16
+      }
+    },
+    {
+      "id": "bool-true-val",
+      "label": "Value::Bool",
+      "properties": {
+        "type": "serde-value-enum",
+        "implementation": "serde",
+        "value": "true",
+        "sizeBytes": 24
+      }
+    },
+    {
+      "id": "null-val",
+      "label": "Value::Null",
+      "properties": {
+        "type": "serde-value-enum",
+        "implementation": "serde",
+        "value": "null",
+        "sizeBytes": 24
+      }
+    },
+    {
+      "id": "str-alpha-1-val",
+      "label": "Value::String",
+      "properties": {
+        "type": "serde-value-enum",
+        "implementation": "serde",
+        "sizeBytes": 24
+      }
+    },
+    {
+      "id": "str-alpha-2-val",
+      "label": "Value::String",
+      "caption": "(DUP!)",
+      "properties": {
+        "type": "serde-value-enum",
+        "implementation": "serde",
+        "sizeBytes": 24,
+        "isDuplicate": true
+      }
+    },
+    {
+      "id": "str-beta-val",
+      "label": "Value::String",
+      "properties": {
+        "type": "serde-value-enum",
+        "implementation": "serde",
+        "sizeBytes": 24
+      }
+    }
+  ],
+  "relationships": [
+    { "id": "r1", "from": "root-val", "to": "root-map", "type": "enum-contains" },
+    { "id": "r2", "from": "root-map", "to": "str-name-1", "type": "map-entry-key" },
+    { "id": "r3", "from": "str-name-1", "to": "str-name-1-data", "type": "string-to-heap" },
+    { "id": "r4", "from": "root-map", "to": "str-test-1-val", "type": "map-entry-value" },
+    { "id": "r5", "from": "str-test-1-val", "to": "str-test-1", "type": "enum-contains" },
+    { "id": "r6", "from": "root-map", "to": "num-42-val", "type": "map-entry-value" },
+    { "id": "r7", "from": "num-42-val", "to": "num-42", "type": "enum-contains" },
+    { "id": "r8", "from": "root-map", "to": "num-3.14-val", "type": "map-entry-value" },
+    { "id": "r9", "from": "num-3.14-val", "to": "num-3.14", "type": "enum-contains" },
+    { "id": "r10", "from": "root-map", "to": "bool-true-val", "type": "map-entry-value" },
+    { "id": "r11", "from": "root-map", "to": "null-val", "type": "map-entry-value" },
+    { "id": "r12", "from": "root-map", "to": "tags-val", "type": "map-entry-value" },
+    { "id": "r13", "from": "tags-val", "to": "tags-vec", "type": "enum-contains" },
+    { "id": "r14", "from": "tags-vec", "to": "tags-data", "type": "vec-to-data" },
+    { "id": "r15", "from": "tags-data", "to": "str-alpha-1-val", "type": "vec-element", "properties": { "index": 0 } },
+    { "id": "r16", "from": "tags-data", "to": "str-beta-val", "type": "vec-element", "properties": { "index": 1 } },
+    { "id": "r17", "from": "tags-data", "to": "str-alpha-2-val", "type": "vec-element", "properties": { "index": 2 } },
+    { "id": "r18", "from": "root-map", "to": "meta-val", "type": "map-entry-value" },
+    { "id": "r19", "from": "meta-val", "to": "meta-map", "type": "enum-contains" },
+    { "id": "r20", "from": "meta-map", "to": "str-name-2", "type": "map-entry-key" },
+    { "id": "r21", "from": "meta-map", "to": "str-test-2-val", "type": "map-entry-value" }
+  ]
+}

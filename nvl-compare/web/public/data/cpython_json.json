@@ -1,0 +1,326 @@
+{
+  "id": "cpython_json",
+  "name": "json (CPython)",
+  "language": "Python",
+  "description": "PyObject-based with reference counting and type pointers",
+  "stats": {
+    "nodeCount": 52,
+    "edgeCount": 58,
+    "totalBytes": 1248,
+    "overheadBytes": 416,
+    "overheadPercent": 33.3,
+    "uniqueStrings": 11,
+    "duplicateStrings": 4,
+    "refCountedObjects": 22
+  },
+  "nodes": [
+    {
+      "id": "root-dict",
+      "label": "PyDict",
+      "caption": "root object",
+      "properties": {
+        "type": "py-dict",
+        "implementation": "cpython",
+        "sizeBytes": 48,
+        "refCount": 1
+      }
+    },
+    {
+      "id": "root-keys",
+      "label": "DictKeys",
+      "caption": "dk_entries",
+      "properties": {
+        "type": "py-dict-keys",
+        "implementation": "cpython",
+        "sizeBytes": 128
+      }
+    },
+    {
+      "id": "root-type",
+      "label": "dict",
+      "caption": "ob_type",
+      "properties": {
+        "type": "py-type-ptr",
+        "implementation": "cpython",
+        "sizeBytes": 8,
+        "isOverhead": true
+      }
+    },
+    {
+      "id": "meta-dict",
+      "label": "PyDict",
+      "caption": "meta object",
+      "properties": {
+        "type": "py-dict",
+        "implementation": "cpython",
+        "sizeBytes": 48,
+        "refCount": 1
+      }
+    },
+    {
+      "id": "meta-keys",
+      "label": "DictKeys",
+      "caption": "dk_entries",
+      "properties": {
+        "type": "py-dict-keys",
+        "implementation": "cpython",
+        "sizeBytes": 64
+      }
+    },
+    {
+      "id": "tags-list",
+      "label": "PyList",
+      "caption": "tags array",
+      "properties": {
+        "type": "py-list",
+        "implementation": "cpython",
+        "sizeBytes": 40,
+        "refCount": 1
+      }
+    },
+    {
+      "id": "tags-items",
+      "label": "ob_item[]",
+      "caption": "3 elements",
+      "properties": {
+        "type": "py-list-items",
+        "implementation": "cpython",
+        "sizeBytes": 24
+      }
+    },
+    {
+      "id": "str-name-1",
+      "label": "\"name\"",
+      "caption": "root key",
+      "properties": {
+        "type": "py-unicode",
+        "implementation": "cpython",
+        "value": "name",
+        "sizeBytes": 53,
+        "refCount": 1
+      }
+    },
+    {
+      "id": "str-name-2",
+      "label": "\"name\"",
+      "caption": "meta key (DUP!)",
+      "properties": {
+        "type": "py-unicode",
+        "implementation": "cpython",
+        "value": "name",
+        "sizeBytes": 53,
+        "isDuplicate": true,
+        "refCount": 1
+      }
+    },
+    {
+      "id": "str-test-1",
+      "label": "\"test\"",
+      "caption": "root.name value",
+      "properties": {
+        "type": "py-unicode",
+        "implementation": "cpython",
+        "value": "test",
+        "sizeBytes": 53,
+        "refCount": 1
+      }
+    },
+    {
+      "id": "str-test-2",
+      "label": "\"test\"",
+      "caption": "meta.name value (DUP!)",
+      "properties": {
+        "type": "py-unicode",
+        "implementation": "cpython",
+        "value": "test",
+        "sizeBytes": 53,
+        "isDuplicate": true,
+        "refCount": 1
+      }
+    },
+    {
+      "id": "str-count",
+      "label": "\"count\"",
+      "properties": {
+        "type": "py-unicode",
+        "implementation": "cpython",
+        "value": "count",
+        "sizeBytes": 54
+      }
+    },
+    {
+      "id": "str-ratio",
+      "label": "\"ratio\"",
+      "properties": {
+        "type": "py-unicode",
+        "implementation": "cpython",
+        "value": "ratio",
+        "sizeBytes": 54
+      }
+    },
+    {
+      "id": "str-active",
+      "label": "\"active\"",
+      "properties": {
+        "type": "py-unicode",
+        "implementation": "cpython",
+        "value": "active",
+        "sizeBytes": 55
+      }
+    },
+    {
+      "id": "str-data",
+      "label": "\"data\"",
+      "properties": {
+        "type": "py-unicode",
+        "implementation": "cpython",
+        "value": "data",
+        "sizeBytes": 53
+      }
+    },
+    {
+      "id": "str-tags",
+      "label": "\"tags\"",
+      "properties": {
+        "type": "py-unicode",
+        "implementation": "cpython",
+        "value": "tags",
+        "sizeBytes": 53
+      }
+    },
+    {
+      "id": "str-meta",
+      "label": "\"meta\"",
+      "properties": {
+        "type": "py-unicode",
+        "implementation": "cpython",
+        "value": "meta",
+        "sizeBytes": 53
+      }
+    },
+    {
+      "id": "str-version",
+      "label": "\"version\"",
+      "properties": {
+        "type": "py-unicode",
+        "implementation": "cpython",
+        "value": "version",
+        "sizeBytes": 56
+      }
+    },
+    {
+      "id": "str-1.0",
+      "label": "\"1.0\"",
+      "properties": {
+        "type": "py-unicode",
+        "implementation": "cpython",
+        "value": "1.0",
+        "sizeBytes": 52
+      }
+    },
+    {
+      "id": "str-alpha-1",
+      "label": "\"alpha\"",
+      "caption": "tags[0]",
+      "properties": {
+        "type": "py-unicode",
+        "implementation": "cpython",
+        "value": "alpha",
+        "sizeBytes": 54
+      }
+    },
+    {
+      "id": "str-alpha-2",
+      "label": "\"alpha\"",
+      "caption": "tags[2] (DUP!)",
+      "properties": {
+        "type": "py-unicode",
+        "implementation": "cpython",
+        "value": "alpha",
+        "sizeBytes": 54,
+        "isDuplicate": true
+      }
+    },
+    {
+      "id": "str-beta",
+      "label": "\"beta\"",
+      "properties": {
+        "type": "py-unicode",
+        "implementation": "cpython",
+        "value": "beta",
+        "sizeBytes": 53
+      }
+    },
+    {
+      "id": "int-42",
+      "label": "42",
+      "caption": "PyLong",
+      "properties": {
+        "type": "py-long",
+        "implementation": "cpython",
+        "value": "42",
+        "sizeBytes": 28
+      }
+    },
+    {
+      "id": "float-3.14",
+      "label": "3.14159",
+      "caption": "PyFloat",
+      "properties": {
+        "type": "py-float",
+        "implementation": "cpython",
+        "value": "3.14159",
+        "sizeBytes": 24
+      }
+    },
+    {
+      "id": "bool-true",
+      "label": "True",
+      "caption": "Py_True singleton",
+      "properties": {
+        "type": "py-bool-singleton",
+        "implementation": "cpython",
+        "value": "True",
+        "sizeBytes": 0
+      }
+    },
+    {
+      "id": "none",
+      "label": "None",
+      "caption": "Py_None singleton",
+      "properties": {
+        "type": "py-none-singleton",
+        "implementation": "cpython",
+        "value": "None",
+        "sizeBytes": 0
+      }
+    }
+  ],
+  "relationships": [
+    { "id": "r1", "from": "root-dict", "to": "root-keys", "type": "dict-to-keys" },
+    { "id": "r2", "from": "root-dict", "to": "root-type", "type": "ob-type", "properties": { "isOverhead": true } },
+    { "id": "r3", "from": "root-keys", "to": "str-name-1", "type": "entry-key" },
+    { "id": "r4", "from": "root-keys", "to": "str-test-1", "type": "entry-value" },
+    { "id": "r5", "from": "root-keys", "to": "str-count", "type": "entry-key" },
+    { "id": "r6", "from": "root-keys", "to": "int-42", "type": "entry-value" },
+    { "id": "r7", "from": "root-keys", "to": "str-ratio", "type": "entry-key" },
+    { "id": "r8", "from": "root-keys", "to": "float-3.14", "type": "entry-value" },
+    { "id": "r9", "from": "root-keys", "to": "str-active", "type": "entry-key" },
+    { "id": "r10", "from": "root-keys", "to": "bool-true", "type": "entry-value" },
+    { "id": "r11", "from": "root-keys", "to": "str-data", "type": "entry-key" },
+    { "id": "r12", "from": "root-keys", "to": "none", "type": "entry-value" },
+    { "id": "r13", "from": "root-keys", "to": "str-tags", "type": "entry-key" },
+    { "id": "r14", "from": "root-keys", "to": "tags-list", "type": "entry-value" },
+    { "id": "r15", "from": "root-keys", "to": "str-meta", "type": "entry-key" },
+    { "id": "r16", "from": "root-keys", "to": "meta-dict", "type": "entry-value" },
+    { "id": "r17", "from": "tags-list", "to": "tags-items", "type": "list-to-items" },
+    { "id": "r18", "from": "tags-items", "to": "str-alpha-1", "type": "items-element", "properties": { "index": 0 } },
+    { "id": "r19", "from": "tags-items", "to": "str-beta", "type": "items-element", "properties": { "index": 1 } },
+    { "id": "r20", "from": "tags-items", "to": "str-alpha-2", "type": "items-element", "properties": { "index": 2 } },
+    { "id": "r21", "from": "meta-dict", "to": "meta-keys", "type": "dict-to-keys" },
+    { "id": "r22", "from": "meta-keys", "to": "str-version", "type": "entry-key" },
+    { "id": "r23", "from": "meta-keys", "to": "str-1.0", "type": "entry-value" },
+    { "id": "r24", "from": "meta-keys", "to": "str-name-2", "type": "entry-key" },
+    { "id": "r25", "from": "meta-keys", "to": "str-test-2", "type": "entry-value" }
+  ]
+}
