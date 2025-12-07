@@ -23,9 +23,31 @@ ProcessorCount(N)
 # Function to determine ICU version and URL
 function(determine_icu_version_and_url)
     if(ICU_VERSION)
-        string(REPLACE "." "-" ICU_VERSION_DASH "${ICU_VERSION}")
         string(REPLACE "." "_" ICU_VERSION_UNDERSCORE "${ICU_VERSION}")
-        set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-${ICU_VERSION_DASH}/icu4c-${ICU_VERSION_UNDERSCORE}-src.tgz" PARENT_SCOPE)
+        
+        # Determine if version >= 78.1 (uses -sources.tgz instead of -src.tgz)
+        string(REPLACE "." ";" VERSION_LIST "${ICU_VERSION}")
+        list(GET VERSION_LIST 0 MAJOR_VERSION)
+        list(LENGTH VERSION_LIST VERSION_PARTS)
+        if(VERSION_PARTS GREATER 1)
+            list(GET VERSION_LIST 1 MINOR_VERSION)
+        else()
+            set(MINOR_VERSION 0)
+        endif()
+        
+        # Check if version >= 78.1
+        if((MAJOR_VERSION GREATER 78) OR (MAJOR_VERSION EQUAL 78 AND MINOR_VERSION GREATER_EQUAL 1))
+            # For >= 78.1: use dot notation in tag and filename, -sources suffix
+            set(ICU_TAG "release-${ICU_VERSION}")
+            set(ICU_FILENAME "icu4c-${ICU_VERSION}-sources")
+        else()
+            # For <= 77.1: use dash in tag, underscore in filename, -src suffix
+            string(REPLACE "." "-" ICU_VERSION_DASH "${ICU_VERSION}")
+            set(ICU_TAG "release-${ICU_VERSION_DASH}")
+            set(ICU_FILENAME "icu4c-${ICU_VERSION_UNDERSCORE}-src")
+        endif()
+        
+        set(ICU_URL "https://github.com/unicode-org/icu/releases/download/${ICU_TAG}/${ICU_FILENAME}.tgz" PARENT_SCOPE)
     else()
         # Fetch the latest release version
         file(DOWNLOAD "https://api.github.com/repos/unicode-org/icu/releases/latest" "${CMAKE_BINARY_DIR}/icu_latest_release.json" STATUS status)
@@ -37,9 +59,31 @@ function(determine_icu_version_and_url)
         set(ICU_VERSION "${CMAKE_MATCH_1}")
         string(REPLACE "release-" "" ICU_VERSION "${ICU_VERSION}")
         string(REPLACE "-" "." ICU_VERSION "${ICU_VERSION}")
-        string(REPLACE "." "-" ICU_VERSION_DASH "${ICU_VERSION}")
         string(REPLACE "." "_" ICU_VERSION_UNDERSCORE "${ICU_VERSION}")
-        set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-${ICU_VERSION_DASH}/icu4c-${ICU_VERSION_UNDERSCORE}-src.tgz" PARENT_SCOPE)
+        
+        # Determine if version >= 78.1
+        string(REPLACE "." ";" VERSION_LIST "${ICU_VERSION}")
+        list(GET VERSION_LIST 0 MAJOR_VERSION)
+        list(LENGTH VERSION_LIST VERSION_PARTS)
+        if(VERSION_PARTS GREATER 1)
+            list(GET VERSION_LIST 1 MINOR_VERSION)
+        else()
+            set(MINOR_VERSION 0)
+        endif()
+        
+        # Check if version >= 78.1
+        if((MAJOR_VERSION GREATER 78) OR (MAJOR_VERSION EQUAL 78 AND MINOR_VERSION GREATER_EQUAL 1))
+            # For >= 78.1: use dot notation in tag and filename, -sources suffix
+            set(ICU_TAG "release-${ICU_VERSION}")
+            set(ICU_FILENAME "icu4c-${ICU_VERSION}-sources")
+        else()
+            # For <= 77.1: use dash in tag, underscore in filename, -src suffix
+            string(REPLACE "." "-" ICU_VERSION_DASH "${ICU_VERSION}")
+            set(ICU_TAG "release-${ICU_VERSION_DASH}")
+            set(ICU_FILENAME "icu4c-${ICU_VERSION_UNDERSCORE}-src")
+        endif()
+        
+        set(ICU_URL "https://github.com/unicode-org/icu/releases/download/${ICU_TAG}/${ICU_FILENAME}.tgz" PARENT_SCOPE)
     endif()
 endfunction()
 
