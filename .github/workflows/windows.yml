@@ -81,3 +81,16 @@ jobs:
         env:
           ASAN_OPTIONS: windows_hook_rtl_allocators=true:abort_on_error=1
 
+      - name: Upload Build Logs on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ matrix.vs-version }}-${{ matrix.build-type }}${{ matrix.sanitizer && '-asan' || '' }}-logs
+          path: |
+            build/**/*.log
+            build/CMakeFiles/*.log
+            build/icu_project-prefix/src/icu_project-stamp/*.log
+            build/_deps/*-build/*.log
+          if-no-files-found: warn
+          retention-days: 7
+
