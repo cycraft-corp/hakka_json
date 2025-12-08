@@ -139,6 +139,17 @@ jobs:
         with:
           xcode-version: ${{ matrix.xcode }}
 
+      - name: Install dependencies (macOS)
+        if: matrix.os == 'macos-14'
+        run: |
+          if ! brew list ninja &>/dev/null; then
+            brew install ninja
+          fi
+          # Ensure make is available (needed for ICU build)
+          if ! command -v make &>/dev/null; then
+            brew install make
+          fi
+
       - name: Setup Python (non-container)
         if: matrix.use-container == false
         uses: actions/setup-python@v5
