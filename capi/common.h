@@ -12,8 +12,9 @@
 #endif
 
 #include <hakka_json_enum.h>
+#include <hakka_json_export.h>
 
-#define extern_c extern "C"
+#define extern_c extern "C" HAKKA_JSON_EXPORT
 #define C_BOOL uint8_t
 
 #ifdef __cplusplus

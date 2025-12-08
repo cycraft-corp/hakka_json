@@ -1,0 +1,8 @@
+{
+    global:
+        # Export C API symbols (Hakka*, CreateHakka*, GetHakka*, etc.)
+        *Hakka*;
+    local:
+        # Hide all other symbols (including C++ internals and third-party)
+        *;
+};

@@ -10,6 +10,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# Note: Symbol visibility is controlled per-target, not globally.
+# - hakka_json_core (static): All C++ API symbols available for unit tests
+# - hakka_json (shared): Only C API symbols (hakka_*) exported via version scripts
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 include(GNUInstallDirs)
@@ -33,6 +37,25 @@ install(TARGETS hakka_json_core hakka_json
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+# Install ICU dependencies for standalone releases
+if(HAKKA_ICU_USING_FETCH)
+    if(WIN32)
+        # Windows: Install ICU DLLs alongside hakka_json.dll
+        install(DIRECTORY ${ICU_INSTALL_DIR}/bin/
+                DESTINATION ${CMAKE_INSTALL_BINDIR}
+                FILES_MATCHING PATTERN "icu*.dll")
+        # Also install ICU import libraries for consumers
+        install(DIRECTORY ${ICU_INSTALL_DIR}/lib/
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                FILES_MATCHING PATTERN "icu*.lib")
+    else()
+        # Unix: Install ICU static libraries
+        install(DIRECTORY ${ICU_INSTALL_DIR}/lib/
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                FILES_MATCHING PATTERN "libicu*.a")
+    endif()
+endif()
 
 # Tests
 option(HAKKA_JSON_BUILD_TESTS "Build tests" OFF)

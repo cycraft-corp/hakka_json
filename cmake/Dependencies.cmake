@@ -1,46 +1,46 @@
 include(FetchContent)
 
-option(HAKKA_JSON_USE_SYSTEM_DEPS "Try system packages first" ON)
+# CMake Options for dependency resolution
+option(HAKKA_JSON_USE_SYSTEM_DEPS "Try system packages first (default path)" ON)
+option(HAKKA_JSON_FORCE_FETCH_CONTENT "Always use FetchContent/ExternalProject (never system)" OFF)
+option(HAKKA_JSON_FORCE_SYSTEM_DEPS "Always require system packages (never fetch)" OFF)
+
+# Validation: prevent both FORCE options from being ON simultaneously
+if(HAKKA_JSON_FORCE_FETCH_CONTENT AND HAKKA_JSON_FORCE_SYSTEM_DEPS)
+    message(FATAL_ERROR "HAKKA_JSON_FORCE_FETCH_CONTENT and HAKKA_JSON_FORCE_SYSTEM_DEPS cannot both be ON")
+endif()
+
+# Include helper macro for dependency resolution
+include(${CMAKE_CURRENT_LIST_DIR}/DependencyHelper.cmake)
 
 # nlohmann_json
-if(HAKKA_JSON_USE_SYSTEM_DEPS)
-    find_package(nlohmann_json 3.12 QUIET)
-endif()
-if(NOT nlohmann_json_FOUND)
-    FetchContent_Declare(
-        nlohmann_json
+resolve_dependency(
+    NAME nlohmann_json
+    FIND_PACKAGE_ARGS 3.12
+    FETCHCONTENT_DECLARE_ARGS
         GIT_REPOSITORY https://github.com/nlohmann/json.git
         GIT_TAG v3.12.0
-    )
-    FetchContent_MakeAvailable(nlohmann_json)
-endif()
+        GIT_SHALLOW TRUE
+)
 
 # tl::expected
-if(HAKKA_JSON_USE_SYSTEM_DEPS)
-    find_package(tl-expected 1.1 QUIET)
-endif()
-if(NOT tl-expected_FOUND)
-    FetchContent_Declare(
-        expected
+set(EXPECTED_BUILD_TESTS OFF)
+resolve_dependency(
+    NAME tl-expected
+    FIND_PACKAGE_ARGS 1.1
+    FETCHCONTENT_DECLARE_ARGS
         GIT_REPOSITORY https://github.com/TartanLlama/expected.git
         GIT_TAG v1.1.0
-    )
-    set(EXPECTED_BUILD_TESTS OFF)
-    FetchContent_MakeAvailable(expected)
+        GIT_SHALLOW TRUE
+)
+# Note: FetchContent names the target "expected" not "tl-expected"
+# Create alias if using FetchContent and alias doesn't exist
+if(NOT tl-expected_FOUND AND TARGET expected AND NOT TARGET tl::expected)
+    add_library(tl::expected ALIAS expected)
 endif()
 
-# ICU - wrap old script to handle PARENT_SCOPE
-function(_setup_icu)
-    set(ICU_VERSION "" CACHE STRING "ICU version")
-    set(ICU_ROOT "" CACHE PATH "ICU installation path")
-    include(${CMAKE_SOURCE_DIR}/cmake/ICU.cmake)
-    # Export to parent (Dependencies.cmake scope)
-    set(ICU_INCLUDE_DIR ${ICU_INCLUDE_DIR} PARENT_SCOPE)
-    set(ICU_LIB_DIR ${ICU_LIB_DIR} PARENT_SCOPE)
-    set(ICU_LIBRARIES ${ICU_LIBRARIES} PARENT_SCOPE)
-    set(ICU_SHARED_LIBRARIES ${ICU_SHARED_LIBRARIES} PARENT_SCOPE)
-endfunction()
-_setup_icu()
+# ICU - use new ICUDependency.cmake
+include(${CMAKE_CURRENT_LIST_DIR}/ICUDependency.cmake)
 
 # Sanitizer options (must be declared before GoogleTest to ensure consistent compilation)
 option(HAKKA_JSON_ENABLE_SANITIZER_ADDRESS "Enable Address Sanitizer" OFF)
@@ -58,6 +58,7 @@ if(HAKKA_JSON_BUILD_TESTS)
             googletest
             GIT_REPOSITORY https://github.com/google/googletest.git
             GIT_TAG v1.15.2
+            GIT_SHALLOW TRUE
         )
         set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
         FetchContent_MakeAvailable(googletest)

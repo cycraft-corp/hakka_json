@@ -6,23 +6,41 @@ set(TEST_SOURCES
     hakka_json_primitive.cpp
 )
 
-# Windows: Create a single target to copy ICU DLLs and hakka_json.dll (avoids parallel build race condition)
+# Windows: Create a single target to copy DLLs (avoids parallel build race condition)
 if(WIN32)
     # Use a dummy file as marker to ensure copy happens once per config
     set(CAPI_DLLS_MARKER "${CMAKE_CURRENT_BINARY_DIR}/capi_dlls_copied_$<CONFIG>.stamp")
-    add_custom_command(
-        OUTPUT ${CAPI_DLLS_MARKER}
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${ICU_INSTALL_DIR}/bin"
-            "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:hakka_json>
-            "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>"
-        COMMAND ${CMAKE_COMMAND} -E touch ${CAPI_DLLS_MARKER}
-        COMMENT "Copying ICU DLLs and hakka_json.dll to capi tests directory"
-        DEPENDS hakka_json
-        VERBATIM
-    )
+    
+    # Build the copy command based on whether we're using ExternalProject ICU
+    if(HAKKA_ICU_USING_FETCH)
+        # Copy both ICU DLLs and hakka_json.dll when using ExternalProject
+        add_custom_command(
+            OUTPUT ${CAPI_DLLS_MARKER}
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${ICU_INSTALL_DIR}/bin"
+                "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                $<TARGET_FILE:hakka_json>
+                "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>"
+            COMMAND ${CMAKE_COMMAND} -E touch ${CAPI_DLLS_MARKER}
+            COMMENT "Copying ICU DLLs and hakka_json.dll to capi tests directory"
+            DEPENDS hakka_json
+            VERBATIM
+        )
+    else()
+        # Copy only hakka_json.dll when using system ICU
+        add_custom_command(
+            OUTPUT ${CAPI_DLLS_MARKER}
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                $<TARGET_FILE:hakka_json>
+                "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>"
+            COMMAND ${CMAKE_COMMAND} -E touch ${CAPI_DLLS_MARKER}
+            COMMENT "Copying hakka_json.dll to capi tests directory"
+            DEPENDS hakka_json
+            VERBATIM
+        )
+    endif()
+    
     add_custom_target(copy_dlls_capi_tests DEPENDS ${CAPI_DLLS_MARKER})
 
     # Copy ASAN runtime DLL if enabled

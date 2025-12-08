@@ -53,8 +53,17 @@ class HakkaJsonConan(ConanFile):
     def configure(self):
         if self.options.shared:
             self.options.rm_safe("fPIC")
+        # Windows: Force shared=True because ICU doesn't support static linking via MSBuild
+        if self.settings.os == "Windows":
+            self.options["*"].shared = True
 
     def validate(self):
+        # Windows: Validate that shared=True (ICU limitation)
+        if self.settings.os == "Windows" and not self.options.shared:
+            raise ConanInvalidConfiguration(
+                f"{self.ref} on Windows requires shared=True because ICU does not support "
+                "static linking via MSBuild. Use shared=True or build on Linux/macOS for static libraries."
+            )
         if self.settings.compiler.get_safe("cppstd"):
             check_min_cppstd(self, "23")
 
@@ -110,19 +119,33 @@ class HakkaJsonConan(ConanFile):
         cmake = CMake(self)
         cmake.install()
 
+        # Copy ICU libraries based on platform
         icu_lib_dir = os.path.join(self.build_folder, "icu-install", "lib")
-        if os.path.exists(icu_lib_dir):
-            copy(self, "*.a", src=icu_lib_dir, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
-            copy(self, "*.lib", src=icu_lib_dir, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
+        icu_bin_dir = os.path.join(self.build_folder, "icu-install", "bin")
+
+        if self.settings.os == "Windows":
+            # Windows: Copy ICU DLLs and import libraries
+            if os.path.exists(icu_bin_dir):
+                copy(self, "icu*.dll", src=icu_bin_dir, dst=os.path.join(self.package_folder, "bin"), keep_path=False)
+            if os.path.exists(icu_lib_dir):
+                copy(self, "icu*.lib", src=icu_lib_dir, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
+        else:
+            # Unix: Copy ICU static libraries
+            if os.path.exists(icu_lib_dir):
+                copy(self, "*.a", src=icu_lib_dir, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "HakkaJson")
         self.cpp_info.set_property("cmake_target_name", "HakkaJson::core")
 
-        # CRITICAL:Main library needs ICU libraries statically linked
+        # Library dependencies based on platform and build type
         if self.settings.os == "Windows":
+            # Windows: Always shared (DLLs), ICU uses different library names
             self.cpp_info.libs = ["hakka_json_core", "icutu", "icuin", "icuio", "icuuc", "icudt"]
+            # Windows shared library needs to find ICU DLLs at runtime
+            self.cpp_info.bindirs = ["bin"]
         else:
+            # Unix: ICU libraries with standard names
             self.cpp_info.libs = ["hakka_json_core", "icutu", "icui18n", "icuio", "icuuc", "icudata"]
 
         self.cpp_info.requires = ["nlohmann_json::nlohmann_json", "tl-expected::tl-expected"]

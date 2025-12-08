@@ -15,6 +15,10 @@ add_library(hakka_json_core STATIC
     json_deserializer.cpp
 )
 
+# Note: Visibility presets are not set on static library as they're only relevant for shared libraries.
+# The C++ API from hakka_json_core is available to unit tests and other consumers.
+# Symbol visibility is controlled at the shared library level (hakka_json C API).
+
 # Include directories
 target_include_directories(hakka_json_core
     PUBLIC
@@ -39,22 +43,31 @@ if(HAKKA_JSON_ENABLE_COVERAGE)
     target_link_libraries(hakka_json_core PRIVATE hakka_json::coverage_options)
 endif()
 
-# ICU dependencies - platform specific library names
-add_dependencies(hakka_json_core icu_project_libs)
-target_include_directories(hakka_json_core PRIVATE ${ICU_INCLUDE_DIR})
+# ICU dependencies
+# Link ICU libraries (works for both system and ExternalProject)
+target_link_libraries(hakka_json_core PRIVATE ${HAKKA_ICU_LIBRARIES})
 
-if(WIN32)
-    target_link_libraries(hakka_json_core PRIVATE
-        "${ICU_LIB_DIR}/icuin$<$<CONFIG:Debug>:d>.lib"
-        "${ICU_LIB_DIR}/icuuc$<$<CONFIG:Debug>:d>.lib"
-        "${ICU_LIB_DIR}/icudt.lib"
-        "${ICU_LIB_DIR}/icuio$<$<CONFIG:Debug>:d>.lib"
-        "${ICU_LIB_DIR}/icutu$<$<CONFIG:Debug>:d>.lib"
-    )
-else()
-    target_link_libraries(hakka_json_core PRIVATE
-        icutu icui18n icuio icuuc icudata
-    )
+if(HAKKA_ICU_USING_FETCH)
+    # When using ExternalProject, add explicit dependencies and includes
+    add_dependencies(hakka_json_core icu_project_libs)
+    target_include_directories(hakka_json_core PRIVATE ${ICU_INCLUDE_DIR})
+    # Unix: ICU built with --disable-renaming, so we define HAKKA_ICU_DISABLE_RENAMING
+    # Windows: MSBuild ICU uses versioned symbols (icu_XX), ICU headers create namespace alias automatically
+    if(NOT WIN32)
+        target_compile_definitions(hakka_json_core PRIVATE HAKKA_ICU_DISABLE_RENAMING)
+    endif()
+elseif(HAKKA_ICU_USING_SYSTEM)
+    # When using system ICU, include directories should come from ICU:: targets
+    # but add explicitly to ensure they're available
+    if(ICU_INCLUDE_DIRS)
+        target_include_directories(hakka_json_core PRIVATE ${ICU_INCLUDE_DIRS})
+    endif()
+    
+    # If system ICU has renaming, do NOT define U_DISABLE_RENAMING
+    # If system ICU doesn't have renaming, define U_DISABLE_RENAMING
+    if(NOT HAKKA_ICU_HAS_RENAMING)
+        target_compile_definitions(hakka_json_core PRIVATE HAKKA_ICU_DISABLE_RENAMING)
+    endif()
 endif()
 
 # GCC needs atomic

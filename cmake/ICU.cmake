@@ -23,9 +23,31 @@ ProcessorCount(N)
 # Function to determine ICU version and URL
 function(determine_icu_version_and_url)
     if(ICU_VERSION)
-        string(REPLACE "." "-" ICU_VERSION_DASH "${ICU_VERSION}")
         string(REPLACE "." "_" ICU_VERSION_UNDERSCORE "${ICU_VERSION}")
-        set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-${ICU_VERSION_DASH}/icu4c-${ICU_VERSION_UNDERSCORE}-src.tgz" PARENT_SCOPE)
+        
+        # Determine if version >= 78.1 (uses -sources.tgz instead of -src.tgz)
+        string(REPLACE "." ";" VERSION_LIST "${ICU_VERSION}")
+        list(GET VERSION_LIST 0 MAJOR_VERSION)
+        list(LENGTH VERSION_LIST VERSION_PARTS)
+        if(VERSION_PARTS GREATER 1)
+            list(GET VERSION_LIST 1 MINOR_VERSION)
+        else()
+            set(MINOR_VERSION 0)
+        endif()
+        
+        # Check if version >= 78.1
+        if((MAJOR_VERSION GREATER 78) OR (MAJOR_VERSION EQUAL 78 AND MINOR_VERSION GREATER_EQUAL 1))
+            # For >= 78.1: use dot notation in tag and filename, -sources suffix
+            set(ICU_TAG "release-${ICU_VERSION}")
+            set(ICU_FILENAME "icu4c-${ICU_VERSION}-sources")
+        else()
+            # For <= 77.1: use dash in tag, underscore in filename, -src suffix
+            string(REPLACE "." "-" ICU_VERSION_DASH "${ICU_VERSION}")
+            set(ICU_TAG "release-${ICU_VERSION_DASH}")
+            set(ICU_FILENAME "icu4c-${ICU_VERSION_UNDERSCORE}-src")
+        endif()
+        
+        set(ICU_URL "https://github.com/unicode-org/icu/releases/download/${ICU_TAG}/${ICU_FILENAME}.tgz" PARENT_SCOPE)
     else()
         # Fetch the latest release version
         file(DOWNLOAD "https://api.github.com/repos/unicode-org/icu/releases/latest" "${CMAKE_BINARY_DIR}/icu_latest_release.json" STATUS status)
@@ -37,9 +59,31 @@ function(determine_icu_version_and_url)
         set(ICU_VERSION "${CMAKE_MATCH_1}")
         string(REPLACE "release-" "" ICU_VERSION "${ICU_VERSION}")
         string(REPLACE "-" "." ICU_VERSION "${ICU_VERSION}")
-        string(REPLACE "." "-" ICU_VERSION_DASH "${ICU_VERSION}")
         string(REPLACE "." "_" ICU_VERSION_UNDERSCORE "${ICU_VERSION}")
-        set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-${ICU_VERSION_DASH}/icu4c-${ICU_VERSION_UNDERSCORE}-src.tgz" PARENT_SCOPE)
+        
+        # Determine if version >= 78.1
+        string(REPLACE "." ";" VERSION_LIST "${ICU_VERSION}")
+        list(GET VERSION_LIST 0 MAJOR_VERSION)
+        list(LENGTH VERSION_LIST VERSION_PARTS)
+        if(VERSION_PARTS GREATER 1)
+            list(GET VERSION_LIST 1 MINOR_VERSION)
+        else()
+            set(MINOR_VERSION 0)
+        endif()
+        
+        # Check if version >= 78.1
+        if((MAJOR_VERSION GREATER 78) OR (MAJOR_VERSION EQUAL 78 AND MINOR_VERSION GREATER_EQUAL 1))
+            # For >= 78.1: use dot notation in tag and filename, -sources suffix
+            set(ICU_TAG "release-${ICU_VERSION}")
+            set(ICU_FILENAME "icu4c-${ICU_VERSION}-sources")
+        else()
+            # For <= 77.1: use dash in tag, underscore in filename, -src suffix
+            string(REPLACE "." "-" ICU_VERSION_DASH "${ICU_VERSION}")
+            set(ICU_TAG "release-${ICU_VERSION_DASH}")
+            set(ICU_FILENAME "icu4c-${ICU_VERSION_UNDERSCORE}-src")
+        endif()
+        
+        set(ICU_URL "https://github.com/unicode-org/icu/releases/download/${ICU_TAG}/${ICU_FILENAME}.tgz" PARENT_SCOPE)
     endif()
 endfunction()
 
@@ -76,11 +120,13 @@ function(build_icu_windows)
         set(ICU_MSBUILD_PATH "MSBuild.exe")
     endif()
 
-    # Determine build configuration
+    # Determine build configuration and debug suffix
     if(CMAKE_BUILD_TYPE MATCHES "Debug")
         set(ICU_CONFIG "Debug")
+        set(ICU_WIN_DEBUG_SUFFIX "d")
     else()
         set(ICU_CONFIG "Release")
+        set(ICU_WIN_DEBUG_SUFFIX "")
     endif()
 
     # Map ICU_ARCH to MSBuild platform
@@ -111,7 +157,7 @@ function(build_icu_windows)
         BUILD_COMMAND
             ${ICU_MSBUILD_PATH} ${ICU_SRC_DIR}/source/allinone/allinone.sln
             /p:Configuration=${ICU_CONFIG} /p:Platform=${MSBUILD_PLATFORM} /p:SkipUWP=true
-            /p:RuntimeLibrary=MultiThreaded$<$<CONFIG:Debug>:Debug>
+            /p:VcpkgEnabled=false
         INSTALL_COMMAND
             ${CMAKE_COMMAND} -E copy_directory ${WINDOWS_SRC_BIN_DIR} ${ICU_INSTALL_DIR}/bin
             COMMAND ${CMAKE_COMMAND} -E copy_directory ${WINDOWS_SRC_LIB_DIR} ${ICU_INSTALL_DIR}/lib
@@ -119,16 +165,19 @@ function(build_icu_windows)
             COMMAND ${CMAKE_COMMAND} -E echo "Renaming ICU DLLs to remove version suffix..."
             COMMAND cmd /c "for %f in (\"${ICU_INSTALL_DIR}/bin/icu*[0-9].dll\") do @copy /y \"%f\" \"%~dpnf.dll\" >nul 2>&1 || echo Skipped %~nxf"
             COMMAND cmd /c "for %f in (\"${ICU_INSTALL_DIR}/bin/icu*[0-9]d.dll\") do @set \"name=%~nf\" && set \"name=!name:~0,-1!\" && copy /y \"%f\" \"%~dpf!name!d.dll\" >nul 2>&1 || echo Skipped %~nxf"
+            COMMAND ${CMAKE_COMMAND} -E echo "Renaming ICU .lib files to remove version suffix..."
+            COMMAND cmd /c "for %f in (\"${ICU_INSTALL_DIR}/lib/icu*[0-9].lib\") do @copy /y \"%f\" \"%~dpnf.lib\" >nul 2>&1 || echo Skipped %~nxf"
+            COMMAND cmd /c "for %f in (\"${ICU_INSTALL_DIR}/lib/icu*[0-9]d.lib\") do @set \"name=%~nf\" && set \"name=!name:~0,-1!\" && copy /y \"%f\" \"%~dpf!name!d.lib\" >nul 2>&1 || echo Skipped %~nxf"
         LOG_DOWNLOAD ON
         LOG_BUILD ON
         LOG_INSTALL ON
         WORKING_DIRECTORY ${ICU_SRC_DIR}
         BUILD_BYPRODUCTS
-            ${ICU_INSTALL_DIR}/lib/icuin.lib
-            ${ICU_INSTALL_DIR}/lib/icuuc.lib
+            ${ICU_INSTALL_DIR}/lib/icuin${ICU_WIN_DEBUG_SUFFIX}.lib
+            ${ICU_INSTALL_DIR}/lib/icuuc${ICU_WIN_DEBUG_SUFFIX}.lib
             ${ICU_INSTALL_DIR}/lib/icudt.lib
-            ${ICU_INSTALL_DIR}/lib/icuio.lib
-            ${ICU_INSTALL_DIR}/lib/icutu.lib
+            ${ICU_INSTALL_DIR}/lib/icuio${ICU_WIN_DEBUG_SUFFIX}.lib
+            ${ICU_INSTALL_DIR}/lib/icutu${ICU_WIN_DEBUG_SUFFIX}.lib
     )
 endfunction()
 
@@ -159,11 +208,22 @@ endif()
 set(ICU_INCLUDE_DIR ${ICU_INCLUDE_DIR} PARENT_SCOPE)
 set(ICU_LIB_DIR ${ICU_LIB_DIR} PARENT_SCOPE)
 set(ICU_INSTALL_DIR ${ICU_INSTALL_DIR} PARENT_SCOPE)
+
+# Determine debug suffix for Windows library names
+# Must be set before ICU_WINDOWS_LIBRARY_NAMES is defined
+if(WIN32)
+    if(CMAKE_BUILD_TYPE MATCHES "Debug")
+        set(ICU_DEBUG_SUFFIX "d")
+    else()
+        set(ICU_DEBUG_SUFFIX "")
+    endif()
+endif()
+
 set(ICU_WINDOWS_LIBRARY_NAMES
-    icutu
-    icuin
-    icuio
-    icuuc
+    icutu${ICU_DEBUG_SUFFIX}
+    icuin${ICU_DEBUG_SUFFIX}
+    icuio${ICU_DEBUG_SUFFIX}
+    icuuc${ICU_DEBUG_SUFFIX}
     icudt
 )
 set(ICU_UNIX_LIBRARY_NAMES
@@ -181,19 +241,39 @@ endif()
 
 add_custom_target(icu_project_libs)
 if (WIN32)
-    # On Windows, libraries have .lib extension (import libraries for DLLs)
+    # On Windows, ICU is built as shared libraries (DLLs) via MSBuild
+    # The .lib files are import libraries that reference the DLLs
+    # Note: True static ICU linking is not available via MSBuild; would require MSYS/configure
     foreach(lib ${ICU_WINDOWS_LIBRARY_NAMES})
         set(LIB_IMPORT_PATH "${ICU_LIB_DIR}/${lib}.lib")
+        set(DLL_PATH "${ICU_INSTALL_DIR}/bin/${lib}.dll")
         list(APPEND ICU_LIBRARIES "${LIB_IMPORT_PATH}")
-        list(APPEND ICU_SHARED_LIBRARIES "${ICU_LIB_DIR}/${lib}.dll")
+        list(APPEND ICU_DLLS "${DLL_PATH}")
         add_library(${lib} SHARED IMPORTED GLOBAL)
         set_target_properties(${lib} PROPERTIES
-            IMPORTED_LOCATION "${ICU_INSTALL_DIR}/bin/${lib}.dll"
             IMPORTED_IMPLIB "${LIB_IMPORT_PATH}"
+            IMPORTED_LOCATION "${DLL_PATH}"
         )
         add_dependencies(${lib} icu_project)
         add_dependencies(icu_project_libs ${lib})
+
+        # Create ICU:: alias for consistency
+        if(NOT TARGET ICU::${lib})
+            # Map library name to component name (handle debug suffix)
+            if(lib STREQUAL "icutu${ICU_DEBUG_SUFFIX}")
+                add_library(ICU::tu ALIAS ${lib})
+            elseif(lib STREQUAL "icuin${ICU_DEBUG_SUFFIX}")
+                add_library(ICU::i18n ALIAS ${lib})
+            elseif(lib STREQUAL "icuio${ICU_DEBUG_SUFFIX}")
+                add_library(ICU::io ALIAS ${lib})
+            elseif(lib STREQUAL "icuuc${ICU_DEBUG_SUFFIX}")
+                add_library(ICU::uc ALIAS ${lib})
+            elseif(lib STREQUAL "icudt")
+                add_library(ICU::data ALIAS ${lib})
+            endif()
+        endif()
     endforeach(lib ${ICU_WINDOWS_LIBRARY_NAMES})
+    set(ICU_DLLS "${ICU_DLLS}" PARENT_SCOPE)
 else()
     # On Unix-like systems, libraries have .a extension
     foreach(lib ${ICU_UNIX_LIBRARY_NAMES})
@@ -216,10 +296,35 @@ else()
         set_target_properties(${lib}_shared PROPERTIES 
             IMPORTED_LOCATION "${LIB_SHARED_PATH}"
         )
+        
+        # Add U_STATIC_IMPLEMENTATION for static builds
+        set_target_properties(${lib} PROPERTIES
+            INTERFACE_COMPILE_DEFINITIONS "U_STATIC_IMPLEMENTATION"
+        )
+        # Shared libraries don't need U_STATIC_IMPLEMENTATION
+        set_target_properties(${lib}_shared PROPERTIES
+            INTERFACE_COMPILE_DEFINITIONS ""
+        )
 
         add_dependencies(${lib} icu_project)
         add_dependencies(${lib}_shared icu_project)
         add_dependencies(icu_project_libs ${lib} ${lib}_shared)
+        
+        # Create ICU:: alias for consistency
+        if(NOT TARGET ICU::${lib})
+            # Map library name to component name
+            if(lib STREQUAL "icutu")
+                add_library(ICU::tu ALIAS ${lib})
+            elseif(lib STREQUAL "icui18n")
+                add_library(ICU::i18n ALIAS ${lib})
+            elseif(lib STREQUAL "icuio")
+                add_library(ICU::io ALIAS ${lib})
+            elseif(lib STREQUAL "icuuc")
+                add_library(ICU::uc ALIAS ${lib})
+            elseif(lib STREQUAL "icudata")
+                add_library(ICU::data ALIAS ${lib})
+            endif()
+        endif()
     endforeach()
 endif()
 set(ICU_LIBRARIES "${ICU_LIBRARIES}" PARENT_SCOPE)

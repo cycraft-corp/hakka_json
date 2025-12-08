@@ -140,6 +140,11 @@ static consteval double get_nan(int offset) noexcept {
     return hakka_json_nan_detail::construct_nan_validated(offset);
 }
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4505) // unreferenced function with internal linkage has been removed
+#endif
+
 [[gnu::used, gnu::noinline]]
 STRICT_FP
 static double get_nan_runtime(int offset) noexcept {
@@ -147,6 +152,10 @@ static double get_nan_runtime(int offset) noexcept {
     volatile double result = hakka_json_nan_detail::construct_nan_bitwise(voffset);
     return result;
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 // Use offset starting from 1024 to avoid collision with implementation-defined NaN values
 // that typically start from 0, 1, 2, etc.
@@ -157,6 +166,10 @@ inline constinit double TRUE_NAN    = get_nan(NAN_OFFSET_BASE + 1);
 inline constinit double FALSE_NAN   = get_nan(NAN_OFFSET_BASE + 2);
 inline constinit double INVALID_NAN = get_nan(NAN_OFFSET_BASE + 3);
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4505) // unreferenced function with internal linkage has been removed
+#endif
 [[gnu::used, gnu::cold]]
 static bool validate_nan_constants() noexcept {
     using hakka_json_internal::validate_nan_representation;
@@ -169,12 +182,20 @@ static bool validate_nan_constants() noexcept {
            (std::bit_cast<std::uint64_t>(TRUE_NAN) != std::bit_cast<std::uint64_t>(FALSE_NAN)) &&
            (std::bit_cast<std::uint64_t>(FALSE_NAN) != std::bit_cast<std::uint64_t>(INVALID_NAN));
 }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 STRICT_FP_END
 
 #if defined(HAKKA_JSON_NAN_DEBUG) || !defined(NDEBUG)
 #include <cstdio>
 #include <cinttypes>
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4505) // unreferenced function with internal linkage has been removed
+#endif
 
 [[gnu::used, gnu::cold]]
 static void dump_nan_info() noexcept {
@@ -195,6 +216,11 @@ static void dump_nan_info() noexcept {
     std::printf("\nValidation: %s\n", 
                 validate_nan_constants() ? "PASS" : "FAIL");
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
 #endif
 
 #endif // __HAKKA_JSON_STRICT_FP_BLOCK_HPP__
