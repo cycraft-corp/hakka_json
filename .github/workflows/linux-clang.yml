@@ -15,7 +15,7 @@ jobs:
     container:
       image: ghcr.io/mattkretz/cplusplus-ci/clang${{ matrix.clang-version }}
     env:
-      ICU_VERSION: "77.1"
+      ICU_VERSION: "78.1"
     strategy:
       fail-fast: false
       matrix:
@@ -33,9 +33,9 @@ jobs:
         with:
           path: |
             build/icu-install
-            build/_deps/icu-src
-            build/_deps/icu-build
-          key: icu-${{ env.ICU_VERSION }}-clang${{ matrix.clang-version }}-${{ matrix.build-type }}-${{ hashFiles('cmake/icu.cmake') }}
+            build/icu-src
+            build/icu-build
+          key: icu-${{ env.ICU_VERSION }}-clang${{ matrix.clang-version }}-${{ matrix.build-type }}-${{ hashFiles('cmake/ICU.cmake') }}
           restore-keys: |
             icu-${{ env.ICU_VERSION }}-clang${{ matrix.clang-version }}-${{ matrix.build-type }}-
             icu-${{ env.ICU_VERSION }}-clang${{ matrix.clang-version }}-

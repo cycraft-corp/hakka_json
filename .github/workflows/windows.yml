@@ -12,7 +12,7 @@ jobs:
     name: Windows MSVC ${{ matrix.vs-version }} (${{ matrix.build-type }}${{ matrix.sanitizer && ', ASAN' || '' }})
     runs-on: ${{ matrix.os }}
     env:
-      ICU_VERSION: "77.1"
+      ICU_VERSION: "78.1"
     strategy:
       fail-fast: false
       matrix:
@@ -41,9 +41,9 @@ jobs:
         with:
           path: |
             build/icu-install
-            build/_deps/icu-src
-            build/_deps/icu-build
-          key: icu-${{ env.ICU_VERSION }}-windows-${{ matrix.vs-version }}-${{ matrix.build-type }}-${{ hashFiles('cmake/icu.cmake') }}
+            build/icu-src
+            build/icu-build
+          key: icu-${{ env.ICU_VERSION }}-windows-${{ matrix.vs-version }}-${{ matrix.build-type }}-${{ hashFiles('cmake/ICU.cmake') }}
           restore-keys: |
             icu-${{ env.ICU_VERSION }}-windows-${{ matrix.vs-version }}-${{ matrix.build-type }}-
             icu-${{ env.ICU_VERSION }}-windows-${{ matrix.vs-version }}-
