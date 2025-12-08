@@ -77,7 +77,16 @@ export abstract class BaseGenerator implements GraphGenerator {
       (sum, n) => sum + (n.properties?.sizeBytes ?? 0),
       0
     );
-    // Overhead = structural overhead (isOverhead) + wasted memory from duplicates (isDuplicate)
+    // Memory Overhead = Structural overhead + Wasted memory
+    //
+    // 1. STRUCTURAL OVERHEAD (isOverhead: true):
+    //    - Infrastructure: type objects, managers, registries
+    //    - Per-object overhead: refcounts, type pointers, wrapper types
+    //
+    // 2. WASTED MEMORY (isDuplicate: true):
+    //    - Duplicate allocations of immutable values
+    //    - Strings, numbers, booleans, null that could be interned/shared
+    //
     const overheadBytes = this.nodes
       .filter((n) => n.properties?.isOverhead || n.properties?.isDuplicate)
       .reduce((sum, n) => sum + (n.properties?.sizeBytes ?? 0), 0);

@@ -12,128 +12,273 @@ export type NodeType =
   | 'hakka-object-manager'     // ObjectManagerCompact
   // Handle layer
   | 'hakka-handle'             // 32-bit HandleManagerToken (uint32_t)
-  | 'hakka-owned-pointer'      // OwnedUniformCompactPointer in handles_[] (tagged void*)
-  | 'hakka-freelist'           // Recycled slot in freelist_
   // Value layer
   | 'hakka-nan-boxed'          // NaN-boxed scalar (int/float/bool/null)
-  | 'hakka-interned-string'    // Interned string in pool
-  | 'hakka-array-value'        // JsonArrayCompact
-  | 'hakka-object-value'       // JsonObjectCompact
-  | 'hakka-array-storage'      // Array storage node (generated)
-  | 'hakka-object-storage'     // Object storage node (generated)
-  // POD-level HakkaJson internals
-  | 'hakka-handle-type-bits'   // top 2 bits of HandleManagerToken (Scalar/String/Array/Object)
-  | 'hakka-handle-index-bits'  // bottom 30 bits - index into handles_[]
-  | 'hakka-ptr-type-tag'       // high 4 bits of OwnedUniformCompactPointer (HakkaJsonType enum)
-  | 'hakka-ptr-address'        // lower 60 bits - actual memory address
-  | 'hakka-primitive-value'    // JsonPrimitiveCompact::value_ field
-  | 'hakka-primitive-refcount' // JsonPrimitiveCompact::ref_count (atomic<uint64_t>)
-  | 'hakka-int-data'           // int64_t value inside JsonIntCompact
-  | 'hakka-float-data'         // double value inside JsonFloatCompact (IEEE 754)
-  | 'hakka-nan-pattern'        // NaN-boxed bit pattern for bool/null/invalid
-  | 'hakka-string-proxy'       // PicoStringProxy inside JsonStringCompact
-  | 'hakka-string-ptr'         // char* data pointer
-  | 'hakka-string-len'         // size_t length field
+  | 'hakka-interned-string'    // Interned string in pool (PicoString)
+  | 'hakka-array'              // JsonArrayCompact (vec<handle> + refcount)
+  | 'hakka-object'             // JsonObjectCompact (2 array handles + refcount)
 
   // ========== CPython json ==========
-  | 'py-dict'                  // PyDictObject (48+ bytes)
+  // Infrastructure (type objects - overhead)
+  | 'py-type-pool'             // Container for type objects
+  | 'py-type-object'           // PyTypeObject base struct (424 bytes)
+  // Protocol method structs (part of type objects)
+  | 'py-number-methods'        // PyNumberMethods (280 bytes = 35 func ptrs)
+  | 'py-sequence-methods'      // PySequenceMethods (80 bytes = 10 func ptrs)
+  | 'py-mapping-methods'       // PyMappingMethods (24 bytes = 3 func ptrs)
+  // Container types
+  | 'py-dict'                  // PyDictObject (216 bytes data + 16 header)
   | 'py-dict-keys'             // PyDictKeysObject (shared keys)
   | 'py-dict-entry'            // (key, value) in dk_entries[]
-  | 'py-list'                  // PyListObject (40 bytes)
+  | 'py-list'                  // PyListObject (40 bytes data + 16 header)
   | 'py-list-items'            // ob_item[] heap array
+  // Value types
   | 'py-unicode'               // PyUnicodeObject/PyASCIIObject
-  | 'py-long'                  // PyLongObject
-  | 'py-float'                 // PyFloatObject
+  | 'py-long'                  // PyLongObject (16 bytes data + 16 header)
+  | 'py-float'                 // PyFloatObject (8 bytes data + 16 header)
   | 'py-bool-singleton'        // Py_True / Py_False
   | 'py-none-singleton'        // Py_None
-  | 'py-type-ptr'              // ob_type pointer overhead
-  | 'py-none'                  // None value (alias for visualization)
-  | 'py-bool'                  // Boolean value (alias for visualization)
-  | 'py-refcount'              // Reference count node (generated)
-  // POD-level CPython
-  | 'py-ob-refcnt'             // ob_refcnt field (Py_ssize_t)
-  | 'py-ob-type'               // ob_type field (PyTypeObject*)
-  | 'py-lv-tag'                // lv_tag field (Python 3.12+)
-  | 'py-ob-size'               // ob_size field (Python 3.11-)
-  | 'py-long-digit'            // long_value.ob_digit[] in PyLongObject
-  | 'py-float-fval'            // ob_fval in PyFloatObject (double)
-  | 'py-unicode-length'        // length field
-  | 'py-unicode-hash'          // hash field (Py_hash_t)
-  | 'py-unicode-state'         // state bitfield
-  | 'py-unicode-data'          // inline char/wchar data
+  | 'py-none'                  // None value (0 bytes data + 16 header)
+  | 'py-bool'                  // Boolean value (16 bytes data + 16 header)
+  // Overhead nodes (16 bytes per object)
+  | 'py-type-ptr'              // ob_type pointer (8 bytes overhead)
+  | 'py-refcount'              // ob_refcnt (8 bytes overhead)
+  // POD-level CPython - Internal fields of each object type
+  // PyObject base fields
+  | 'py-ob-refcnt'             // ob_refcnt field (Py_ssize_t, 8B)
+  | 'py-ob-type'               // ob_type field (PyTypeObject*, 8B)
+  | 'py-ob-size'               // ob_size field for PyVarObject (Py_ssize_t, 8B)
+
+  // PyDictObject fields (32 bytes excluding header)
+  | 'py-dict-ma-used'          // ma_used: number of items (8B)
+  | 'py-dict-ma-version'       // ma_version_tag: version for dict views (8B)
+  | 'py-dict-ma-keys-ptr'      // ma_keys: pointer to PyDictKeysObject (8B)
+  | 'py-dict-ma-values-ptr'    // ma_values: pointer or NULL (8B)
+
+  // PyDictKeysObject fields (~40 bytes header + variable)
+  | 'py-dict-keys-refcnt'      // dk_refcnt: shared keys refcount (8B)
+  | 'py-dict-keys-log2'        // dk_log2_size + dk_log2_index_bytes + dk_kind (3B)
+  | 'py-dict-keys-version'     // dk_version (4B)
+  | 'py-dict-keys-usable'      // dk_usable: usable entries (8B)
+  | 'py-dict-keys-nentries'    // dk_nentries: actual entries (8B)
+  | 'py-dict-keys-indices'     // dk_indices[]: hash table indices (variable)
+  | 'py-dict-keys-entries'     // dk_entries[]: array of PyDictKeyEntry
+
+  // PyDictKeyEntry fields (24 bytes per entry)
+  | 'py-dict-entry-hash'       // me_hash: cached hash (8B)
+  | 'py-dict-entry-key-ptr'    // me_key: pointer to key object (8B)
+  | 'py-dict-entry-value-ptr'  // me_value: pointer to value object (8B)
+
+  // PyListObject fields (24 bytes excluding header)
+  | 'py-list-ob-size'          // ob_size: item count from PyVarObject (8B)
+  | 'py-list-ob-item-ptr'      // ob_item: pointer to item array (8B)
+  | 'py-list-allocated'        // allocated: capacity (8B)
+  | 'py-list-items-array'      // The heap array of PyObject* pointers
+  | 'py-list-item-slot'        // Individual slot in ob_item array (8B pointer)
+
+  // PyLongObject fields
+  | 'py-long-ob-size'          // ob_size: digit count, sign in high bit (8B)
+  | 'py-long-digit'            // ob_digit[]: 30-bit digits (4B each)
+  | 'py-lv-tag'                // lv_tag field (Python 3.12+ compact int)
+
+  // PyFloatObject fields
+  | 'py-float-fval'            // ob_fval: the double value (8B)
+
+  // PyUnicodeObject (PyASCIIObject) fields
+  | 'py-unicode-length'        // length: string length (8B)
+  | 'py-unicode-hash'          // hash: cached hash, -1 if not computed (8B)
+  | 'py-unicode-state'         // state: bitfield flags (4B)
+  | 'py-unicode-wstr'          // wstr: deprecated legacy pointer (8B)
+  | 'py-unicode-data'          // inline char data (variable)
 
   // ========== serde_json (Rust) ==========
-  | 'serde-value-enum'         // Value enum (24 bytes)
-  | 'serde-string'             // String (24 bytes + heap)
-  | 'serde-string-data'        // heap backing for String
+  // Container types
+  | 'serde-value-enum'         // Value enum container (32 bytes)
+  | 'serde-string'             // String container (24 bytes stack)
+  | 'serde-string-data'        // heap backing for String (actual data)
   | 'serde-vec'                // Vec<Value> header
   | 'serde-vec-data'           // heap array of Values
   | 'serde-indexmap'           // IndexMap<String, Value>
+  | 'serde-btreemap'           // BTreeMap<String, Value> (default Map)
   | 'serde-map-entry'          // (String, Value) entry
-  | 'serde-number'             // Number (PosInt/NegInt/Float)
+  | 'serde-number'             // Number container (16 bytes)
   | 'serde-array'              // Array container (generated)
-  // POD-level Rust
-  | 'serde-discriminant'       // enum discriminant (u8/u64)
+
+  // Value enum fields (32 bytes total)
+  | 'serde-discriminant'       // enum discriminant [8B] (overhead - type tag)
+  | 'serde-padding'            // alignment padding (overhead)
+
+  // String fields (24 bytes stack + heap)
+  | 'serde-string-ptr'         // ptr to heap data [8B] (overhead)
+  | 'serde-string-len'         // length [8B] (overhead - metadata)
+  | 'serde-string-cap'         // capacity [8B] (overhead - over-allocation)
+
+  // Number fields (16 bytes)
+  | 'serde-n-discriminant'     // N enum discriminant [8B] (overhead - inner type tag)
+  | 'serde-n-value'            // actual numeric value [8B] (DATA)
+
+  // Vec fields (24 bytes stack + heap)
+  | 'serde-vec-ptr'            // ptr to heap array [8B] (overhead)
+  | 'serde-vec-len'            // length [8B] (overhead - metadata)
+  | 'serde-vec-cap'            // capacity [8B] (overhead - over-allocation)
+  | 'serde-vec-slot'           // slot in heap array [32B] (overhead - pointer to Value)
+
+  // BTreeMap fields (16 bytes stack + ~628 bytes per LeafNode!)
+  | 'serde-btree-root'         // root node pointer [8B] (overhead)
+  | 'serde-btree-len'          // entry count [8B] (overhead - metadata)
+  | 'serde-btree-node'         // internal B-tree node (overhead - tree structure)
+  | 'serde-btree-leaf'         // LeafNode<String, Value> (~628 bytes!)
+
+  // BTreeMap LeafNode<String, Value> internals (B=6, CAPACITY=11)
+  // Reference: rust/library/alloc/src/collections/btree/node.rs
+  | 'serde-leafnode-parent'    // parent: Option<NonNull<InternalNode>> [8B] (overhead)
+  | 'serde-leafnode-parent-idx' // parent_idx: MaybeUninit<u16> [2B] (overhead)
+  | 'serde-leafnode-len'       // len: u16 [2B] (overhead - metadata)
+  | 'serde-leafnode-keys'      // keys: [MaybeUninit<String>; 11] container
+  | 'serde-leafnode-vals'      // vals: [MaybeUninit<Value>; 11] container
+  | 'serde-leafnode-key-slot'  // individual key slot [24B] - used or WASTED
+  | 'serde-leafnode-val-slot'  // individual val slot [32B] - used or WASTED
+  | 'serde-leafnode-wasted-key' // WASTED key slot [24B] (overhead - unused allocation)
+  | 'serde-leafnode-wasted-val' // WASTED val slot [32B] (overhead - unused allocation)
+
+  // Legacy/compatibility
   | 'serde-n-variant'          // Number's N enum variant
   | 'rust-ptr'                 // raw pointer (*mut T)
   | 'rust-usize'               // usize (len, cap)
   | 'rust-hash-seed'           // RandomState k0/k1
 
   // ========== encoding/json (Go) ==========
-  | 'go-interface'             // interface{} / any (16 bytes)
-  | 'go-string'                // string header (16 bytes)
-  | 'go-string-data'           // backing []byte
+  // Reference: runtime/runtime2.go, runtime/string.go, runtime/map.go
+  //
+  // Container/aggregate types
+  | 'go-interface'             // interface{} / eface (16 bytes total)
+  | 'go-string'                // string header (16 bytes) + heap data
+  | 'go-string-data'           // backing []byte on heap (DATA)
   | 'go-slice'                 // []interface{} header (24 bytes)
   | 'go-slice-data'            // backing array
-  | 'go-hmap'                  // map header (48 bytes)
+  | 'go-hmap'                  // hmap header (48 bytes)
   | 'go-bucket'                // bmap (272 bytes for 8 k-v pairs)
-  | 'go-float64'               // all numbers become float64
-  | 'go-bool'                  // Boolean value (generated)
-  // POD-level Go
+  | 'go-float64'               // float64 value (8 bytes DATA)
+  | 'go-bool'                  // bool value (1 byte DATA)
+
+  // interface{} (eface) internal fields - runtime/runtime2.go
+  | 'go-iface-type'            // _type pointer [8B] (OVERHEAD)
+  | 'go-iface-data'            // data pointer [8B] (OVERHEAD)
+
+  // string (stringStruct) internal fields - runtime/string.go
+  | 'go-string-ptr'            // str pointer [8B] (OVERHEAD)
+  | 'go-string-len'            // len field [8B] (OVERHEAD - metadata!)
+
+  // []interface{} slice internal fields - runtime/slice.go
+  | 'go-slice-ptr'             // array pointer [8B] (OVERHEAD)
+  | 'go-slice-len'             // length [8B] (OVERHEAD - metadata!)
+  | 'go-slice-cap'             // capacity [8B] (OVERHEAD)
+  | 'go-slice-slot'            // individual interface{} slot [16B]
+  | 'go-slice-wasted-slot'     // WASTED slot [16B] (OVERHEAD - unused!)
+
+  // hmap internal fields - runtime/map.go
+  | 'go-hmap-count'            // count: int [8B] (OVERHEAD - length!)
+  | 'go-hmap-flags'            // flags: uint8 [1B] (OVERHEAD)
+  | 'go-hmap-b'                // B: uint8 log2 buckets [1B] (OVERHEAD)
+  | 'go-hmap-noverflow'        // noverflow: uint16 [2B] (OVERHEAD)
+  | 'go-hmap-hash0'            // hash0: uint32 seed [4B] (OVERHEAD)
+  | 'go-hmap-buckets'          // buckets: pointer [8B] (OVERHEAD)
+  | 'go-hmap-oldbuckets'       // oldbuckets: pointer [8B] (OVERHEAD)
+  | 'go-hmap-nevacuate'        // nevacuate: uintptr [8B] (OVERHEAD)
+  | 'go-hmap-extra'            // extra: *mapextra [8B] (OVERHEAD)
+
+  // bucket (bmap) internal fields - runtime/map.go, bucketCnt=8
+  | 'go-bucket-tophash'        // tophash[8]: 8 × uint8 container
+  | 'go-bucket-tophash-slot'   // individual tophash [1B] (OVERHEAD)
+  | 'go-bucket-tophash-wasted' // WASTED tophash [1B] (OVERHEAD)
+  | 'go-bucket-keys'           // keys region container (8 × 16B = 128B)
+  | 'go-bucket-vals'           // vals region container (8 × 16B = 128B)
+  | 'go-bucket-overflow'       // overflow pointer [8B] (OVERHEAD)
+  | 'go-bucket-key-slot'       // individual key slot [16B] (string header)
+  | 'go-bucket-val-slot'       // individual val slot [16B] (interface{})
+  | 'go-bucket-wasted-key'     // WASTED key slot [16B] (OVERHEAD - unused!)
+  | 'go-bucket-wasted-val'     // WASTED val slot [16B] (OVERHEAD - unused!)
+
+  // Legacy POD-level Go (kept for compatibility)
   | 'go-type-struct'           // _type metadata struct
   | 'go-type-size'             // _type.size
   | 'go-type-kind'             // _type.kind
   | 'go-type-hash'             // _type.hash
-  | 'go-hmap-count'            // hmap.count
-  | 'go-hmap-b'                // hmap.B (log2 buckets)
-  | 'go-hmap-hash0'            // hmap.hash0 (seed)
   | 'go-tophash'               // bmap.tophash[8]
-  | 'go-bucket-keys'           // keys region in bmap
   | 'go-bucket-values'         // values region in bmap
-  | 'go-string-len'            // string.len field
 
   // ========== Jansson (C) ==========
-  | 'jansson-object'           // json_object_t (json_t + hashtable_t)
-  | 'jansson-hashtable'        // hashtable_t (~56 bytes)
-  | 'jansson-pair'             // hashtable_pair (56+ bytes, includes key inline)
-  | 'jansson-array'            // json_array_t (json_t + size + entries + table)
-  | 'jansson-array-data'       // json_t** elements heap array
-  | 'jansson-string'           // json_string_t (json_t + char* + length)
-  | 'jansson-string-data'      // char* backing on heap
-  | 'jansson-integer'          // json_integer_t (json_t + json_int_t)
-  | 'jansson-real'             // json_real_t (json_t + double)
-  | 'jansson-true'             // json_true singleton
-  | 'jansson-false'            // json_false singleton
-  | 'jansson-null'             // json_null singleton
-  // POD-level Jansson internals
-  | 'jansson-type-enum'        // json_type enum (int, 4 bytes)
-  | 'jansson-refcount'         // volatile size_t refcount (8 bytes)
-  | 'jansson-int-value'        // json_int_t (int64_t) inside json_integer_t
-  | 'jansson-real-value'       // double (IEEE 754) inside json_real_t
-  | 'jansson-string-ptr'       // char* value pointer in json_string_t
-  | 'jansson-string-length'    // size_t length in json_string_t
-  | 'jansson-array-size'       // size_t allocated capacity
-  | 'jansson-array-entries'    // size_t actual entry count
-  | 'jansson-array-table'      // json_t** table pointer
-  | 'jansson-ht-size'          // hashtable_t.size (number of pairs)
-  | 'jansson-ht-order'         // hashtable_t.order (log2 of bucket count)
-  | 'jansson-ht-buckets'       // hashtable_bucket* pointer
-  | 'jansson-pair-hash'        // size_t hash value in hashtable_pair
-  | 'jansson-pair-value-ptr'   // json_t* value pointer in hashtable_pair
-  | 'jansson-pair-key-len'     // size_t key_len in hashtable_pair
-  | 'jansson-pair-key-data'    // char key[] flexible array member
-  | 'jansson-list-prev'        // struct hashtable_list.prev pointer
-  | 'jansson-list-next'        // struct hashtable_list.next pointer
+  // Reference: jansson.h, jansson_private.h, hashtable.h
+  //
+  // json_t base structure (16 bytes with padding)
+  | 'jansson-json-t'           // json_t base (type + refcount + padding)
+  | 'jansson-type-enum'        // json_type enum [4B] (OVERHEAD)
+  | 'jansson-refcount'         // volatile size_t refcount [8B] (OVERHEAD)
+  | 'jansson-padding'          // alignment padding [4B] (OVERHEAD)
+
+  // json_object_t = json_t (16) + hashtable_t (56) = 72 bytes
+  | 'jansson-object'           // json_object_t container
+
+  // hashtable_t (56 bytes) - embedded in json_object_t
+  | 'jansson-hashtable'        // hashtable_t container
+  | 'jansson-ht-size'          // size_t size [8B] (OVERHEAD - count!)
+  | 'jansson-ht-buckets-ptr'   // bucket_t* buckets [8B] (OVERHEAD - pointer)
+  | 'jansson-ht-order'         // size_t order [8B] (OVERHEAD - log2)
+  | 'jansson-ht-list-prev'     // list.prev [8B] (OVERHEAD)
+  | 'jansson-ht-list-next'     // list.next [8B] (OVERHEAD)
+  | 'jansson-ht-ordered-prev'  // ordered_list.prev [8B] (OVERHEAD)
+  | 'jansson-ht-ordered-next'  // ordered_list.next [8B] (OVERHEAD)
+
+  // hashtable_bucket (bucket_t) - 16 bytes each, 8 buckets = 128 bytes
+  | 'jansson-bucket'           // bucket_t container
+  | 'jansson-bucket-first'     // first pointer [8B] (OVERHEAD)
+  | 'jansson-bucket-last'      // last pointer [8B] (OVERHEAD)
+  | 'jansson-bucket-array'     // bucket array container
+
+  // hashtable_pair - 56 bytes + key_len + 1 (null terminator)
+  | 'jansson-pair'             // hashtable_pair container
+  | 'jansson-pair-list-prev'   // list.prev [8B] (OVERHEAD - collision)
+  | 'jansson-pair-list-next'   // list.next [8B] (OVERHEAD - collision)
+  | 'jansson-pair-ordered-prev' // ordered_list.prev [8B] (OVERHEAD - order)
+  | 'jansson-pair-ordered-next' // ordered_list.next [8B] (OVERHEAD - order)
+  | 'jansson-pair-hash'        // size_t hash [8B] (OVERHEAD - cached)
+  | 'jansson-pair-value-ptr'   // json_t* value [8B] (OVERHEAD - pointer)
+  | 'jansson-pair-key-len'     // size_t key_len [8B] (OVERHEAD - length!)
+  | 'jansson-pair-key-data'    // char key[] (DATA - flexible array)
+  | 'jansson-pair-key-null'    // null terminator [1B] (OVERHEAD)
+
+  // json_string_t = json_t (16) + char* (8) + size_t (8) = 32 bytes
+  | 'jansson-string'           // json_string_t container
+  | 'jansson-string-ptr'       // char* value [8B] (OVERHEAD - pointer)
+  | 'jansson-string-length'    // size_t length [8B] (OVERHEAD - length!)
+  | 'jansson-string-data'      // char* backing on heap (DATA)
+  | 'jansson-string-null'      // null terminator [1B] (OVERHEAD)
+
+  // json_integer_t = json_t (16) + json_int_t (8) = 24 bytes
+  | 'jansson-integer'          // json_integer_t container
+  | 'jansson-int-value'        // json_int_t value [8B] (DATA)
+
+  // json_real_t = json_t (16) + double (8) = 24 bytes
+  | 'jansson-real'             // json_real_t container
+  | 'jansson-real-value'       // double value [8B] (DATA)
+
+  // json_t for true/false/null (16 bytes each)
+  | 'jansson-true'             // json_t for JSON_TRUE
+  | 'jansson-false'            // json_t for JSON_FALSE
+  | 'jansson-null'             // json_t for JSON_NULL
+
+  // json_array_t = json_t (16) + size (8) + entries (8) + table* (8) = 40 bytes
+  | 'jansson-array'            // json_array_t container
+  | 'jansson-array-data'       // json_t** table heap array
+  | 'jansson-array-size'       // size_t size [8B] (OVERHEAD - capacity)
+  | 'jansson-array-entries'    // size_t entries [8B] (OVERHEAD - count!)
+  | 'jansson-array-table'      // json_t** table [8B] (OVERHEAD - pointer)
+  | 'jansson-array-slot'       // json_t* slot [8B] (OVERHEAD - pointer)
+
+  // Legacy compatibility
+  | 'jansson-ht-buckets'       // hashtable_bucket* pointer (alias)
+  | 'jansson-list-prev'        // list.prev pointer (alias)
+  | 'jansson-list-next'        // list.next pointer (alias)
 
   // ========== POD (Plain Old Data) Types ==========
   | 'pod-int8'                 // int8_t / char (1 byte)
@@ -155,27 +300,13 @@ export type NodeType =
  * Relationship types between nodes
  */
 export type RelationshipType =
-  // HakkaJson relationships (high-level)
+  // HakkaJson relationships
   | 'registry-manages'         // Registry → Manager
-  | 'manager-stores'           // Manager → OwnedPointer (handles_[])
+  | 'manager-stores'           // Manager → handle entry
   | 'handle-resolves'          // Handle → Manager (type bits)
-  | 'handle-indexes'           // Handle → OwnedPointer (index bits)
-  | 'pointer-wraps'            // OwnedPointer → Value
+  | 'handle-indexes'           // Handle → entry (index bits)
   | 'value-contains'           // Array/Object → child handles
   | 'string-interned-at'       // Reference to interned string
-  // HakkaJson deep/POD relationships
-  | 'handle-to-type-bits'      // HandleManagerToken → top 2 bits
-  | 'handle-to-index-bits'     // HandleManagerToken → bottom 30 bits
-  | 'ptr-to-type-tag'          // OwnedUniformCompactPointer → high 4 bits
-  | 'ptr-to-address'           // OwnedUniformCompactPointer → lower 60 bits
-  | 'primitive-to-refcount'    // JsonPrimitiveCompact → ref_count
-  | 'primitive-to-value'       // JsonPrimitiveCompact → value_ field
-  | 'int-to-data'              // JsonIntCompact → int64_t value POD
-  | 'float-to-data'            // JsonFloatCompact → double value POD
-  | 'float-to-nan-bits'        // JsonFloatCompact → NaN-boxed bit pattern
-  | 'string-to-proxy'          // JsonStringCompact → PicoStringProxy
-  | 'proxy-to-ptr'             // PicoStringProxy → char* data
-  | 'proxy-to-len'             // PicoStringProxy → size_t length
   // Generic relationships used by generators
   | 'manages'                  // Manager → managed element
   | 'contains'                 // Container → contained element
@@ -191,6 +322,7 @@ export type RelationshipType =
   | 'entry-value'              // entry → value PyObject
   | 'list-to-items'            // PyList → ob_item[]
   | 'items-element'            // ob_item → element
+  | 'array-element'            // Generic array → element relationship
   | 'ob-type'                  // PyObject → ob_type (overhead)
   | 'has-type-ptr'             // Object → type pointer (overhead)
   | 'has-refcount'             // Object → refcount node

@@ -238,25 +238,26 @@ export class HakkaJsonGenerator extends BaseGenerator {
     });
     nodes.push(handleNode);
 
-    // Create array storage
-    const storageId = idGen.nodeId('arr');
-    const storageNode = this.createAndAddNode(storageId, 'hakka-array-storage', `[${value.length}]`, {
-      caption: 'Array storage',
-      sizeBytes: estimateSize('hakka-array-storage', value),
+    // JsonArrayCompact: vector<JsonHandleCompact> + refcount
+    // No separate storage - the array IS the object containing handles directly
+    const arrayId = idGen.nodeId('arr');
+    const arrayNode = this.createAndAddNode(arrayId, 'hakka-array', `[${value.length}]`, {
+      caption: `JsonArrayCompact (vec<handle> + refcount)`,
+      sizeBytes: estimateSize('hakka-array', value),
       implementation: this.implementation,
     });
-    nodes.push(storageNode);
+    nodes.push(arrayNode);
 
-    // Link handle to storage
-    this.createAndAddRelationship(idGen.edgeId(), handleId, storageId, 'points-to');
+    // Link handle to array object
+    this.createAndAddRelationship(idGen.edgeId(), handleId, arrayId, 'points-to');
 
     // Link to array manager
     this.createAndAddRelationship(idGen.edgeId(), this.arrayManagerId, handleId, 'owns');
 
-    // Generate children
+    // Generate children - parent is the array itself
     value.forEach((item, index) => {
       const childPath = `${path}[${index}]`;
-      const result = this.generateValue(item, childPath, storageId);
+      const result = this.generateValue(item, childPath, arrayId);
       nodes.push(...result.nodes);
     });
 
@@ -286,20 +287,41 @@ export class HakkaJsonGenerator extends BaseGenerator {
     });
     nodes.push(handleNode);
 
-    // Create object storage
-    const storageId = idGen.nodeId('obj');
-    const storageNode = this.createAndAddNode(storageId, 'hakka-object-storage', `{${keys.length}}`, {
-      caption: 'Object storage',
-      sizeBytes: estimateSize('hakka-object-storage', value),
+    // JsonObjectCompact: just 2 handles (keys array, values array) + refcount
+    // The actual keys and values are stored in separate JsonArrayCompact instances
+    const objectId = idGen.nodeId('obj');
+    const objectNode = this.createAndAddNode(objectId, 'hakka-object', `{${keys.length}}`, {
+      caption: `JsonObjectCompact (keys + values handles)`,
+      sizeBytes: estimateSize('hakka-object'),
       implementation: this.implementation,
     });
-    nodes.push(storageNode);
+    nodes.push(objectNode);
 
-    // Link handle to storage
-    this.createAndAddRelationship(idGen.edgeId(), handleId, storageId, 'points-to');
+    // Link handle to object
+    this.createAndAddRelationship(idGen.edgeId(), handleId, objectId, 'points-to');
 
     // Link to object manager
     this.createAndAddRelationship(idGen.edgeId(), this.objectManagerId, handleId, 'owns');
+
+    // Create keys array (JsonArrayCompact storing string handles)
+    const keysArrayId = idGen.nodeId('keys');
+    const keysArrayNode = this.createAndAddNode(keysArrayId, 'hakka-array', `keys[${keys.length}]`, {
+      caption: 'Keys array',
+      sizeBytes: estimateSize('hakka-array', keys),
+      implementation: this.implementation,
+    });
+    nodes.push(keysArrayNode);
+    this.createAndAddRelationship(idGen.edgeId(), objectId, keysArrayId, 'contains');
+
+    // Create values array (JsonArrayCompact storing value handles)
+    const valuesArrayId = idGen.nodeId('vals');
+    const valuesArrayNode = this.createAndAddNode(valuesArrayId, 'hakka-array', `values[${keys.length}]`, {
+      caption: 'Values array',
+      sizeBytes: estimateSize('hakka-array', keys),
+      implementation: this.implementation,
+    });
+    nodes.push(valuesArrayNode);
+    this.createAndAddRelationship(idGen.edgeId(), objectId, valuesArrayId, 'contains');
 
     // Generate key-value pairs
     for (const key of keys) {
@@ -320,11 +342,11 @@ export class HakkaJsonGenerator extends BaseGenerator {
         this.createAndAddRelationship(idGen.edgeId(), this.stringManagerId, keyNodeId, 'interns');
       }
 
-      // Link storage to key
-      this.createAndAddRelationship(idGen.edgeId(), storageId, keyNodeId, 'has-key');
+      // Link keys array to key
+      this.createAndAddRelationship(idGen.edgeId(), keysArrayId, keyNodeId, 'contains');
 
-      // Generate value
-      const result = this.generateValue(value[key], childPath, storageId);
+      // Generate value and link to values array
+      const result = this.generateValue(value[key], childPath, valuesArrayId);
       nodes.push(...result.nodes);
     }
 
