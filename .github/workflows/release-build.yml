@@ -219,6 +219,17 @@ jobs:
         if: matrix.use-container == false
         run: conan create . --build=missing -s compiler.cppstd=23 -o "&:shared=${{ matrix.shared == true && 'True' || 'False' }}"
 
+      - name: Upload Build Logs on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conan-${{ matrix.name }}-${{ matrix.shared && 'shared' || 'static' }}-logs
+          path: |
+            ~/.conan2/p/b/**/icu_project-prefix/src/icu_project-stamp/*.log
+            ~/.conan2/p/b/**/build/**/*.log
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Export Conan Package (container)
         if: matrix.use-container == true
         run: |

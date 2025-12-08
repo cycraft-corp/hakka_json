@@ -14,7 +14,7 @@ set(ICU_INSTALL_DIR "${CMAKE_BINARY_DIR}/icu-install")
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(CONFIGURE_ICU_PLATFORM "Linux")
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(CONFIGURE_ICU_PLATFORM "macOS")
+    set(CONFIGURE_ICU_PLATFORM "MacOSX")
 endif()
 
 include(ProcessorCount)
