@@ -241,29 +241,22 @@ endif()
 
 add_custom_target(icu_project_libs)
 if (WIN32)
-    # On Windows, libraries have .lib extension (import libraries for DLLs)
+    # On Windows, ICU is built as shared libraries (DLLs) via MSBuild
+    # The .lib files are import libraries that reference the DLLs
+    # Note: True static ICU linking is not available via MSBuild; would require MSYS/configure
     foreach(lib ${ICU_WINDOWS_LIBRARY_NAMES})
         set(LIB_IMPORT_PATH "${ICU_LIB_DIR}/${lib}.lib")
+        set(DLL_PATH "${ICU_INSTALL_DIR}/bin/${lib}.dll")
         list(APPEND ICU_LIBRARIES "${LIB_IMPORT_PATH}")
-        list(APPEND ICU_SHARED_LIBRARIES "${ICU_LIB_DIR}/${lib}.dll")
+        list(APPEND ICU_DLLS "${DLL_PATH}")
         add_library(${lib} SHARED IMPORTED GLOBAL)
         set_target_properties(${lib} PROPERTIES
-            IMPORTED_LOCATION "${ICU_INSTALL_DIR}/bin/${lib}.dll"
             IMPORTED_IMPLIB "${LIB_IMPORT_PATH}"
+            IMPORTED_LOCATION "${DLL_PATH}"
         )
-        # Add U_STATIC_IMPLEMENTATION for static builds (though Windows uses shared by default)
-        if(BUILD_SHARED_LIBS)
-            set_target_properties(${lib} PROPERTIES
-                INTERFACE_COMPILE_DEFINITIONS ""
-            )
-        else()
-            set_target_properties(${lib} PROPERTIES
-                INTERFACE_COMPILE_DEFINITIONS "U_STATIC_IMPLEMENTATION"
-            )
-        endif()
         add_dependencies(${lib} icu_project)
         add_dependencies(icu_project_libs ${lib})
-        
+
         # Create ICU:: alias for consistency
         if(NOT TARGET ICU::${lib})
             # Map library name to component name (handle debug suffix)
@@ -280,6 +273,7 @@ if (WIN32)
             endif()
         endif()
     endforeach(lib ${ICU_WINDOWS_LIBRARY_NAMES})
+    set(ICU_DLLS "${ICU_DLLS}" PARENT_SCOPE)
 else()
     # On Unix-like systems, libraries have .a extension
     foreach(lib ${ICU_UNIX_LIBRARY_NAMES})

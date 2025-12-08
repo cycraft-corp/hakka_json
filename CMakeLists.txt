@@ -38,6 +38,25 @@ install(TARGETS hakka_json_core hakka_json
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
+# Install ICU dependencies for standalone releases
+if(HAKKA_ICU_USING_FETCH)
+    if(WIN32)
+        # Windows: Install ICU DLLs alongside hakka_json.dll
+        install(DIRECTORY ${ICU_INSTALL_DIR}/bin/
+                DESTINATION ${CMAKE_INSTALL_BINDIR}
+                FILES_MATCHING PATTERN "icu*.dll")
+        # Also install ICU import libraries for consumers
+        install(DIRECTORY ${ICU_INSTALL_DIR}/lib/
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                FILES_MATCHING PATTERN "icu*.lib")
+    else()
+        # Unix: Install ICU static libraries
+        install(DIRECTORY ${ICU_INSTALL_DIR}/lib/
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                FILES_MATCHING PATTERN "libicu*.a")
+    endif()
+endif()
+
 # Tests
 option(HAKKA_JSON_BUILD_TESTS "Build tests" OFF)
 if(HAKKA_JSON_BUILD_TESTS)

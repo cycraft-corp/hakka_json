@@ -6,6 +6,9 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+'
       - 'v[0-9]+.[0-9]+.[0-9]+-rc[0-9]+'
 
+env:
+  ICU_VERSION: "78.1"
+
 jobs:
   validate-version:
     name: Validate Version
@@ -60,31 +63,58 @@ jobs:
           print(f'Conan will use version: {version}')
           "
 
-  build-and-test:
-    name: Build ${{ matrix.name }}
+  # =============================================================================
+  # Conan Package Builds
+  # - Linux/macOS: Both shared and static libraries
+  # - Windows: Shared only (ICU limitation - no static via MSBuild)
+  # =============================================================================
+  conan-build:
+    name: Conan ${{ matrix.name }} (${{ matrix.shared && 'shared' || 'static' }})
     needs: validate-version
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: Linux GCC 15
+          # Linux GCC - shared
+          - name: Linux GCC
             os: ubuntu-latest
             compiler: gcc
             version: 15
             use-container: true
+            shared: true
 
-          - name: macOS Apple Clang 15.4
+          # Linux GCC - static
+          - name: Linux GCC
+            os: ubuntu-latest
+            compiler: gcc
+            version: 15
+            use-container: true
+            shared: false
+
+          # macOS - shared
+          - name: macOS
             os: macos-14
             compiler: apple-clang
             xcode: "15.4"
             use-container: false
+            shared: true
 
-          - name: Windows MSVC 2022
+          # macOS - static
+          - name: macOS
+            os: macos-14
+            compiler: apple-clang
+            xcode: "15.4"
+            use-container: false
+            shared: false
+
+          # Windows - shared only (ICU limitation)
+          - name: Windows MSVC
             os: windows-2022
             compiler: msvc
             version: 2022
             use-container: false
+            shared: true
 
     container: ${{ matrix.use-container && 'ghcr.io/mattkretz/cplusplus-ci/gcc15' || null }}
 
@@ -98,10 +128,10 @@ jobs:
           path: |
             ~/.conan2
             ${{ runner.os == 'Windows' && '~\\.conan2' || '' }}
-          key: conan-${{ matrix.os }}-${{ matrix.compiler }}-${{ hashFiles('conanfile.py') }}-v1
+          key: conan-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.shared && 'shared' || 'static' }}-${{ hashFiles('conanfile.py') }}-v1
           restore-keys: |
+            conan-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.shared && 'shared' || 'static' }}-
             conan-${{ matrix.os }}-${{ matrix.compiler }}-
-            conan-${{ matrix.os }}-
 
       - name: Setup Xcode (macOS only)
         if: matrix.os == 'macos-14'
@@ -121,7 +151,6 @@ jobs:
         run: |
           apt-get update
           apt-get install -y python3 python3-pip python3-venv
-          # Install conan, ignoring Debian-installed packages
           pip3 install conan --break-system-packages --ignore-installed distro
 
       - name: Install Conan (non-container)
@@ -131,7 +160,6 @@ jobs:
       - name: Conan Profile Detect (container)
         if: matrix.use-container == true
         run: |
-          # Ensure conan is in PATH
           export PATH="$HOME/.local/bin:$PATH"
           conan profile detect --force
 
@@ -174,11 +202,11 @@ jobs:
         if: matrix.use-container == true
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          conan create . --build=missing -s compiler.cppstd=23
+          conan create . --build=missing -s compiler.cppstd=23 -o shared=${{ matrix.shared }}
 
       - name: Create Conan Package (non-container)
         if: matrix.use-container == false
-        run: conan create . --build=missing -s compiler.cppstd=23
+        run: conan create . --build=missing -s compiler.cppstd=23 -o shared=${{ matrix.shared }}
 
       - name: Export Conan Package (container)
         if: matrix.use-container == true
@@ -186,50 +214,22 @@ jobs:
           export PATH="$HOME/.local/bin:$PATH"
           CONAN_VERSION="${{ needs.validate-version.outputs.base_version }}"
           TAG_VERSION="${{ needs.validate-version.outputs.version }}"
+          LINK_TYPE="${{ matrix.shared && 'shared' || 'static' }}"
           mkdir -p artifacts
 
           conan cache save "hakka_json/${CONAN_VERSION}:*" \
-            --file "artifacts/hakka_json-${TAG_VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-conan.tgz"
+            --file "artifacts/hakka_json-${TAG_VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-${LINK_TYPE}-conan.tgz"
 
-          PACKAGE_DIR=$(conan cache path "hakka_json/${CONAN_VERSION}:*" | head -n 1)
-          if [ -n "$PACKAGE_DIR" ] && [ -d "$PACKAGE_DIR" ]; then
-            echo "Extracting binaries from: $PACKAGE_DIR"
-            mkdir -p "artifacts/binaries"
-
-            [ -d "$PACKAGE_DIR/lib" ] && cp -r "$PACKAGE_DIR/lib" "artifacts/binaries/"
-            [ -d "$PACKAGE_DIR/include" ] && cp -r "$PACKAGE_DIR/include" "artifacts/binaries/"
-
-            if [ -d "artifacts/binaries/lib" ] || [ -d "artifacts/binaries/include" ]; then
-              tar -czf "artifacts/hakka_json-${TAG_VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-binaries.tar.gz" \
-                -C artifacts/binaries .
-              rm -rf artifacts/binaries
-            fi
-          fi
-
-      - name: Export Conan Package (non-container)
+      - name: Export Conan Package (non-container Unix)
         if: matrix.use-container == false && runner.os != 'Windows'
         run: |
           CONAN_VERSION="${{ needs.validate-version.outputs.base_version }}"
           TAG_VERSION="${{ needs.validate-version.outputs.version }}"
+          LINK_TYPE="${{ matrix.shared && 'shared' || 'static' }}"
           mkdir -p artifacts
 
           conan cache save "hakka_json/${CONAN_VERSION}:*" \
-            --file "artifacts/hakka_json-${TAG_VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-conan.tgz"
-
-          PACKAGE_DIR=$(conan cache path "hakka_json/${CONAN_VERSION}:*" | head -n 1)
-          if [ -n "$PACKAGE_DIR" ] && [ -d "$PACKAGE_DIR" ]; then
-            echo "Extracting binaries from: $PACKAGE_DIR"
-            mkdir -p "artifacts/binaries"
-
-            [ -d "$PACKAGE_DIR/lib" ] && cp -r "$PACKAGE_DIR/lib" "artifacts/binaries/"
-            [ -d "$PACKAGE_DIR/include" ] && cp -r "$PACKAGE_DIR/include" "artifacts/binaries/"
-
-            if [ -d "artifacts/binaries/lib" ] || [ -d "artifacts/binaries/include" ]; then
-              tar -czf "artifacts/hakka_json-${TAG_VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-binaries.tar.gz" \
-                -C artifacts/binaries .
-              rm -rf artifacts/binaries
-            fi
-          fi
+            --file "artifacts/hakka_json-${TAG_VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-${LINK_TYPE}-conan.tgz"
 
       - name: Export Conan Package (Windows)
         if: runner.os == 'Windows'
@@ -237,48 +237,182 @@ jobs:
         run: |
           $CONAN_VERSION = "${{ needs.validate-version.outputs.base_version }}"
           $TAG_VERSION = "${{ needs.validate-version.outputs.version }}"
+          $LINK_TYPE = "shared"  # Windows is always shared
           New-Item -ItemType Directory -Force -Path "artifacts"
 
           conan cache save "hakka_json/${CONAN_VERSION}:*" `
-            --file "artifacts/hakka_json-${TAG_VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-conan.tgz"
+            --file "artifacts/hakka_json-${TAG_VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-${LINK_TYPE}-conan.tgz"
 
-          $PKG_REF = (conan list hakka_json --format=compact 2>$null | Select-String "hakka_json/${CONAN_VERSION}" | Select-Object -First 1).ToString().Trim()
-          if ($PKG_REF) {
-            $PACKAGE_DIR = (conan cache path "$PKG_REF" 2>$null | Select-Object -First 1)
-            if ($PACKAGE_DIR) {
-              $PACKAGE_DIR = $PACKAGE_DIR.Trim()
-            }
-          }
-          if ($PACKAGE_DIR -and (Test-Path $PACKAGE_DIR)) {
-            Write-Host "Extracting binaries from: $PACKAGE_DIR"
-            New-Item -ItemType Directory -Force -Path "artifacts/binaries"
-
-            if (Test-Path "$PACKAGE_DIR/lib") {
-              Copy-Item -Recurse -Path "$PACKAGE_DIR/lib" -Destination "artifacts/binaries/"
-            }
-            if (Test-Path "$PACKAGE_DIR/include") {
-              Copy-Item -Recurse -Path "$PACKAGE_DIR/include" -Destination "artifacts/binaries/"
-            }
-
-            if ((Test-Path "artifacts/binaries/lib") -or (Test-Path "artifacts/binaries/include")) {
-              tar -czf "artifacts/hakka_json-${TAG_VERSION}-${{ matrix.os }}-${{ matrix.compiler }}-binaries.tar.gz" `
-                -C artifacts/binaries .
-              Remove-Item -Recurse -Force "artifacts/binaries"
-            }
-          }
-
-      - name: Upload Artifacts
+      - name: Upload Conan Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: hakka_json-${{ matrix.os }}-${{ matrix.compiler }}
-          path: |
-            artifacts/*.tar.gz
-            artifacts/*.tgz
+          name: conan-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.shared && 'shared' || 'static' }}
+          path: artifacts/*.tgz
           if-no-files-found: error
 
+  # =============================================================================
+  # CMake Release Builds (Standalone Binaries for GitHub Release)
+  # - Linux/macOS: Static libraries with ICU statically linked
+  # - Windows: Shared libraries (DLLs) with ICU DLLs included
+  # =============================================================================
+  cmake-release:
+    name: CMake Release ${{ matrix.name }}
+    needs: validate-version
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x64
+            os: ubuntu-latest
+            compiler: gcc
+            use-container: true
+            artifact-suffix: linux-x64
+
+          - name: macOS ARM64
+            os: macos-14
+            compiler: apple-clang
+            xcode: "15.4"
+            use-container: false
+            artifact-suffix: macos-arm64
+
+          - name: Windows x64
+            os: windows-2022
+            compiler: msvc
+            use-container: false
+            artifact-suffix: windows-x64
+
+    container: ${{ matrix.use-container && 'ghcr.io/mattkretz/cplusplus-ci/gcc15' || null }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Cache ICU
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/icu-install
+            build/icu-src
+            build/icu-build
+          key: icu-${{ matrix.os }}-${{ env.ICU_VERSION }}-release-${{ hashFiles('cmake/ICU.cmake') }}
+          restore-keys: |
+            icu-${{ matrix.os }}-${{ env.ICU_VERSION }}-
+
+      - name: Setup Xcode (macOS only)
+        if: matrix.os == 'macos-14'
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ matrix.xcode }}
+
+      - name: Setup Python (non-container)
+        if: matrix.use-container == false
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Conan (non-container)
+        if: matrix.use-container == false
+        run: pip install conan
+
+      - name: Install dependencies (container)
+        if: matrix.use-container == true
+        run: |
+          apt-get update
+          apt-get install -y python3 python3-pip python3-venv ninja-build
+          pip3 install conan --break-system-packages --ignore-installed distro
+
+      - name: Conan Profile Detect
+        run: |
+          if [ -n "${{ matrix.use-container && 'true' || '' }}" ]; then
+            export PATH="$HOME/.local/bin:$PATH"
+          fi
+          conan profile detect --force
+        shell: bash
+
+      - name: Install Conan Dependencies (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          if [ -n "${{ matrix.use-container && 'true' || '' }}" ]; then
+            export PATH="$HOME/.local/bin:$PATH"
+          fi
+          conan install . --output-folder=build --build=missing -s compiler.cppstd=23 -s build_type=Release
+        shell: bash
+
+      - name: Install Conan Dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: conan install . --output-folder=build --build=missing -s compiler.cppstd=23 -s build_type=Release
+
+      - name: Configure CMake (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cmake -B build -S . \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake \
+            -DHAKKA_JSON_BUILD_TESTS=OFF \
+            -DHAKKA_JSON_USE_SYSTEM_DEPS=ON \
+            -DICU_VERSION=${{ env.ICU_VERSION }} \
+            -DCMAKE_INSTALL_PREFIX=install
+
+      - name: Configure CMake (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cmake -B build -S . `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake `
+            -DHAKKA_JSON_BUILD_TESTS=OFF `
+            -DHAKKA_JSON_USE_SYSTEM_DEPS=ON `
+            -DICU_VERSION=${{ env.ICU_VERSION }} `
+            -DCMAKE_INSTALL_PREFIX=install
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Install
+        run: cmake --install build --config Release --prefix install
+
+      - name: Package Release (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          TAG_VERSION="${{ needs.validate-version.outputs.version }}"
+          mkdir -p artifacts
+
+          # Create tarball with install directory contents
+          tar -czf "artifacts/hakka_json-${TAG_VERSION}-${{ matrix.artifact-suffix }}.tar.gz" \
+            -C install .
+
+          echo "Created release package:"
+          ls -la artifacts/
+
+      - name: Package Release (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $TAG_VERSION = "${{ needs.validate-version.outputs.version }}"
+          New-Item -ItemType Directory -Force -Path "artifacts"
+
+          # Create zip with install directory contents
+          Compress-Archive -Path "install\*" -DestinationPath "artifacts\hakka_json-${TAG_VERSION}-${{ matrix.artifact-suffix }}.zip"
+
+          Write-Host "Created release package:"
+          Get-ChildItem artifacts/
+
+      - name: Upload CMake Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cmake-release-${{ matrix.artifact-suffix }}
+          path: |
+            artifacts/*.tar.gz
+            artifacts/*.zip
+          if-no-files-found: error
+
+  # =============================================================================
+  # Create GitHub Release
+  # =============================================================================
   create-github-release:
     name: Create GitHub Release
-    needs: [validate-version, build-and-test]
+    needs: [validate-version, conan-build, cmake-release]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -294,28 +428,50 @@ jobs:
         with:
           path: artifacts/
 
-      - name: Generate SHA256 Hashes and conandata.yml
+      - name: Organize Release Files
         run: |
           VERSION="${{ needs.validate-version.outputs.version }}"
           mkdir -p release-files
 
-          find artifacts -type f \( -name "*.tar.gz" -o -name "*.tgz" \) | while read file; do
+          echo "=== Downloaded artifacts ==="
+          find artifacts -type f | head -50
+
+          # Move all package files to release-files
+          find artifacts -type f \( -name "*.tar.gz" -o -name "*.tgz" -o -name "*.zip" \) | while read file; do
             filename=$(basename "$file")
-            sha256=$(sha256sum "$file" | awk '{print $1}')
-            echo "$sha256  $filename" >> release-files/SHA256SUMS.txt
-            echo "✓ $filename: $sha256"
+            echo "Processing: $filename"
             mv "$file" "release-files/"
           done
 
+          echo ""
+          echo "=== Release files ==="
+          ls -la release-files/
+
+      - name: Generate SHA256 Hashes
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          cd release-files
+
+          # Generate hashes for all release files
+          for file in *; do
+            if [ -f "$file" ]; then
+              sha256=$(sha256sum "$file" | awk '{print $1}')
+              echo "$sha256  $file" >> SHA256SUMS.txt
+              echo "$file: $sha256"
+            fi
+          done
+
+          # Also add source tarball hash
           TARBALL_URL="https://github.com/${{ github.repository }}/archive/refs/tags/v${VERSION}.tar.gz"
-          curl -L "$TARBALL_URL" -o source.tar.gz
+          curl -sL "$TARBALL_URL" -o source.tar.gz
           SOURCE_SHA256=$(sha256sum source.tar.gz | awk '{print $1}')
           rm source.tar.gz
 
-          echo "$SOURCE_SHA256  v${VERSION}.tar.gz" >> release-files/SHA256SUMS.txt
-          echo "✓ Source tarball SHA256: $SOURCE_SHA256"
+          echo "$SOURCE_SHA256  v${VERSION}.tar.gz (source)" >> SHA256SUMS.txt
+          echo "Source tarball: $SOURCE_SHA256"
 
-          cat > release-files/conandata.yml <<EOF
+          # Generate conandata.yml for Conan Center Index submission
+          cat > conandata.yml <<EOF
           sources:
             "${VERSION}":
               url: "${TARBALL_URL}"
@@ -323,11 +479,12 @@ jobs:
           EOF
 
           echo ""
-          echo "Generated conandata.yml for Conan Center Index submission:"
-          cat release-files/conandata.yml
+          echo "=== SHA256SUMS.txt ==="
+          cat SHA256SUMS.txt
+
           echo ""
-          echo "All SHA256 hashes:"
-          cat release-files/SHA256SUMS.txt
+          echo "=== conandata.yml ==="
+          cat conandata.yml
 
       - name: Generate Changelog
         id: changelog
@@ -377,48 +534,72 @@ jobs:
 
             ### Via Conan (Recommended)
             ```bash
-            # Will build for your specific compiler/settings
+            # Default: static library (Linux/macOS), shared library (Windows)
             conan install hakka_json/${{ needs.validate-version.outputs.version }}
+
+            # Explicit shared library
+            conan install hakka_json/${{ needs.validate-version.outputs.version }} -o shared=True
+
+            # Explicit static library (Linux/macOS only)
+            conan install hakka_json/${{ needs.validate-version.outputs.version }} -o shared=False
             ```
 
-            ### Via Conan Package Cache Export
-            Download the platform-specific Conan package (`*-conan.tgz`):
-            - Contains Conan cache export
-            - Can be imported: `conan cache restore <package>.tgz`
-            - Conan will rebuild if settings don't match
+            ### Via Conan Package Cache Import
+            Download platform-specific Conan packages (`*-conan.tgz`):
+            ```bash
+            conan cache restore hakka_json-*-conan.tgz
+            ```
 
-            ### Via Standalone Binaries (Advanced)
-            Download platform-specific binaries (`*-binaries.tar.gz`):
-            - **Pre-compiled** with specific compilers (see below)
-            - May have ABI compatibility issues with different compilers/stdlib
-            - Includes: static libs, dynamic libs (Linux/macOS), headers
+            ### Via Standalone Binaries (CMake Release)
+            Download platform-specific release packages:
+            - **Linux x64**: `hakka_json-${{ needs.validate-version.outputs.version }}-linux-x64.tar.gz`
+            - **macOS ARM64**: `hakka_json-${{ needs.validate-version.outputs.version }}-macos-arm64.tar.gz`
+            - **Windows x64**: `hakka_json-${{ needs.validate-version.outputs.version }}-windows-x64.zip`
+
+            Extract and use with CMake:
+            ```cmake
+            find_package(HakkaJson REQUIRED)
+            target_link_libraries(your_target PRIVATE HakkaJson::core)
+            ```
+
+            ## Platform Notes
+
+            | Platform | Static Library | Shared Library | Notes |
+            |----------|---------------|----------------|-------|
+            | Linux    | ✅ | ✅ | ICU statically linked |
+            | macOS    | ✅ | ✅ | ICU statically linked |
+            | Windows  | ❌ | ✅ | ICU DLLs included (MSBuild limitation) |
 
             ## Artifacts
 
             ### Conan Packages
-            - `hakka_json-${{ needs.validate-version.outputs.version }}-*-conan.tgz`
+            - `hakka_json-*-ubuntu-latest-gcc-shared-conan.tgz` - Linux shared
+            - `hakka_json-*-ubuntu-latest-gcc-static-conan.tgz` - Linux static
+            - `hakka_json-*-macos-14-apple-clang-shared-conan.tgz` - macOS shared
+            - `hakka_json-*-macos-14-apple-clang-static-conan.tgz` - macOS static
+            - `hakka_json-*-windows-2022-msvc-shared-conan.tgz` - Windows shared
 
-            ### Standalone Binaries (built with)
-            - Linux: GCC 15, `*-ubuntu-latest-gcc-binaries.tar.gz`
-            - macOS: Apple Clang 15.4, `*-macos-14-apple-clang-binaries.tar.gz`
-            - Windows: MSVC 2022, `*-windows-2022-msvc-binaries.tar.gz` (DLLs only, see #2)
+            ### CMake Release Binaries
+            - `hakka_json-*-linux-x64.tar.gz` - Linux static binaries
+            - `hakka_json-*-macos-arm64.tar.gz` - macOS ARM64 static binaries
+            - `hakka_json-*-windows-x64.zip` - Windows DLLs with ICU
 
             ### Verification
             - `SHA256SUMS.txt` - SHA256 hashes for all artifacts
-            - `conandata.yml` - Ready-to-use for Conan Center Index submission
+            - `conandata.yml` - Ready for Conan Center Index submission
           artifacts: "release-files/*"
           draft: false
           prerelease: ${{ steps.prerelease.outputs.is_prerelease }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  # Note: Conan Center Index submission must be done manually
-  # See: https://github.com/conan-io/conan-center-index/blob/master/docs/how_to_add_packages.md
-  #
-  # Steps to submit to Conan Center Index:
-  # 1. Fork https://github.com/conan-io/conan-center-index
-  # 2. Create recipes/hakka_json/all/ directory structure
-  # 3. Copy conanfile.py and test_package/ from this repository
-  # 4. Download conandata.yml from GitHub releases (already has correct SHA256)
-  # 5. Create config.yml to register the version
-  # 6. Run local validation with CCI hooks: pip install -r .c3i/requirements.txt && python3 .c3i/run_validation.py recipes/hakka_json
-  # 7. Submit PR to conan-io/conan-center-index
+# =============================================================================
+# Notes for Conan Center Index Submission
+# =============================================================================
+# Steps to submit to Conan Center Index:
+# 1. Fork https://github.com/conan-io/conan-center-index
+# 2. Create recipes/hakka_json/all/ directory structure
+# 3. Copy conanfile.py and test_package/ from this repository
+# 4. Download conandata.yml from GitHub releases (already has correct SHA256)
+# 5. Create config.yml to register the version
+# 6. Run local validation: pip install -r .c3i/requirements.txt && python3 .c3i/run_validation.py recipes/hakka_json
+# 7. Submit PR to conan-io/conan-center-index
