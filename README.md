@@ -68,7 +68,7 @@ xychart-beta horizontal
 |----------|----------|----------|--------|
 | **Linux** | GCC | 11, 12, 13, 14, 15, 16 | ![GCC](https://img.shields.io/github/actions/workflow/status/cycraft-corp/hakka_json/linux-gcc.yml?branch=main&label=GCC) |
 | **Linux** | Clang/LLVM | 17, 18, 19, 20, 21, 22 | ![Clang](https://img.shields.io/github/actions/workflow/status/cycraft-corp/hakka_json/linux-clang.yml?branch=main&label=Clang) |
-| **macOS** | Apple Clang | Xcode 15.2, 15.4 | ![macOS](https://img.shields.io/github/actions/workflow/status/cycraft-corp/hakka_json/macos.yml?branch=main&label=macOS) |
+| **macOS** | Apple Clang | Xcode 15.4, 16.2, 26.0 | ![macOS](https://img.shields.io/github/actions/workflow/status/cycraft-corp/hakka_json/macos.yml?branch=main&label=macOS) |
 | **Windows** | MSVC | VS 2022 | ![Windows](https://img.shields.io/github/actions/workflow/status/cycraft-corp/hakka_json/windows.yml?branch=main&label=Windows) |
 
 **Sanitizers Tested**: Address, Undefined Behavior, Thread, Memory (Clang) | **Build Types**: Debug, Release

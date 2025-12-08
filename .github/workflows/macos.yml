@@ -17,40 +17,76 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          
-          # macOS 13 (Ventura) with Xcode 15.2
-          - os: macos-13
-            xcode-version: "15.2"
+
+          # macOS 14 (Sonoma) with Xcode 15.4 - ARM64
+          - os: macos-14
+            xcode-version: "15.4"
             build-type: Debug
             sanitizer: ""
-          - os: macos-13
-            xcode-version: "15.2"
+          - os: macos-14
+            xcode-version: "15.4"
             build-type: Release
             sanitizer: ""
-          - os: macos-13
-            xcode-version: "15.2"
+          - os: macos-14
+            xcode-version: "15.4"
             build-type: Debug
             sanitizer: "address"
-          - os: macos-13
-            xcode-version: "15.2"
+          - os: macos-14
+            xcode-version: "15.4"
             build-type: Debug
             sanitizer: "undefined"
-          
-          # macOS 14 (Sonoma) with Xcode 15.4
-          - os: macos-14
-            xcode-version: "15.4"
+
+          # macOS 15 (Sequoia) with Xcode 16.2 - ARM64
+          - os: macos-15
+            xcode-version: "16.2"
             build-type: Debug
             sanitizer: ""
-          - os: macos-14
-            xcode-version: "15.4"
+          - os: macos-15
+            xcode-version: "16.2"
             build-type: Release
             sanitizer: ""
-          - os: macos-14
-            xcode-version: "15.4"
+          - os: macos-15
+            xcode-version: "16.2"
             build-type: Debug
             sanitizer: "address"
-          - os: macos-14
-            xcode-version: "15.4"
+          - os: macos-15
+            xcode-version: "16.2"
+            build-type: Debug
+            sanitizer: "undefined"
+
+          # macOS 15 (Sequoia) with Xcode 16.2 - Intel (supported until Aug 2027)
+          - os: macos-15-intel
+            xcode-version: "16.2"
+            build-type: Debug
+            sanitizer: ""
+          - os: macos-15-intel
+            xcode-version: "16.2"
+            build-type: Release
+            sanitizer: ""
+          - os: macos-15-intel
+            xcode-version: "16.2"
+            build-type: Debug
+            sanitizer: "address"
+          - os: macos-15-intel
+            xcode-version: "16.2"
+            build-type: Debug
+            sanitizer: "undefined"
+
+          # macOS 26 (Tahoe) with Xcode 26.0 - ARM64
+          - os: macos-26
+            xcode-version: "26.0"
+            build-type: Debug
+            sanitizer: ""
+          - os: macos-26
+            xcode-version: "26.0"
+            build-type: Release
+            sanitizer: ""
+          - os: macos-26
+            xcode-version: "26.0"
+            build-type: Debug
+            sanitizer: "address"
+          - os: macos-26
+            xcode-version: "26.0"
             build-type: Debug
             sanitizer: "undefined"
 
