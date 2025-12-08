@@ -166,6 +166,10 @@ inline constinit double TRUE_NAN    = get_nan(NAN_OFFSET_BASE + 1);
 inline constinit double FALSE_NAN   = get_nan(NAN_OFFSET_BASE + 2);
 inline constinit double INVALID_NAN = get_nan(NAN_OFFSET_BASE + 3);
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4505) // unreferenced function with internal linkage has been removed
+#endif
 [[gnu::used, gnu::cold]]
 static bool validate_nan_constants() noexcept {
     using hakka_json_internal::validate_nan_representation;
@@ -178,6 +182,9 @@ static bool validate_nan_constants() noexcept {
            (std::bit_cast<std::uint64_t>(TRUE_NAN) != std::bit_cast<std::uint64_t>(FALSE_NAN)) &&
            (std::bit_cast<std::uint64_t>(FALSE_NAN) != std::bit_cast<std::uint64_t>(INVALID_NAN));
 }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 STRICT_FP_END
 
