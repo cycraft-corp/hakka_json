@@ -202,11 +202,11 @@ jobs:
         if: matrix.use-container == true
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          conan create . --build=missing -s compiler.cppstd=23 -o shared=${{ matrix.shared }}
+          conan create . --build=missing -s compiler.cppstd=23 -o "&:shared=${{ matrix.shared == true && 'True' || 'False' }}"
 
       - name: Create Conan Package (non-container)
         if: matrix.use-container == false
-        run: conan create . --build=missing -s compiler.cppstd=23 -o shared=${{ matrix.shared }}
+        run: conan create . --build=missing -s compiler.cppstd=23 -o "&:shared=${{ matrix.shared == true && 'True' || 'False' }}"
 
       - name: Export Conan Package (container)
         if: matrix.use-container == true
@@ -337,12 +337,12 @@ jobs:
           if [ -n "${{ matrix.use-container && 'true' || '' }}" ]; then
             export PATH="$HOME/.local/bin:$PATH"
           fi
-          conan install . --output-folder=build --build=missing -s compiler.cppstd=23 -s build_type=Release
+          conan install . --output-folder=build --build=missing -s compiler.cppstd=23 -s build_type=Release -o "&:shared=False"
         shell: bash
 
       - name: Install Conan Dependencies (Windows)
         if: runner.os == 'Windows'
-        run: conan install . --output-folder=build --build=missing -s compiler.cppstd=23 -s build_type=Release -o shared=True
+        run: conan install . --output-folder=build --build=missing -s compiler.cppstd=23 -s build_type=Release -o "&:shared=True"
 
       - name: Configure CMake (Unix)
         if: runner.os != 'Windows'
@@ -363,7 +363,7 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake `
             -DHAKKA_JSON_BUILD_TESTS=OFF `
             -DHAKKA_JSON_USE_SYSTEM_DEPS=ON `
-            -DICU_VERSION=${{ env.ICU_VERSION }} `
+            -DICU_VERSION="${{ env.ICU_VERSION }}" `
             -DCMAKE_INSTALL_PREFIX=install
 
       - name: Build
