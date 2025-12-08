@@ -20,6 +20,7 @@ resolve_dependency(
     FETCHCONTENT_DECLARE_ARGS
         GIT_REPOSITORY https://github.com/nlohmann/json.git
         GIT_TAG v3.12.0
+        GIT_SHALLOW TRUE
 )
 
 # tl::expected
@@ -30,6 +31,7 @@ resolve_dependency(
     FETCHCONTENT_DECLARE_ARGS
         GIT_REPOSITORY https://github.com/TartanLlama/expected.git
         GIT_TAG v1.1.0
+        GIT_SHALLOW TRUE
 )
 # Note: FetchContent names the target "expected" not "tl-expected"
 # Create alias if using FetchContent and alias doesn't exist
@@ -56,6 +58,7 @@ if(HAKKA_JSON_BUILD_TESTS)
             googletest
             GIT_REPOSITORY https://github.com/google/googletest.git
             GIT_TAG v1.15.2
+            GIT_SHALLOW TRUE
         )
         set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
         FetchContent_MakeAvailable(googletest)

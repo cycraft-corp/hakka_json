@@ -120,11 +120,13 @@ function(build_icu_windows)
         set(ICU_MSBUILD_PATH "MSBuild.exe")
     endif()
 
-    # Determine build configuration
+    # Determine build configuration and debug suffix
     if(CMAKE_BUILD_TYPE MATCHES "Debug")
         set(ICU_CONFIG "Debug")
+        set(ICU_WIN_DEBUG_SUFFIX "d")
     else()
         set(ICU_CONFIG "Release")
+        set(ICU_WIN_DEBUG_SUFFIX "")
     endif()
 
     # Map ICU_ARCH to MSBuild platform
@@ -155,7 +157,7 @@ function(build_icu_windows)
         BUILD_COMMAND
             ${ICU_MSBUILD_PATH} ${ICU_SRC_DIR}/source/allinone/allinone.sln
             /p:Configuration=${ICU_CONFIG} /p:Platform=${MSBUILD_PLATFORM} /p:SkipUWP=true
-            /p:RuntimeLibrary=MultiThreaded$<$<CONFIG:Debug>:Debug>
+            /p:VcpkgEnabled=false
         INSTALL_COMMAND
             ${CMAKE_COMMAND} -E copy_directory ${WINDOWS_SRC_BIN_DIR} ${ICU_INSTALL_DIR}/bin
             COMMAND ${CMAKE_COMMAND} -E copy_directory ${WINDOWS_SRC_LIB_DIR} ${ICU_INSTALL_DIR}/lib
@@ -171,11 +173,11 @@ function(build_icu_windows)
         LOG_INSTALL ON
         WORKING_DIRECTORY ${ICU_SRC_DIR}
         BUILD_BYPRODUCTS
-            ${ICU_INSTALL_DIR}/lib/icuin.lib
-            ${ICU_INSTALL_DIR}/lib/icuuc.lib
+            ${ICU_INSTALL_DIR}/lib/icuin${ICU_WIN_DEBUG_SUFFIX}.lib
+            ${ICU_INSTALL_DIR}/lib/icuuc${ICU_WIN_DEBUG_SUFFIX}.lib
             ${ICU_INSTALL_DIR}/lib/icudt.lib
-            ${ICU_INSTALL_DIR}/lib/icuio.lib
-            ${ICU_INSTALL_DIR}/lib/icutu.lib
+            ${ICU_INSTALL_DIR}/lib/icuio${ICU_WIN_DEBUG_SUFFIX}.lib
+            ${ICU_INSTALL_DIR}/lib/icutu${ICU_WIN_DEBUG_SUFFIX}.lib
     )
 endfunction()
 
@@ -206,11 +208,22 @@ endif()
 set(ICU_INCLUDE_DIR ${ICU_INCLUDE_DIR} PARENT_SCOPE)
 set(ICU_LIB_DIR ${ICU_LIB_DIR} PARENT_SCOPE)
 set(ICU_INSTALL_DIR ${ICU_INSTALL_DIR} PARENT_SCOPE)
+
+# Determine debug suffix for Windows library names
+# Must be set before ICU_WINDOWS_LIBRARY_NAMES is defined
+if(WIN32)
+    if(CMAKE_BUILD_TYPE MATCHES "Debug")
+        set(ICU_DEBUG_SUFFIX "d")
+    else()
+        set(ICU_DEBUG_SUFFIX "")
+    endif()
+endif()
+
 set(ICU_WINDOWS_LIBRARY_NAMES
-    icutu
-    icuin
-    icuio
-    icuuc
+    icutu${ICU_DEBUG_SUFFIX}
+    icuin${ICU_DEBUG_SUFFIX}
+    icuio${ICU_DEBUG_SUFFIX}
+    icuuc${ICU_DEBUG_SUFFIX}
     icudt
 )
 set(ICU_UNIX_LIBRARY_NAMES
@@ -253,14 +266,14 @@ if (WIN32)
         
         # Create ICU:: alias for consistency
         if(NOT TARGET ICU::${lib})
-            # Map library name to component name
-            if(lib STREQUAL "icutu")
+            # Map library name to component name (handle debug suffix)
+            if(lib STREQUAL "icutu${ICU_DEBUG_SUFFIX}")
                 add_library(ICU::tu ALIAS ${lib})
-            elseif(lib STREQUAL "icuin")
+            elseif(lib STREQUAL "icuin${ICU_DEBUG_SUFFIX}")
                 add_library(ICU::i18n ALIAS ${lib})
-            elseif(lib STREQUAL "icuio")
+            elseif(lib STREQUAL "icuio${ICU_DEBUG_SUFFIX}")
                 add_library(ICU::io ALIAS ${lib})
-            elseif(lib STREQUAL "icuuc")
+            elseif(lib STREQUAL "icuuc${ICU_DEBUG_SUFFIX}")
                 add_library(ICU::uc ALIAS ${lib})
             elseif(lib STREQUAL "icudt")
                 add_library(ICU::data ALIAS ${lib})

@@ -58,8 +58,11 @@ if(HAKKA_ICU_USING_FETCH)
     # When using ExternalProject, add explicit dependencies and includes
     add_dependencies(hakka_json icu_project_libs)
     target_include_directories(hakka_json PRIVATE ${ICU_INCLUDE_DIR})
-    # ExternalProject ICU is built with --disable-renaming, so we can define U_DISABLE_RENAMING
-    target_compile_definitions(hakka_json PRIVATE HAKKA_ICU_DISABLE_RENAMING)
+    # Unix: ICU built with --disable-renaming, so we define HAKKA_ICU_DISABLE_RENAMING
+    # Windows: MSBuild ICU uses versioned symbols (icu_XX), ICU headers create namespace alias automatically
+    if(NOT WIN32)
+        target_compile_definitions(hakka_json PRIVATE HAKKA_ICU_DISABLE_RENAMING)
+    endif()
     
     # Copy ICU DLLs to output directory on Windows
     if(WIN32)
