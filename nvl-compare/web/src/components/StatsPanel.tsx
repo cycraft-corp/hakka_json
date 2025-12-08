@@ -214,15 +214,15 @@ function formatBytes(bytes: number): string {
 
 /** Get CSS class for overhead text based on percentage */
 function getOverheadTextClass(percent: number, isDark = true): string {
-  if (percent < 16) return isDark ? 'text-emerald-400' : 'text-emerald-600';
-  if (percent < 30) return isDark ? 'text-amber-400' : 'text-amber-600';
+  if (percent < 40) return isDark ? 'text-emerald-400' : 'text-emerald-600';
+  if (percent < 70) return isDark ? 'text-amber-400' : 'text-amber-600';
   return isDark ? 'text-red-400' : 'text-red-600';
 }
 
 /** Get CSS class for overhead bar based on percentage */
 function getOverheadBarClass(percent: number): string {
-  if (percent < 16) return 'bg-emerald-500';
-  if (percent < 30) return 'bg-amber-500';
+  if (percent < 40) return 'bg-emerald-500';
+  if (percent < 70) return 'bg-amber-500';
   return 'bg-red-500';
 }
 
