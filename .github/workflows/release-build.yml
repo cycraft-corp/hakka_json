@@ -82,7 +82,7 @@ jobs:
             compiler: gcc
             version: 15
             use-container: true
-            shared: true
+            shared: True
 
           # Linux GCC - static
           - name: Linux GCC
@@ -90,7 +90,7 @@ jobs:
             compiler: gcc
             version: 15
             use-container: true
-            shared: false
+            shared: False
 
           # macOS - shared
           - name: macOS
@@ -98,7 +98,7 @@ jobs:
             compiler: apple-clang
             xcode: "15.4"
             use-container: false
-            shared: true
+            shared: True
 
           # macOS - static
           - name: macOS
@@ -106,7 +106,7 @@ jobs:
             compiler: apple-clang
             xcode: "15.4"
             use-container: false
-            shared: false
+            shared: False
 
           # Windows - shared only (ICU limitation)
           - name: Windows MSVC
@@ -114,7 +114,7 @@ jobs:
             compiler: msvc
             version: 2022
             use-container: false
-            shared: true
+            shared: True
 
     container: ${{ matrix.use-container && 'ghcr.io/mattkretz/cplusplus-ci/gcc15' || null }}
 
@@ -342,7 +342,7 @@ jobs:
 
       - name: Install Conan Dependencies (Windows)
         if: runner.os == 'Windows'
-        run: conan install . --output-folder=build --build=missing -s compiler.cppstd=23 -s build_type=Release
+        run: conan install . --output-folder=build --build=missing -s compiler.cppstd=23 -s build_type=Release -o shared=True
 
       - name: Configure CMake (Unix)
         if: runner.os != 'Windows'
